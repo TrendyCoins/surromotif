@@ -1,0 +1,290 @@
+{
+ "smc_series_AAVEBTC_5M_N200.npz": {
+  "floor_L32": 0.19090908765792847,
+  "floor_L64": 0.23462843894958496
+ },
+ "smc_series_AAVEETH_5M_N200.npz": {
+  "floor_L32": 0.1111111119389534,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_AAVEUSDT_5M_N200.npz": {
+  "floor_L32": 0.17167004942893982,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_ADABTC_5M_N200.npz": {
+  "floor_L32": 0.1428571492433548,
+  "floor_L64": 0.1666666716337204
+ },
+ "smc_series_ADAETH_5M_N200.npz": {
+  "floor_L32": 0.09109731018543243,
+  "floor_L64": 0.15789473056793213
+ },
+ "smc_series_ADAUSDT_5M_N200.npz": {
+  "floor_L32": 0.15625,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_AMPUSDT_5M_N200.npz": {
+  "floor_L32": 0.1428571492433548,
+  "floor_L64": 0.18125855922698975
+ },
+ "smc_series_ARUSDT_5M_N200.npz": {
+  "floor_L32": 0.1607142984867096,
+  "floor_L64": 0.19759729504585266
+ },
+ "smc_series_AVAXBTC_5M_N200.npz": {
+  "floor_L32": 0.18692198395729065,
+  "floor_L64": 0.23118075728416443
+ },
+ "smc_series_AVAXUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_BCHBTC_5M_N200.npz": {
+  "floor_L32": 0.18607094883918762,
+  "floor_L64": 0.22499999403953552
+ },
+ "smc_series_BCHUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_BNBBTC_5M_N200.npz": {
+  "floor_L32": 0.12068966031074524,
+  "floor_L64": 0.1616804450750351
+ },
+ "smc_series_BNBETH_5M_N200.npz": {
+  "floor_L32": 0.09635873883962631,
+  "floor_L64": 0.13366693258285522
+ },
+ "smc_series_BNBUSDT_5M_N200.npz": {
+  "floor_L32": 0.1300564557313919,
+  "floor_L64": 0.16880816221237183
+ },
+ "smc_series_BTCUSDT_5M_N200.npz": {
+  "floor_L32": 0.1444183588027954,
+  "floor_L64": 0.17530229687690735
+ },
+ "smc_series_CAKEUSDT_5M_N200.npz": {
+  "floor_L32": 0.16333332657814026,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_DASHBTC_5M_N200.npz": {
+  "floor_L32": 0.07339449226856232,
+  "floor_L64": 0.1197393611073494
+ },
+ "smc_series_DASHUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_DOGEBTC_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_DOGEUSDT_5M_N200.npz": {
+  "floor_L32": 0.0833333358168602,
+  "floor_L64": 0.1610305905342102
+ },
+ "smc_series_DOTBTC_5M_N200.npz": {
+  "floor_L32": 0.17546941339969635,
+  "floor_L64": 0.22127139568328857
+ },
+ "smc_series_DOTUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_ETHBTC_5M_N200.npz": {
+  "floor_L32": 0.12745098769664764,
+  "floor_L64": 0.1614583432674408
+ },
+ "smc_series_ETHUSDT_5M_N200.npz": {
+  "floor_L32": 0.14770641922950745,
+  "floor_L64": 0.184787318110466
+ },
+ "smc_series_FETBTC_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_FETUSDT_5M_N200.npz": {
+  "floor_L32": 0.125,
+  "floor_L64": 0.1666666716337204
+ },
+ "smc_series_FILBTC_5M_N200.npz": {
+  "floor_L32": 0.190476194024086,
+  "floor_L64": 0.23595678806304932
+ },
+ "smc_series_FILUSDT_5M_N200.npz": {
+  "floor_L32": 0.15998418629169464,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_HBARUSDT_5M_N200.npz": {
+  "floor_L32": 0.1409090906381607,
+  "floor_L64": 0.18859648704528809
+ },
+ "smc_series_ICPBTC_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.25
+ },
+ "smc_series_ICPUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_INJBTC_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.22499999403953552
+ },
+ "smc_series_INJUSDT_5M_N200.npz": {
+  "floor_L32": 0.1538461595773697,
+  "floor_L64": 0.19910044968128204
+ },
+ "smc_series_LINKBTC_5M_N200.npz": {
+  "floor_L32": 0.1111111119389534,
+  "floor_L64": 0.1666666716337204
+ },
+ "smc_series_LINKETH_5M_N200.npz": {
+  "floor_L32": 0.008623253554105759,
+  "floor_L64": 0.026375994086265564
+ },
+ "smc_series_LINKUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_LSKUSDT_5M_N200.npz": {
+  "floor_L32": 0.10000000149011612,
+  "floor_L64": 0.15009380877017975
+ },
+ "smc_series_LTCBTC_5M_N200.npz": {
+  "floor_L32": 0.1428571492433548,
+  "floor_L64": 0.17391304671764374
+ },
+ "smc_series_LTCETH_5M_N200.npz": {
+  "floor_L32": 0.10000000149011612,
+  "floor_L64": 0.1818181872367859
+ },
+ "smc_series_LTCUSDT_5M_N200.npz": {
+  "floor_L32": 0.15000000596046448,
+  "floor_L64": 0.19251661002635956
+ },
+ "smc_series_NEARBTC_5M_N200.npz": {
+  "floor_L32": 0.1950106918811798,
+  "floor_L64": 0.22930866479873657
+ },
+ "smc_series_NEARUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_PAXGUSDT_5M_N200.npz": {
+  "floor_L32": 0.06035141274333,
+  "floor_L64": 0.12060606479644775
+ },
+ "smc_series_PHAUSDT_5M_N200.npz": {
+  "floor_L32": 0.1409090906381607,
+  "floor_L64": 0.1666666716337204
+ },
+ "smc_series_QIUSDT_5M_N200.npz": {
+  "floor_L32": 0.14318183064460754,
+  "floor_L64": 0.17413006722927094
+ },
+ "smc_series_QNTUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_RAREUSDT_5M_N200.npz": {
+  "floor_L32": 0.1428571492433548,
+  "floor_L64": 0.1666666716337204
+ },
+ "smc_series_RAYUSDT_5M_N200.npz": {
+  "floor_L32": 0.1428571492433548,
+  "floor_L64": 0.17996746301651
+ },
+ "smc_series_RUNEUSDT_5M_N200.npz": {
+  "floor_L32": 0.165286123752594,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_SOLBNB_5M_N200.npz": {
+  "floor_L32": 0.11253561079502106,
+  "floor_L64": 0.19454504549503326
+ },
+ "smc_series_SOLBTC_5M_N200.npz": {
+  "floor_L32": 0.16298583149909973,
+  "floor_L64": 0.21104928851127625
+ },
+ "smc_series_SOLETH_5M_N200.npz": {
+  "floor_L32": 0.1967741847038269,
+  "floor_L64": 0.24780702590942383
+ },
+ "smc_series_SOLUSDT_5M_N200.npz": {
+  "floor_L32": 0.16161879897117615,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_SPELLUSDT_5M_N200.npz": {
+  "floor_L32": 0.15099716186523438,
+  "floor_L64": 0.17500001192092896
+ },
+ "smc_series_TRXBNB_5M_N200.npz": {
+  "floor_L32": 0.15843138098716736,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_TRXBTC_5M_N200.npz": {
+  "floor_L32": 0.20000000298023224,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_TRXETH_5M_N200.npz": {
+  "floor_L32": 0.15000000596046448,
+  "floor_L64": 0.1875
+ },
+ "smc_series_TRXUSDT_5M_N200.npz": {
+  "floor_L32": 0.1428571492433548,
+  "floor_L64": 0.1666666716337204
+ },
+ "smc_series_TRXXRP_5M_N200.npz": {
+  "floor_L32": 0.0476190485060215,
+  "floor_L64": 0.07692307978868484
+ },
+ "smc_series_UNIBTC_5M_N200.npz": {
+  "floor_L32": 0.17164179682731628,
+  "floor_L64": 0.23076923191547394
+ },
+ "smc_series_UNIUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20248538255691528
+ },
+ "smc_series_VTHOUSDT_5M_N200.npz": {
+  "floor_L32": 0.125,
+  "floor_L64": 0.15904566645622253
+ },
+ "smc_series_XLMETH_5M_N200.npz": {
+  "floor_L32": 0.02777777798473835,
+  "floor_L64": 0.08712121844291687
+ },
+ "smc_series_XLMUSDT_5M_N200.npz": {
+  "floor_L32": 0.15646971762180328,
+  "floor_L64": 0.19565217196941376
+ },
+ "smc_series_XRPBTC_5M_N200.npz": {
+  "floor_L32": 0.13333334028720856,
+  "floor_L64": 0.1666666716337204
+ },
+ "smc_series_XRPETH_5M_N200.npz": {
+  "floor_L32": 0.13448408246040344,
+  "floor_L64": 0.1815791130065918
+ },
+ "smc_series_XRPUSDT_5M_N200.npz": {
+  "floor_L32": 0.1520467847585678,
+  "floor_L64": 0.19362260401248932
+ },
+ "smc_series_ZECBTC_5M_N200.npz": {
+  "floor_L32": 0.09046964347362518,
+  "floor_L64": 0.13483397662639618
+ },
+ "smc_series_ZECETH_5M_N200.npz": {
+  "floor_L32": 0.01315789483487606,
+  "floor_L64": 0.018608838319778442
+ },
+ "smc_series_ZECUSDT_5M_N200.npz": {
+  "floor_L32": 0.16025641560554504,
+  "floor_L64": 0.20000000298023224
+ },
+ "smc_series_ZENUSDT_5M_N200.npz": {
+  "floor_L32": 0.1666666716337204,
+  "floor_L64": 0.20000000298023224
+ }
+}

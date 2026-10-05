@@ -1,0 +1,181 @@
+{
+ "ver": 1,
+ "when": "20261004_061538",
+ "winner": "C",
+ "final_assets": [
+  "BTCUSDT",
+  "ETHUSDT",
+  "DOGEUSDT",
+  "SOLUSDT",
+  "ADAUSDT",
+  "BNBUSDT",
+  "BCHUSDT",
+  "DOTUSDT",
+  "UNIUSDT",
+  "XRPUSDT",
+  "LTCUSDT",
+  "DASHUSDT",
+  "ZECUSDT",
+  "SPELLUSDT",
+  "ICPUSDT",
+  "NEARUSDT",
+  "ZENUSDT",
+  "AVAXUSDT",
+  "FETUSDT",
+  "RAYUSDT",
+  "CAKEUSDT",
+  "INJUSDT",
+  "RUNEUSDT",
+  "PHAUSDT",
+  "QNTUSDT",
+  "HBARUSDT",
+  "AAVEUSDT",
+  "VTHOUSDT",
+  "FILUSDT",
+  "LINKUSDT",
+  "XLMUSDT"
+ ],
+ "full": "F1",
+ "prod": {
+  "assets": [
+   "BTCUSDT",
+   "ETHUSDT",
+   "DOGEUSDT",
+   "SOLUSDT",
+   "ADAUSDT",
+   "BNBUSDT",
+   "BCHUSDT",
+   "DOTUSDT",
+   "UNIUSDT",
+   "XRPUSDT",
+   "LTCUSDT",
+   "DASHUSDT",
+   "ZECUSDT",
+   "SPELLUSDT",
+   "ICPUSDT",
+   "NEARUSDT",
+   "ZENUSDT",
+   "AVAXUSDT",
+   "FETUSDT",
+   "RAYUSDT",
+   "CAKEUSDT",
+   "INJUSDT",
+   "RUNEUSDT",
+   "PHAUSDT",
+   "QNTUSDT",
+   "HBARUSDT",
+   "AAVEUSDT",
+   "VTHOUSDT",
+   "FILUSDT",
+   "LINKUSDT",
+   "XLMUSDT"
+  ],
+  "full": "F1",
+  "pine": "F3",
+  "epochs": {
+   "F1": 25,
+   "F2": 34,
+   "F3": 8,
+   "RG_den": 27,
+   "F3_g": 15
+  },
+  "sched": "cos",
+  "data": "all"
+ },
+ "recipe_ok": {
+  "F1": true,
+  "F2": true,
+  "F3": true,
+  "RG_den": true,
+  "F3_g": true
+ },
+ "calib_ok": {
+  "F1": true,
+  "F2": true,
+  "F3": true,
+  "RG_den": true,
+  "F3_g": true
+ },
+ "pyr_ok": {
+  "PY_ms_h": false
+ },
+ "tok_ok": {},
+ "rg_ok": {
+  "RG_den": true
+ },
+ "rx_ok": {},
+ "rx_pine_ok": {
+  "F3_g": true
+ },
+ "recalc": [
+  "RG_den",
+  "F3_g"
+ ],
+ "prod_models": {
+  "site": "RG_den",
+  "pine": "F3_g"
+ },
+ "rules": {
+  "rule": [
+   1.0,
+   2.0
+  ],
+  "rule_model": [
+   1.0,
+   2.0
+  ],
+  "rule_fix": 1.0,
+  "rule_refit": [
+   2.0,
+   2.0
+  ],
+  "rule_recipe": 1.0,
+  "rule_pyr": 2.0,
+  "rule_tok": 2.0,
+  "rule_rg": 2.0,
+  "rule_rx": 2.0
+ },
+ "missing": [],
+ "runs": [
+  "pool_A_C3_ctxp_mc_L64_a",
+  "pool_A_C3_ctxp_mc_L64_b",
+  "pool_B_C3_ctxp_mc_L64_a",
+  "pool_B_C3_ctxp_mc_L64_b",
+  "pool_C_C3_ctxp_mc_L64_a",
+  "pool_C_C3_ctxp_mc_L64_a_cos",
+  "pool_C_C3_ctxp_mc_L64_a_refit",
+  "pool_C_C3_ctxp_mc_L64_b",
+  "pool_C_C3_ctxp_mc_L64_b_cos",
+  "pool_C_C3_ctxp_mc_L64_b_refit",
+  "pool_C_C3_ctxp_mc_ch64_L64_a",
+  "pool_C_C3_ctxp_mc_ch64_L64_a_refit",
+  "pool_C_C3_ctxp_mc_ch64_L64_b",
+  "pool_C_C3_ctxp_mc_ch64_L64_b_refit",
+  "pool_C_C3_stream_ctxp_mc_L64_a",
+  "pool_C_C3_stream_ctxp_mc_L64_a_refit",
+  "pool_C_C3_stream_ctxp_mc_L64_b",
+  "pool_C_C3_stream_ctxp_mc_L64_b_refit",
+  "pool_C_F3_g_L64_a",
+  "pool_C_F3_g_L64_a_refit",
+  "pool_C_F3_g_L64_b",
+  "pool_C_F3_g_L64_b_refit",
+  "pool_C_F3_gc_L64_a",
+  "pool_C_F3_gc_L64_b",
+  "pool_C_PY_ms_h_L64_a",
+  "pool_C_PY_ms_h_L64_b",
+  "pool_C_RG_den_L64_a",
+  "pool_C_RG_den_L64_a_refit",
+  "pool_C_RG_den_L64_b",
+  "pool_C_RG_den_L64_b_refit",
+  "pool_C_RX_clv_L64_a",
+  "pool_C_RX_clv_L64_b",
+  "pool_C_RX_log_L64_a",
+  "pool_C_RX_log_L64_b",
+  "pool_REF_C3_ctxp_mc_L64_a",
+  "pool_REF_C3_ctxp_mc_L64_b",
+  "pool_REF_C3_ctxp_mc_ch64_L64_a",
+  "pool_REF_C3_ctxp_mc_ch64_L64_b",
+  "pool_REF_C3_stream_ctxp_mc_L64_a",
+  "pool_REF_C3_stream_ctxp_mc_L64_b"
+ ]
+}
