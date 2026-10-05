@@ -9,7 +9,7 @@
 // the window; Platt calibration turns the score into M. M is a frequency ratio of the window's shape, not a forecast.
 // Calibration was checked out of sample up to M = 21; the line does not rise above that ("21+").
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
-// Passport: weights prod_F3_g_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 6f20309+dirty.
+// Passport: weights prod_F3_g_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code ef40163.
 indicator("Market Randomness Index", shorttitle = "MRI", overlay = false, precision = 2)
 
 // ---------------------------------------------------------------- inputs
