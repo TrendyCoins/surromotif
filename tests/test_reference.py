@@ -14,7 +14,7 @@ from mri import L  # noqa: E402
 from mri.batch import infer  # noqa: E402
 from mri.features import bar_features  # noqa: E402
 from mri.params import random_params  # noqa: E402
-from mri.pine_gen import flat_weights, fmt  # noqa: E402
+from mri.pine_gen import decode_dense, encode_dense, flat_values, flat_weights, fmt  # noqa: E402
 from mri.stream import run  # noqa: E402
 
 FLOOR = 0.2
@@ -85,3 +85,13 @@ def test_shapes_and_literals():
     assert all('.' in v and 'e' not in v.lower() for v in vals)
     x = np.float32(np.random.default_rng(0).normal(0, 1, 1000)) * np.float32(1e-3)
     assert all(np.float32(float(fmt(v))) == v for v in x)    # decimal literal round-trips float32
+
+
+def test_dense_weight_strings_are_exact():
+    p = random_params(seed=10)
+    v = flat_values(p)
+    special = np.array([0.0, -0.0, 1e-40, -3e-39, 1.0, -2.0, 3.4e38, -1.1754944e-38, 0.1], dtype=np.float32)
+    for x in (v, special):
+        s = encode_dense(x)
+        assert len(s) == 3 * len(x) and all(0x4E00 <= ord(c) < 0x4E00 + 2048 for c in s)
+        assert np.array_equal(np.array(decode_dense(s)), x.astype(np.float64))

@@ -1,5 +1,5 @@
 """Golden file (tests/golden/btc5m_fresh.csv.gz, written by the bar-by-bar stream) against the vectorized batch reference
-recomputed from the export JSON and the golden OHLC; export weights against the research npz (float32 round trip)."""
+recomputed from the export JSON and the golden OHLC; export weights against the research npz (exactly the float32 values)."""
 import json
 import os
 import sys
@@ -32,7 +32,7 @@ def test_export_weights_are_the_npz_float32(ex):
     p1 = from_dict(ex['model'])
     for a, b in zip(p0.conv + [p0.head0_w, p0.head0_b, p0.head3_w, p0.head3_b, p0.side_mu, p0.side_sd],
                     p1.conv + [p1.head0_w, p1.head0_b, p1.head3_w, p1.head3_b, p1.side_mu, p1.side_sd]):
-        assert np.array_equal(a.astype(np.float32), b.astype(np.float32))
+        assert np.array_equal(a, b)                     # float32 values, exactly
     assert p1.n_params == ex['model']['n_params'] == 16897
 
 

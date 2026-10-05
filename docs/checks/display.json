@@ -1,12 +1,12 @@
 {
  "platt": [
-  0.82160765,
-  -0.22872847
+  0.8216076493263245,
+  -0.22872847318649292
  ],
  "btc_fresh_prod_a": {
   "bars": 22818,
   "days": 79.2,
-  "median_abs_dlogM": 0.078287595711244,
+  "median_abs_dlogM": 0.07828759407778163,
   "color_flips_per_day": 12.179858006836707,
   "marked_color_flips_per_day": 4.9855377333683935,
   "mean_run_marked_bars": 19.934782608695652,
@@ -20,7 +20,7 @@
   "AAVEUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08204611751203689,
+   "median_abs_dlogM": 0.08204611744476331,
    "color_flips_per_day": 13.645713630149428,
    "marked_color_flips_per_day": 5.308501993326896,
    "mean_run_marked_bars": 18.198740818467996,
@@ -33,7 +33,7 @@
   "ADAUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08108517569627621,
+   "median_abs_dlogM": 0.08108517900382894,
    "color_flips_per_day": 13.389649996653887,
    "marked_color_flips_per_day": 4.810141588351705,
    "mean_run_marked_bars": 19.26036155202822,
@@ -46,7 +46,7 @@
   "AVAXUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08083037225876744,
+   "median_abs_dlogM": 0.08083037219249078,
    "color_flips_per_day": 12.984904253386743,
    "marked_color_flips_per_day": 4.71377355424048,
    "mean_run_marked_bars": 19.273827867048205,
@@ -59,7 +59,7 @@
   "BCHUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08446426324882211,
+   "median_abs_dlogM": 0.08446426317956579,
    "color_flips_per_day": 14.686488398550654,
    "marked_color_flips_per_day": 5.512251551162057,
    "mean_run_marked_bars": 17.289901626179482,
@@ -72,7 +72,7 @@
   "BNBUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08309224951744824,
+   "median_abs_dlogM": 0.08309224944931692,
    "color_flips_per_day": 13.890763774032257,
    "marked_color_flips_per_day": 5.330528972552319,
    "mean_run_marked_bars": 18.545202558635395,
@@ -85,7 +85,7 @@
   "BTCUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08173855117648854,
+   "median_abs_dlogM": 0.08173855110946704,
    "color_flips_per_day": 12.2194667253033,
    "marked_color_flips_per_day": 4.912016367269286,
    "mean_run_marked_bars": 20.366391184573004,
@@ -98,7 +98,7 @@
   "CAKEUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0838410502584249,
+   "median_abs_dlogM": 0.08384105018967958,
    "color_flips_per_day": 14.752569336226923,
    "marked_color_flips_per_day": 5.231407566037916,
    "mean_run_marked_bars": 17.84525036060169,
@@ -111,7 +111,7 @@
   "DASHUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08194609295342559,
+   "median_abs_dlogM": 0.08194609288623411,
    "color_flips_per_day": 13.172133576802837,
    "marked_color_flips_per_day": 4.603638658113367,
    "mean_run_marked_bars": 19.92731376975169,
@@ -124,7 +124,7 @@
   "DOGEUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07935255531619194,
+   "median_abs_dlogM": 0.07935255525112694,
    "color_flips_per_day": 10.812493427279419,
    "marked_color_flips_per_day": 3.851967992045813,
    "mean_run_marked_bars": 23.60582218725413,
@@ -137,7 +137,7 @@
   "DOTUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08191156795277893,
+   "median_abs_dlogM": 0.08191156788561571,
    "color_flips_per_day": 14.760829453436457,
    "marked_color_flips_per_day": 5.151559766345758,
    "mean_run_marked_bars": 17.83405842137974,
@@ -150,7 +150,7 @@
   "ETHUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07911151694288243,
+   "median_abs_dlogM": 0.07911151687801521,
    "color_flips_per_day": 8.766737731718276,
    "marked_color_flips_per_day": 3.193911987686307,
    "mean_run_marked_bars": 29.73376,
@@ -163,7 +163,7 @@
   "FETUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08006036680108163,
+   "median_abs_dlogM": 0.08006036673543626,
    "color_flips_per_day": 14.57635350242354,
    "marked_color_flips_per_day": 4.901002877656574,
    "mean_run_marked_bars": 17.940992493744787,
@@ -176,7 +176,7 @@
   "FILUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08257070163533833,
+   "median_abs_dlogM": 0.08257070156763469,
    "color_flips_per_day": 12.72058050268167,
    "marked_color_flips_per_day": 4.559584699662521,
    "mean_run_marked_bars": 20.170842824601365,
@@ -189,7 +189,7 @@
   "HBARUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0818001574896991,
+   "median_abs_dlogM": 0.08180015742262725,
    "color_flips_per_day": 14.917771680417594,
    "marked_color_flips_per_day": 5.578332488838325,
    "mean_run_marked_bars": 16.665236888282315,
@@ -202,7 +202,7 @@
   "ICPUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0815541240099133,
+   "median_abs_dlogM": 0.08155412394304307,
    "color_flips_per_day": 14.427671392651938,
    "marked_color_flips_per_day": 5.258941290069695,
    "mean_run_marked_bars": 17.803970223325063,
@@ -215,7 +215,7 @@
   "INJUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0832493260274827,
+   "median_abs_dlogM": 0.08324932595922263,
    "color_flips_per_day": 14.697501888163366,
    "marked_color_flips_per_day": 5.435157123873077,
    "mean_run_marked_bars": 17.067947702060223,
@@ -228,7 +228,7 @@
   "LINKUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07889276066218914,
+   "median_abs_dlogM": 0.07889276059750117,
    "color_flips_per_day": 12.66826642702129,
    "marked_color_flips_per_day": 4.4136559622940945,
    "mean_run_marked_bars": 19.927467030468396,
@@ -241,7 +241,7 @@
   "LTCUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08163502514618037,
+   "median_abs_dlogM": 0.08163502507924392,
    "color_flips_per_day": 14.193634738381819,
    "marked_color_flips_per_day": 5.140546276733047,
    "mean_run_marked_bars": 17.798430400660884,
@@ -254,7 +254,7 @@
   "NEARUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08204194268039836,
+   "median_abs_dlogM": 0.08204194261312825,
    "color_flips_per_day": 14.865457604757216,
    "marked_color_flips_per_day": 5.4709509651143895,
    "mean_run_marked_bars": 16.92394533571004,
@@ -267,7 +267,7 @@
   "PHAUSDT_a": {
    "bars": 86193,
    "days": 299.3,
-   "median_abs_dlogM": 0.08144545595823229,
+   "median_abs_dlogM": 0.08144545589145125,
    "color_flips_per_day": 16.279001775086144,
    "marked_color_flips_per_day": 5.4664299885141485,
    "mean_run_marked_bars": 15.151030249890399,
@@ -280,7 +280,7 @@
   "QNTUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08289611813079563,
+   "median_abs_dlogM": 0.08289611806282515,
    "color_flips_per_day": 15.407871968183253,
    "marked_color_flips_per_day": 5.693974129771795,
    "mean_run_marked_bars": 16.30629936428434,
@@ -293,7 +293,7 @@
   "RAYUSDT_a": {
    "bars": 103088,
    "days": 357.9,
-   "median_abs_dlogM": 0.08162104374520929,
+   "median_abs_dlogM": 0.08162104367828427,
    "color_flips_per_day": 16.239950333695482,
    "marked_color_flips_per_day": 5.724352009933261,
    "mean_run_marked_bars": 15.431796977047957,
@@ -306,7 +306,7 @@
   "RUNEUSDT_a": {
    "bars": 87098,
    "days": 302.4,
-   "median_abs_dlogM": 0.08073546523571307,
+   "median_abs_dlogM": 0.08073546516951424,
    "color_flips_per_day": 15.078187788468163,
    "marked_color_flips_per_day": 5.409630531125859,
    "mean_run_marked_bars": 16.43401895077421,
@@ -319,7 +319,7 @@
   "SOLUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07937415180595819,
+   "median_abs_dlogM": 0.07937415174087548,
    "color_flips_per_day": 12.770141205938872,
    "marked_color_flips_per_day": 4.620158892532434,
    "mean_run_marked_bars": 20.412351985140468,
@@ -332,7 +332,7 @@
   "SPELLUSDT_a": {
    "bars": 98881,
    "days": 343.3,
-   "median_abs_dlogM": 0.08197194997518653,
+   "median_abs_dlogM": 0.08197194990797385,
    "color_flips_per_day": 17.568754361302982,
    "marked_color_flips_per_day": 6.011589688615609,
    "mean_run_marked_bars": 14.544875398163763,
@@ -345,7 +345,7 @@
   "UNIUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08112096992378534,
+   "median_abs_dlogM": 0.08112096985727035,
    "color_flips_per_day": 13.98713180814348,
    "marked_color_flips_per_day": 5.214887331618849,
    "mean_run_marked_bars": 18.485989304812833,
@@ -358,7 +358,7 @@
   "VTHOUSDT_a": {
    "bars": 84956,
    "days": 295.0,
-   "median_abs_dlogM": 0.08294070680184373,
+   "median_abs_dlogM": 0.08294070673383658,
    "color_flips_per_day": 17.69235839728801,
    "marked_color_flips_per_day": 6.179951975140073,
    "mean_run_marked_bars": 14.132281808622503,
@@ -371,7 +371,7 @@
   "XLMUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08323385099173197,
+   "median_abs_dlogM": 0.08323385092348445,
    "color_flips_per_day": 16.377059054101856,
    "marked_color_flips_per_day": 6.112486735054828,
    "mean_run_marked_bars": 15.812687687687689,
@@ -384,7 +384,7 @@
   "XRPUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07983967614091937,
+   "median_abs_dlogM": 0.07983967607545495,
    "color_flips_per_day": 13.364869645025287,
    "marked_color_flips_per_day": 5.049684987428178,
    "mean_run_marked_bars": 19.17242137673191,
@@ -397,7 +397,7 @@
   "ZECUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08118654293919797,
+   "median_abs_dlogM": 0.08118654287262927,
    "color_flips_per_day": 11.856021568083825,
    "marked_color_flips_per_day": 4.108031625541353,
    "mean_run_marked_bars": 22.084340320591863,
@@ -410,7 +410,7 @@
   "ZENUSDT_a": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08235135769505941,
+   "median_abs_dlogM": 0.08235135762753565,
    "color_flips_per_day": 13.191407183625083,
    "marked_color_flips_per_day": 4.826661822770772,
    "mean_run_marked_bars": 19.069212410501194,
@@ -423,7 +423,7 @@
   "AAVEUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08160478516334452,
+   "median_abs_dlogM": 0.08160478509643276,
    "color_flips_per_day": 14.521286054359985,
    "marked_color_flips_per_day": 5.600359468063748,
    "mean_run_marked_bars": 17.490623726049733,
@@ -436,7 +436,7 @@
   "ADAUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08107867679799313,
+   "median_abs_dlogM": 0.08107867673151281,
    "color_flips_per_day": 13.494278147974645,
    "marked_color_flips_per_day": 4.969837187736021,
    "mean_run_marked_bars": 19.20525270359744,
@@ -449,7 +449,7 @@
   "AVAXUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08114468847221368,
+   "median_abs_dlogM": 0.08114469177971761,
    "color_flips_per_day": 13.921050870467212,
    "marked_color_flips_per_day": 5.082725456266312,
    "mean_run_marked_bars": 17.96793002915452,
@@ -462,7 +462,7 @@
   "BCHUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08404955922509653,
+   "median_abs_dlogM": 0.08404955915618029,
    "color_flips_per_day": 15.363818009732407,
    "marked_color_flips_per_day": 5.787588791479842,
    "mean_run_marked_bars": 16.59832554517134,
@@ -475,7 +475,7 @@
   "BNBUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08260769970340731,
+   "median_abs_dlogM": 0.08260769963567327,
    "color_flips_per_day": 14.298262889702578,
    "marked_color_flips_per_day": 5.592099350854214,
    "mean_run_marked_bars": 18.392902677433064,
@@ -488,7 +488,7 @@
   "BTCUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08083975032631902,
+   "median_abs_dlogM": 0.08083975026003465,
    "color_flips_per_day": 12.731593992294382,
    "marked_color_flips_per_day": 5.049684987428178,
    "mean_run_marked_bars": 19.822362488728583,
@@ -501,7 +501,7 @@
   "CAKEUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08289692004127158,
+   "median_abs_dlogM": 0.08289691997330051,
    "color_flips_per_day": 14.113786938689662,
    "marked_color_flips_per_day": 5.4516773582921445,
    "mean_run_marked_bars": 17.42191283292978,
@@ -514,7 +514,7 @@
   "DASHUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08267119142445478,
+   "median_abs_dlogM": 0.08267119135666867,
    "color_flips_per_day": 13.279515100526773,
    "marked_color_flips_per_day": 4.865209036415262,
    "mean_run_marked_bars": 18.98757628596338,
@@ -527,7 +527,7 @@
   "DOGEUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07981597387097172,
+   "median_abs_dlogM": 0.07981597380552685,
    "color_flips_per_day": 11.302593715045077,
    "marked_color_flips_per_day": 4.083251273912753,
    "mean_run_marked_bars": 22.301905717151456,
@@ -540,7 +540,7 @@
   "DOTUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0825081403753013,
+   "median_abs_dlogM": 0.08250814030764886,
    "color_flips_per_day": 14.694748515760189,
    "marked_color_flips_per_day": 5.448923985888967,
    "mean_run_marked_bars": 17.201246481704864,
@@ -553,7 +553,7 @@
   "ETHUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07929134077603811,
+   "median_abs_dlogM": 0.0792913407110234,
    "color_flips_per_day": 9.405520129255537,
    "marked_color_flips_per_day": 3.557357144905783,
    "mean_run_marked_bars": 27.036905816356658,
@@ -566,7 +566,7 @@
   "FETUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08008334061800132,
+   "median_abs_dlogM": 0.08008334055233712,
    "color_flips_per_day": 14.21841509001042,
    "marked_color_flips_per_day": 5.159819883555292,
    "mean_run_marked_bars": 17.499591836734695,
@@ -579,7 +579,7 @@
   "FILUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08208815353676038,
+   "median_abs_dlogM": 0.08208815346945242,
    "color_flips_per_day": 13.932064360079924,
    "marked_color_flips_per_day": 4.86796240881844,
    "mean_run_marked_bars": 19.324462186737637,
@@ -592,7 +592,7 @@
   "HBARUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08173853893358035,
+   "median_abs_dlogM": 0.08173853886655902,
    "color_flips_per_day": 15.286723582443427,
    "marked_color_flips_per_day": 5.732521343416285,
    "mean_run_marked_bars": 16.394447657605554,
@@ -605,7 +605,7 @@
   "ICPUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0814927135832309,
+   "median_abs_dlogM": 0.08149271351641119,
    "color_flips_per_day": 13.981625063337125,
    "marked_color_flips_per_day": 5.435157123873077,
    "mean_run_marked_bars": 17.718454582819565,
@@ -618,7 +618,7 @@
   "INJUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0824374743101478,
+   "median_abs_dlogM": 0.08243747424255332,
    "color_flips_per_day": 15.033413321351064,
    "marked_color_flips_per_day": 5.616879702482815,
    "mean_run_marked_bars": 16.539771627636927,
@@ -631,7 +631,7 @@
   "LINKUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.079453314449285,
+   "median_abs_dlogM": 0.07945331438413739,
    "color_flips_per_day": 13.631946768133538,
    "marked_color_flips_per_day": 4.6834864578055235,
    "mean_run_marked_bars": 18.669689119170986,
@@ -644,7 +644,7 @@
   "LTCUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08183306642648586,
+   "median_abs_dlogM": 0.08183306635938692,
    "color_flips_per_day": 14.700255260566545,
    "marked_color_flips_per_day": 5.465444220308034,
    "mean_run_marked_bars": 17.556285949055052,
@@ -657,7 +657,7 @@
   "NEARUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08234246934382922,
+   "median_abs_dlogM": 0.08234246927631261,
    "color_flips_per_day": 15.702482815323282,
    "marked_color_flips_per_day": 5.7022342469813285,
    "mean_run_marked_bars": 16.35020282016612,
@@ -670,7 +670,7 @@
   "PHAUSDT_b": {
    "bars": 86193,
    "days": 299.3,
-   "median_abs_dlogM": 0.07759809762375358,
+   "median_abs_dlogM": 0.07759809756012714,
    "color_flips_per_day": 16.248929727472067,
    "marked_color_flips_per_day": 5.336117782186489,
    "mean_run_marked_bars": 15.493234100135318,
@@ -683,7 +683,7 @@
   "QNTUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0816371309263616,
+   "median_abs_dlogM": 0.08163713085942348,
    "color_flips_per_day": 15.919999235174332,
    "marked_color_flips_per_day": 5.897723687606956,
    "mean_run_marked_bars": 15.482394366197184,
@@ -696,7 +696,7 @@
   "RAYUSDT_b": {
    "bars": 103088,
    "days": 357.9,
-   "median_abs_dlogM": 0.07935696276308302,
+   "median_abs_dlogM": 0.0793569626980144,
    "color_flips_per_day": 16.508148378084744,
    "marked_color_flips_per_day": 5.830513735837343,
    "mean_run_marked_bars": 15.41832894241626,
@@ -709,7 +709,7 @@
   "RUNEUSDT_b": {
    "bars": 87098,
    "days": 302.4,
-   "median_abs_dlogM": 0.07813306373306506,
+   "median_abs_dlogM": 0.07813306366900008,
    "color_flips_per_day": 14.73429929504696,
    "marked_color_flips_per_day": 5.151714161059956,
    "mean_run_marked_bars": 16.978947368421053,
@@ -722,7 +722,7 @@
   "SOLUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.07934011652163275,
+   "median_abs_dlogM": 0.0793401164565779,
    "color_flips_per_day": 13.144599852771059,
    "marked_color_flips_per_day": 4.7027600646277685,
    "mean_run_marked_bars": 19.296049711495783,
@@ -735,7 +735,7 @@
   "SPELLUSDT_b": {
    "bars": 98881,
    "days": 343.3,
-   "median_abs_dlogM": 0.07793762615659754,
+   "median_abs_dlogM": 0.07793762271865434,
    "color_flips_per_day": 17.359047744258252,
    "marked_color_flips_per_day": 5.97663858577482,
    "mean_run_marked_bars": 13.934128440366973,
@@ -748,7 +748,7 @@
   "UNIUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08185027383372309,
+   "median_abs_dlogM": 0.08185027376661003,
    "color_flips_per_day": 14.570846757617185,
    "marked_color_flips_per_day": 5.176340117974359,
    "mean_run_marked_bars": 17.98193656794791,
@@ -761,7 +761,7 @@
   "VTHOUSDT_b": {
    "bars": 84956,
    "days": 295.0,
-   "median_abs_dlogM": 0.0794391861334175,
+   "median_abs_dlogM": 0.07943918606828149,
    "color_flips_per_day": 16.777061066905222,
    "marked_color_flips_per_day": 5.6578934978106314,
    "mean_run_marked_bars": 14.66798418972332,
@@ -774,7 +774,7 @@
   "XLMUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08359859170778383,
+   "median_abs_dlogM": 0.08359859163923744,
    "color_flips_per_day": 16.008107152076022,
    "marked_color_flips_per_day": 6.024378818153137,
    "mean_run_marked_bars": 15.793847308197336,
@@ -787,7 +787,7 @@
   "XRPUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.0807396788819569,
+   "median_abs_dlogM": 0.08073967544171623,
    "color_flips_per_day": 13.703534450616162,
    "marked_color_flips_per_day": 5.049684987428178,
    "mean_run_marked_bars": 18.71135135135135,
@@ -800,7 +800,7 @@
   "ZECUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08073602840948246,
+   "median_abs_dlogM": 0.0807360283432832,
    "color_flips_per_day": 11.966156464210938,
    "marked_color_flips_per_day": 4.366848631440071,
    "mean_run_marked_bars": 20.95188433278028,
@@ -813,7 +813,7 @@
   "ZENUSDT_b": {
    "bars": 104599,
    "days": 363.2,
-   "median_abs_dlogM": 0.08183623733966575,
+   "median_abs_dlogM": 0.08183623727256428,
    "color_flips_per_day": 14.314783124121645,
    "marked_color_flips_per_day": 5.113012552701268,
    "mean_run_marked_bars": 18.0272536687631,
@@ -826,9 +826,9 @@
  },
  "val_refit_summary": {
   "median_abs_dlogM": {
-   "median": 0.08162803444569483,
-   "min": 0.07759809762375358,
-   "max": 0.08446426324882211
+   "median": 0.08162803437876409,
+   "min": 0.07759809756012714,
+   "max": 0.08446426317956579
   },
   "color_flips_per_day": {
    "median": 14.306523006912112,

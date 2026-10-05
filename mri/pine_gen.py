@@ -1,42 +1,71 @@
 """Pine Script v6 generator: the streaming F3_g computation with weights inside the script.
 
-Pine limits a local block (the body of an `if`, a function) by its compiled size — 'The if statement is too long'
-(the threshold is not documented). So nothing big lives in one block:
-    - weights: many small functions, each returns one chunk; `loadWeights()` concatenates them; `var` initializers
-      call it once (no `if barstate.isfirst`)
-    - weight storage ('store'): 'literals' — `array.from(...)` of `chunk` decimal literals per function;
-      'strings' — a function per string constant of <= `str_max` chars, parsed with str.split + str.tonumber
-    - per-bar heavy part: convStep() and computeLogit() functions; the `if` bodies only call them
-Weights are written as the shortest decimal that round-trips the float32 value; the export JSON (mri/export.py)
-uses the same decimals, so Pine and the Python reference parse the same numbers.
+Limits met so far (TradingView compiler):
+    - a local block (if / function body) has a size limit: 'The if statement is too long', 'The body of the ... function
+      is too long'; constant results of functions are folded into the call site, so a function returning a long string
+      constant counts in the caller's body;
+    - 100 256 compiled tokens per script; every literal is embedded into the IL: 16 897 decimal literals cost 225 018
+      tokens (~13 per number, about their text length).
+So the weights are packed densely: each float32 — all 32 bits, exact — as 3 characters of a 2048-character alphabet
+(CJK ideographs U+4E00..U+55FF, 11 bits per character): 50 691 characters in strings of <= `str_max` characters.
+Each string is decoded by a `var` initializer at the global scope (runs once, no local block holds the constants);
+the alphabet becomes a map<string, int> once. Decoding is exact (powers of two), so Pine holds the float32 weights
+bit for bit; the export JSON writes the same values as exact decimals.
 
 Flat weight order (16897 for F3_g): conv layer 1..4, tap 0..2, matrix W[:, :, tap] row-major (out, in);
 head0 W row-major (64, 112); head0 b (64); head3 W (64); head3 b (1).
 
 The compute: per confirmed bar, inputs of two streams (+ / -) go into interleaved ring matrices (column 2s = stream +,
 2s + 1 = stream -, s = ring slot); each conv layer = 3 matrix.mult of (32 x c_in) by (c_in x 2) + ReLU loop; layer 4
-outputs go to two matrices (32 x 33) for pooling. tests/pine_sim.py transliterates this template line by line;
-tests/test_reference.py checks it against mri/stream.py.
+outputs go to two matrices (32 x 33) for pooling; the heavy part runs in functions (convStep, computeLogit).
+tests/pine_sim.py transliterates this template line by line; tests/test_reference.py checks it against mri/stream.py.
 """
 import numpy as np
 
 
+ALPHA0, ALPHA_N = 0x4E00, 2048               # alphabet of the dense weight strings: 2048 CJK ideographs
+
+
 def fmt(x):
-    """Shortest positional decimal that round-trips the float32 value (no exponent: safe as a Pine literal)."""
-    s = np.format_float_positional(np.float32(x), unique=True, trim='-')
-    return s if '.' in s else s + '.0'          # always a float literal (array.from infers the type)
+    """Exact positional decimal of the float32 value (as float64): no exponent, safe as a Pine literal, parses back to
+       exactly the float32 value."""
+    s = np.format_float_positional(np.float64(np.float32(x)), unique=True, trim='-')
+    return s if '.' in s else s + '.0'          # always a float literal
 
 
-def flat_weights(p):
+def flat_values(p):
     out = []
     for w in p.conv:
         for k in range(3):
             out.extend(w[:, :, k].ravel())
-    out.extend(p.head0_w.ravel())
-    out.extend(p.head0_b.ravel())
-    out.extend(p.head3_w.ravel())
-    out.extend(p.head3_b.ravel())
-    return [fmt(v) for v in out]
+    for a in (p.head0_w, p.head0_b, p.head3_w, p.head3_b):
+        out.extend(np.ravel(a))
+    return np.array(out, dtype=np.float32)
+
+
+def encode_dense(vals):
+    """float32 -> 3 characters each: bits = d0 * 2^22 + d1 * 2^11 + d2, character = chr(ALPHA0 + d)."""
+    bits = np.asarray(vals, dtype=np.float32).view(np.uint32).astype(np.int64)
+    d = np.stack([bits >> 22, (bits >> 11) & 2047, bits & 2047], axis=1)
+    return ''.join(chr(ALPHA0 + int(x)) for x in d.ravel())
+
+
+def decode_dense(s):
+    """Python mirror of the Pine decoder (arithmetic on doubles, powers of two): exact float32 values."""
+    out = []
+    for k in range(len(s) // 3):
+        b = (ord(s[3 * k]) - ALPHA0) * 4194304.0 + (ord(s[3 * k + 1]) - ALPHA0) * 2048.0 + (ord(s[3 * k + 2]) - ALPHA0)
+        sg = -1.0 if b >= 2147483648.0 else 1.0
+        u = b - 2147483648.0 if b >= 2147483648.0 else b
+        e = float(np.floor(u / 8388608.0))
+        m = u - e * 8388608.0
+        v = m * 2.0 ** -149 if e == 0 else (1.0 + m / 8388608.0) * 2.0 ** (e - 127)
+        out.append(sg * v)
+    return out
+
+
+def flat_weights(p):
+    return [fmt(v) for v in flat_values(p)]
 
 
 def matrix_offsets():
@@ -53,41 +82,32 @@ def matrix_offsets():
     return out, off
 
 
-def _wrap_args(vals, per_line=12, indent=6):
-    # Pine: a wrapped line must be indented by a number of spaces that is NOT a multiple of 4
-    lines = []
-    for i in range(0, len(vals), per_line):
-        lines.append(' ' * indent + ', '.join(vals[i:i + per_line]))
-    return ',\n'.join(lines)
-
-
-def weights_block(vals, store, chunk=250, str_max=4000):
-    """Pine code that defines `loadWeights()` -> array<float> of all weights in the flat order."""
-    fns, calls = [], []
-    if store == 'literals':
-        for j, i in enumerate(range(0, len(vals), chunk)):
-            fns.append(f"wc{j}() =>\n    array.from(\n{_wrap_args(vals[i:i + chunk])})")
-            calls.append(f"    array.concat(w, wc{j}())")
-    elif store == 'strings':
-        strs, cur, n = [], [], 0
-        for v in vals:
-            if cur and n + len(v) + 1 > str_max:
-                strs.append(' '.join(cur))
-                cur, n = [], 0
-            cur.append(v)
-            n += len(v) + 1
-        strs.append(' '.join(cur))
-        fns.append("decodeInto(array<float> dst, string s) =>\n"
-                   "    for tok in str.split(s, \" \")\n"
-                   "        array.push(dst, str.tonumber(tok))\n"
-                   "    true")
-        for j, s in enumerate(strs):
-            fns.append(f'ws{j}() =>\n    "{s}"')
-            calls.append(f"    decodeInto(w, ws{j}())")
-    else:
-        raise ValueError(store)
-    load = "loadWeights() =>\n    array<float> w = array.new<float>(0)\n" + '\n'.join(calls) + "\n    w"
-    return '\n\n'.join(fns + [load]), len(fns)
+def weights_block(vals32, str_max=3999):
+    """Pine code: alphabet map, decoder, one `var` initializer per dense string (global scope)."""
+    enc = encode_dense(vals32)
+    per = (str_max // 3) * 3
+    strs = [enc[i:i + per] for i in range(0, len(enc), per)]
+    alpha = ''.join(chr(ALPHA0 + i) for i in range(ALPHA_N))
+    head = (f'buildAlpha() =>\n    map<string, int> m = map.new<string, int>()\n'
+            f'    array<string> cs = str.split("{alpha}", "")\n'
+            f'    for [i, c] in cs\n        map.put(m, c, i)\n    m\n\n'
+            'decodeInto(array<float> dst, map<string, int> A, string s) =>\n'
+            '    array<string> cs = str.split(s, "")\n'
+            '    int n = math.floor(array.size(cs) / 3.0)\n'
+            '    for k = 0 to n - 1\n'
+            '        float b = map.get(A, array.get(cs, 3 * k)) * 4194304.0 + map.get(A, array.get(cs, 3 * k + 1)) * 2048.0 + '
+            'map.get(A, array.get(cs, 3 * k + 2))\n'
+            '        float sg = b >= 2147483648.0 ? -1.0 : 1.0\n'
+            '        float u = b >= 2147483648.0 ? b - 2147483648.0 : b\n'
+            '        float e = math.floor(u / 8388608.0)\n'
+            '        float m = u - e * 8388608.0\n'
+            '        float v = e == 0 ? m * math.pow(2.0, -149) : (1.0 + m / 8388608.0) * math.pow(2.0, e - 127)\n'
+            '        array.push(dst, sg * v)\n'
+            '    true\n\n'
+            'var map<string, int> ALPHA = buildAlpha()\n'
+            'var array<float> WT = array.new<float>(0)\n')
+    body = '\n'.join(f'var bool WOK{j:02d} = decodeInto(WT, ALPHA, "{x}")' for j, x in enumerate(strs))
+    return head + body, len(strs), len(enc)
 
 
 def float_list(xs):
@@ -119,7 +139,7 @@ const float FLOOR  = {floor}
 var array<float> SIDE_MU = array.from({side_mu})
 var array<float> SIDE_SD = array.from({side_sd})
 
-// ---------------------------------------------------------------- weights ({n_w} numbers, {n_fn} functions)
+// ---------------------------------------------------------------- weights: {n_w} float32, {n_chars} characters in {n_str} strings
 {weights}
 
 toMat(array<float> w, int off, int nr, int nc) =>
@@ -129,7 +149,6 @@ toMat(array<float> w, int off, int nr, int nc) =>
             matrix.set(m, i, j, array.get(w, off + i * nc + j))
     m
 
-var array<float> WT = loadWeights()
 {matrices}
 var array<float>  H3  = array.copy(array.slice(WT, {off_h3}, {off_h3_end}))
 var float         HB3 = array.get(WT, {off_hb3})
@@ -283,14 +302,14 @@ plot(logit, "logit", color = color.new(color.orange, 0), linewidth = 1)
 '''
 
 
-def make_script(p, store='literals', floor=0.2, burn=2981, chunk=250, str_max=4000, title='', note='',
-                name='MRI limits prototype', short='MRI-proto'):
-    vals = flat_weights(p)
+def make_script(p, floor=0.2, burn=2981, str_max=3999, title='', note='', name='MRI limits prototype',
+                short='MRI-proto'):
+    vals = flat_values(p)
     assert len(vals) == p.n_params
     mats, off = matrix_offsets()
     mdecl = '\n'.join(f"var matrix<float> {nm:<4} = toMat(WT, {o}, {r}, {c})" for nm, r, c, o in mats)
-    weights, n_fn = weights_block(vals, store, chunk, str_max)
+    weights, n_str, n_chars = weights_block(vals, str_max)
     return TEMPLATE.format(title=title, note=note, name=name, short=short, burn=burn, s_sd=fmt(p.s_sd),
                            lvl_sd=fmt(p.lvl_sd), floor=fmt(floor), side_mu=float_list(p.side_mu),
-                           side_sd=float_list(p.side_sd), n_w=len(vals), n_fn=n_fn, weights=weights,
+                           side_sd=float_list(p.side_sd), n_w=len(vals), n_str=n_str, n_chars=n_chars, weights=weights,
                            matrices=mdecl, off_h3=off, off_h3_end=off + 64, off_hb3=off + 64)
