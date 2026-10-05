@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 
 from . import BARS_DAY, CTX_BLOCK, CTX_NBLK, GAP_MS, L, N_NORM, SPAN_CTX, SPAN_SIDE, TIE_EPS
-from .calibration import THR
 from .features import read_bars
 from .params import SIDE_NAMES, from_dict, load_npz
 from .pine_gen import fmt
@@ -58,6 +57,8 @@ def build_export(seed=SEED):
         fl_dir = json.load(fh)
     with open(os.path.join(ROOT, 'docs/checks/calibration.json'), encoding='utf-8') as fh:
         cal = json.load(fh)
+    with open(os.path.join(ROOT, 'docs/checks/calib_curve.json'), encoding='utf-8') as fh:
+        curve = json.load(fh)
     # rule R6: the folder the prod model trained on — fresh for BTC / ETH, research for the rest
     floors = {a: _num(fl_dir['SMC/data_fresh/' if a in FRESH else 'SMC/data/'][a]['floor_L64']) for a in POOL_ALL}
     unknown_floor = _num(np.median(list(floors.values())))
@@ -113,7 +114,14 @@ def build_export(seed=SEED):
                         'fit_on': cal['platt_final']['fit_on'], 'rule': 'docs/rules.md R4',
                         'check': {'K1': cal['K1']['ok'], 'K2': cal['K2']['ok'], 'K3': cal['K3']['ok']},
                         'unknown_symbol': 'same Platt (global), note in the corner'},
-        'thresholds': {'mark_M': THR, 'orange': f'lift >= {THR}', 'blue': f'lift <= {1 / THR:g}'},
+        'display': {'line': 'M = exp(|platt_a * logit + platt_b|); more frequent than random if platt_a * logit + platt_b > 0, '
+                            'less frequent if < 0; floor 1.0',
+                    'threshold': 'visual only: input >= 1, default 3 (bright above, pale below, dashed line, optional marks)',
+                    'ceiling': {'more': curve['ceiling_pool']['orange'], 'less': curve['ceiling_pool']['blue']},
+                    'ceiling_rule': 'docs/rules.md R9: the line does not rise above the lower edge of the lowest bin of its '
+                                    'color that failed the calibration curve check; drawn as "N+"',
+                    'unknown_symbol': 'not Binance spot from the table (prefix BINANCE, no .P): floor unknown_symbol + note',
+                    'timeframe': '5M only checked; other timeframes: drawn with a note'},
         'warmup': {'burn_bars_from_first_valid_r': BURN, 'ema_start': 'normalized (adjust=True)',
                    'context_bars': L + 1 + 7 * BARS_DAY, 'rule': 'docs/rules.md R7, docs/checks/warmup.json'},
     }
