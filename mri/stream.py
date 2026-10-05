@@ -106,7 +106,8 @@ class StreamingMRI:
             path, lvl = np.zeros(3), 0.0
         self._conv_step(0, np.append(path, lvl))
         self._conv_step(1, np.append(-path, lvl))
-        out = {'bar': self.bar, 'time': t, 'norm': norm, 'ok': ok, 'r': r, 'logit': math.nan}
+        out = {'bar': self.bar, 'time': t, 'norm': norm, 'ok': ok, 'r': r, 'step_hl2': s1, 'step_hlc3': s2, 'g': g,
+               'first_r': self.first_r, 'logit': math.nan}
         if not all(self.win_ok):
             return out
         rw = np.array(self.win_r)
