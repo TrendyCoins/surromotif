@@ -1,0 +1,114 @@
+"""Rule R2 (docs/rules.md): reference (numpy, mri.batch) against research torch code on the same bars.
+
+Research side: data files written from the bars by mri.research_bridge, then research SeriesData ('multi_g'),
+to_shapes, side_feats and CNNBase (weights from the npz). One continuous segment: TRAINING from the first bar of the
+file, a short VALIDATION tail (its windows are not compared).
+
+    python scripts/check_torch.py [--bars artifacts/bars/btc_fresh_tail.csv.gz] [--npz ...] [--floor ...]
+"""
+import argparse
+import json
+import os
+import sys
+import tempfile
+import time
+
+import numpy as np
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+from mri import L, TIE_EPS  # noqa: E402
+from mri.batch import infer  # noqa: E402
+from mri.features import bar_features, read_bars  # noqa: E402
+from mri.params import load_npz  # noqa: E402
+from mri.research_bridge import write_research_files  # noqa: E402
+
+
+def research_module():
+    os.environ.setdefault('SMC_MODE', 'none')
+    os.environ.setdefault('SMC_PROJECT_PATH', tempfile.mkdtemp() + '/')
+    sys.path.insert(0, os.path.join(ROOT, 'research'))
+    import sumo_class_train as T
+    return T
+
+
+def research_logits(T, data_dir, npz_path, asset='BTCUSDT', bs=32768):
+    import torch
+    T.DATA_DIR, T.DATA_OVERLAY = data_dir, None
+    data = T.SeriesData([asset], '5M', 200, '2100-01-01', 'multi_g')
+    w = data.windows(L)
+    tr = w['st'][(w['sid'] == 0) & (data.part[w['st']] == 0)]
+    cfg = T.make_cfg('F3_g', {'L': L}, 'a')
+    model = T.CNNBase(cfg['L'], cfg['cnn_ch'], cfg['cnn_k'], cfg['cnn_dil'], cfg['head_hidden'], cfg['dropout'], 1.0,
+                      cfg['cnn_bn'], cfg['cnn_res'], cfg['cnn_cdrop'], cfg['cnn_pool'], cfg['cnn_in'], cfg['cnn_sdrop'],
+                      cfg['cnn_valid'], cfg['cnn_bias'], cfg['cnn_ma'], T.SIDE_COLS[cfg['side']], 4, None, 'rw', None,
+                      T.N_LEVEL[cfg['price']], False)
+    with np.load(npz_path) as d:
+        sd = {k[3:]: torch.from_numpy(d[k]) for k in d.files if k.startswith('sd_')}
+    model.load_state_dict(sd)
+    model.eval()
+    out = {'st': tr, 'logit': [], 'flip_shape': [], 'flip_side': []}
+    fl_all = w['floor_t']
+    with torch.no_grad():
+        for i in range(0, len(tr), bs):
+            st = torch.from_numpy(tr[i:i + bs])
+            W = data.gw(st, L)
+            fl = fl_all[torch.zeros(len(st), dtype=torch.long)]
+            X = T.to_shapes(W, fl)
+            S = T.side_feats(data, st, L, W, fl)
+            out['logit'].append(model(X, S)[0].double().numpy())
+            Xc = torch.cumsum(W[:, :3], dim=2)
+            Xc = Xc - Xc.mean(dim=2, keepdim=True)
+            out['flip_shape'].append((Xc[:, 0, -1] < 0).numpy())
+            cs = torch.cumsum(W[:, 0], dim=1)
+            out['flip_side'].append((cs[:, -1] - cs.mean(dim=1) < 0).numpy())
+    return {k: (np.concatenate(v) if isinstance(v, list) else v) for k, v in out.items()}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--bars', default=os.path.join(ROOT, 'artifacts/bars/btc_fresh_tail.csv.gz'))
+    ap.add_argument('--npz', nargs='+', default=[os.path.join(ROOT, f'artifacts/weights/prod_F3_g_L64_{s}_slim.npz')
+                                                 for s in 'abc'])
+    ap.add_argument('--floor', type=float, default=None, help='floor_L64; default: BTCUSDT from artifacts/pack/floors.json')
+    ap.add_argument('--out', default=None, help='json with the summary')
+    a = ap.parse_args()
+    floor = a.floor
+    if floor is None:
+        with open(os.path.join(ROOT, 'artifacts/pack/floors.json')) as fh:
+            floor = json.load(fh)['smc_series_BTCUSDT_5M_N200.npz']['floor_L64']
+    bars = read_bars(a.bars)
+    n = len(bars)
+    tmp = tempfile.mkdtemp() + '/'
+    t_start = str(np.datetime64(int(bars['time'].iloc[0]), 'ms'))
+    t_valid = str(np.datetime64(int(bars['time'].iloc[n - 300]), 'ms'))
+    rows = write_research_files(bars, tmp, 'BTCUSDT', t_start, t_valid, floor)
+    T = research_module()
+    f = bar_features(bars)
+    seg = rows['tr'][0]                           # research segment start (CSV row of the first TRAINING bar)
+    summary = {'bars': os.path.basename(a.bars), 'n_bars': n, 'floor': floor, 'eps': TIE_EPS, 'models': {}}
+    for path in a.npz:
+        t0 = time.time()
+        res = research_logits(T, tmp, path)
+        Tbar = res['st'] + seg + (L - 1)           # CSV row of the window's last bar
+        p, _ = load_npz(path)
+        ref = infer(f, p, floor, seg_start=seg, T=Tbar)
+        d = np.abs(ref['logit'] - res['logit'])
+        z = ref['x_end'] / ref['D']
+        tie = ((np.abs(z) < 1e-3) | (res['flip_shape'] != (ref['sgn'] < 0)) | (res['flip_side'] != res['flip_shape']))
+        row = {'windows': int(len(d)), 'ties': int(tie.sum()), 'tie_share': float(tie.mean()),
+               'max_dlogit_non_tie': float(d[~tie].max()), 'p99_dlogit_non_tie': float(np.percentile(d[~tie], 99)),
+               'max_dlogit_tie': float(d[tie].max()) if tie.any() else 0.0,
+               'orient_mismatch_shape': int((res['flip_shape'] != (ref['sgn'] < 0)).sum()),
+               'side_vs_shape_mismatch': int((res['flip_side'] != res['flip_shape']).sum()),
+               'exact_zero_x_end': int((ref['x_end'] == 0).sum()),
+               'pass_R2': bool(d[~tie].max() <= 1e-4), 'secs': round(time.time() - t0, 1)}
+        summary['models'][os.path.basename(path)] = row
+        print(os.path.basename(path), json.dumps(row))
+    if a.out:
+        with open(a.out, 'w') as fh:
+            json.dump(summary, fh, indent=1)
+
+
+if __name__ == '__main__':
+    main()

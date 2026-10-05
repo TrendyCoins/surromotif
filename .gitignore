@@ -224,3 +224,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# MRI: exceptions — small golden file and model export are committed on purpose
+!tests/golden/*.csv.gz

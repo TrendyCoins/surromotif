@@ -1,0 +1,47 @@
+{
+ "bars": "btc_fresh_tail.csv.gz",
+ "n_bars": 26000,
+ "floor": 0.17530229687690735,
+ "eps": 0.0001,
+ "models": {
+  "prod_F3_g_L64_a_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 1.3787243350549261e-05,
+   "p99_dlogit_non_tie": 1.8975451539637836e-06,
+   "max_dlogit_tie": 2.1542032617449802e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 2.1
+  },
+  "prod_F3_g_L64_b_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 7.942632850088671e-06,
+   "p99_dlogit_non_tie": 1.858906278320295e-06,
+   "max_dlogit_tie": 3.4832329054435007e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 1.7
+  },
+  "prod_F3_g_L64_c_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 7.644959881147884e-06,
+   "p99_dlogit_non_tie": 1.7987073671138484e-06,
+   "max_dlogit_tie": 4.7023512528276967e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 1.4
+  }
+ }
+}
