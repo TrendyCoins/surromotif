@@ -109,10 +109,10 @@ def run(bars, p, floor, burn, calc_bars=0):
                 hr = mins / 60.0 * (2.0 * math.pi / 24.0)
                 dw = ((math.floor(time / 86400000.0) + 3) % 7) * (2.0 * math.pi / 7.0)
                 side = [math.log(D) - math.log(s7 / w7), math.sin(hr), math.cos(hr), math.sin(dw), math.cos(dw)]
-                for nd in (1, 3, 7):
-                    side.append((hist(csS, L + 1) - hist(csS, L + 1 + nd * DAY)) / (math.sqrt(nd * DAY) * nrm1) * sgn)
-                for k in range(7, -1, -1):
-                    side.append((hist(csS, L + 1 + 16 * k) - hist(csS, L + 1 + 16 * (k + 1))) / (4.0 * nrm1) * sgn)
+                csA = hist(csS, L + 1)
+                mv = [(csA - hist(csS, L + 1 + nd * DAY)) / math.sqrt(nd * DAY) for nd in (1, 3, 7)]
+                mv += [(hist(csS, L + 1 + 16 * k) - hist(csS, L + 1 + 16 * (k + 1))) / 4.0 for k in range(7, -1, -1)]
+                side += [v / nrm1 * sgn for v in mv]
                 feat[96:] = (np.array(side) - p.side_mu) / p.side_sd
                 z = p.head0_w @ feat + p.head0_b
                 out[bi] = p.head3_b[0] + float(np.maximum(z, 0.0) @ p.head3_w[0])

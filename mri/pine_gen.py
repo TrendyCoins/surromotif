@@ -1,9 +1,12 @@
 """Pine Script v6 generator: the streaming F3_g computation with weights inside the script.
 
-Weight storage ('store'):
-    'literals' - array.from(...) chunks of decimal literals, concatenated on the first bar
-    'strings'  - space-separated decimals in string constants (<= 36000 chars each), str.split + str.tonumber
-                 on the first bar, one loop per string (the 500 ms per-loop limit)
+Pine limits a local block (the body of an `if`, a function) by its compiled size — 'The if statement is too long'
+(the threshold is not documented). So nothing big lives in one block:
+    - weights: many small functions, each returns one chunk; `loadWeights()` concatenates them; `var` initializers
+      call it once (no `if barstate.isfirst`)
+    - weight storage ('store'): 'literals' — `array.from(...)` of `chunk` decimal literals per function;
+      'strings' — a function per string constant of <= `str_max` chars, parsed with str.split + str.tonumber
+    - per-bar heavy part: convStep() and computeLogit() functions; the `if` bodies only call them
 Weights are written as the shortest decimal that round-trips the float32 value; the export JSON (mri/export.py)
 uses the same decimals, so Pine and the Python reference parse the same numbers.
 
@@ -12,7 +15,8 @@ head0 W row-major (64, 112); head0 b (64); head3 W (64); head3 b (1).
 
 The compute: per confirmed bar, inputs of two streams (+ / -) go into interleaved ring matrices (column 2s = stream +,
 2s + 1 = stream -, s = ring slot); each conv layer = 3 matrix.mult of (32 x c_in) by (c_in x 2) + ReLU loop; layer 4
-outputs go to two matrices (32 x 33) for pooling. See mri/stream.py for the same computation in Python.
+outputs go to two matrices (32 x 33) for pooling. tests/pine_sim.py transliterates this template line by line;
+tests/test_reference.py checks it against mri/stream.py.
 """
 import numpy as np
 
@@ -35,6 +39,20 @@ def flat_weights(p):
     return [fmt(v) for v in out]
 
 
+def matrix_offsets():
+    """(name, rows, cols, offset) of the matrices in the flat order; then H3 (64) and HB3 (1)."""
+    out, off = [], 0
+    for li, c_in in enumerate((4, 32, 32, 32), 1):
+        for k in range(3):
+            out.append((f'K{li}_{k}', 32, c_in, off))
+            off += 32 * c_in
+    out.append(('H0', 64, 112, off))
+    off += 64 * 112
+    out.append(('HB0', 64, 1, off))
+    off += 64
+    return out, off
+
+
 def _wrap_args(vals, per_line=12, indent=6):
     # Pine: a wrapped line must be indented by a number of spaces that is NOT a multiple of 4
     lines = []
@@ -43,29 +61,33 @@ def _wrap_args(vals, per_line=12, indent=6):
     return ',\n'.join(lines)
 
 
-def weights_block(vals, store, chunk=1000, str_max=36000):
-    """Pine code that fills `WT` (array<float>) on the first bar."""
+def weights_block(vals, store, chunk=250, str_max=4000):
+    """Pine code that defines `loadWeights()` -> array<float> of all weights in the flat order."""
+    fns, calls = [], []
     if store == 'literals':
-        parts = ["if barstate.isfirst"]
-        for i in range(0, len(vals), chunk):
-            parts.append(f"    array.concat(WT, array.from(\n{_wrap_args(vals[i:i + chunk])}))")
-        return '\n'.join(parts)
-    if store == 'strings':
-        strs, cur = [], []
+        for j, i in enumerate(range(0, len(vals), chunk)):
+            fns.append(f"wc{j}() =>\n    array.from(\n{_wrap_args(vals[i:i + chunk])})")
+            calls.append(f"    array.concat(w, wc{j}())")
+    elif store == 'strings':
+        strs, cur, n = [], [], 0
         for v in vals:
-            if sum(len(x) + 1 for x in cur) + len(v) + 1 > str_max:
+            if cur and n + len(v) + 1 > str_max:
                 strs.append(' '.join(cur))
-                cur = []
+                cur, n = [], 0
             cur.append(v)
+            n += len(v) + 1
         strs.append(' '.join(cur))
-        decl = '\n'.join(f'string WS{i} = "{s}"' for i, s in enumerate(strs))
-        calls = '\n'.join(f"    decodeInto(WT, WS{i})" for i in range(len(strs)))
-        fn = ("decodeInto(array<float> dst, string s) =>\n"
-              "    for tok in str.split(s, \" \")\n"
-              "        array.push(dst, str.tonumber(tok))\n"
-              "    true")
-        return f"{decl}\n\n{fn}\n\nif barstate.isfirst\n{calls}"
-    raise ValueError(store)
+        fns.append("decodeInto(array<float> dst, string s) =>\n"
+                   "    for tok in str.split(s, \" \")\n"
+                   "        array.push(dst, str.tonumber(tok))\n"
+                   "    true")
+        for j, s in enumerate(strs):
+            fns.append(f'ws{j}() =>\n    "{s}"')
+            calls.append(f"    decodeInto(w, ws{j}())")
+    else:
+        raise ValueError(store)
+    load = "loadWeights() =>\n    array<float> w = array.new<float>(0)\n" + '\n'.join(calls) + "\n    w"
+    return '\n\n'.join(fns + [load]), len(fns)
 
 
 def float_list(xs):
@@ -97,54 +119,20 @@ const float FLOOR  = {floor}
 var array<float> SIDE_MU = array.from({side_mu})
 var array<float> SIDE_SD = array.from({side_sd})
 
-// ---------------------------------------------------------------- weights ({n_w} numbers)
-var array<float> WT = array.new<float>(0)
+// ---------------------------------------------------------------- weights ({n_w} numbers, {n_fn} functions)
 {weights}
 
-var matrix<float> K1_0 = matrix.new<float>(32, 4, 0.0)
-var matrix<float> K1_1 = matrix.new<float>(32, 4, 0.0)
-var matrix<float> K1_2 = matrix.new<float>(32, 4, 0.0)
-var matrix<float> K2_0 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K2_1 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K2_2 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K3_0 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K3_1 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K3_2 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K4_0 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K4_1 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> K4_2 = matrix.new<float>(32, 32, 0.0)
-var matrix<float> H0   = matrix.new<float>(64, 112, 0.0)
-var matrix<float> HB0  = matrix.new<float>(64, 1, 0.0)
-var array<float>  H3   = array.new<float>(64, 0.0)
-var float         HB3  = 0.0
-
-fillMat(matrix<float> m, array<float> w, int off) =>
-    int nr = matrix.rows(m)
-    int nc = matrix.columns(m)
+toMat(array<float> w, int off, int nr, int nc) =>
+    matrix<float> m = matrix.new<float>(nr, nc, 0.0)
     for i = 0 to nr - 1
         for j = 0 to nc - 1
             matrix.set(m, i, j, array.get(w, off + i * nc + j))
-    off + nr * nc
+    m
 
-if barstate.isfirst
-    int o = 0
-    o := fillMat(K1_0, WT, o)
-    o := fillMat(K1_1, WT, o)
-    o := fillMat(K1_2, WT, o)
-    o := fillMat(K2_0, WT, o)
-    o := fillMat(K2_1, WT, o)
-    o := fillMat(K2_2, WT, o)
-    o := fillMat(K3_0, WT, o)
-    o := fillMat(K3_1, WT, o)
-    o := fillMat(K3_2, WT, o)
-    o := fillMat(K4_0, WT, o)
-    o := fillMat(K4_1, WT, o)
-    o := fillMat(K4_2, WT, o)
-    o := fillMat(H0, WT, o)
-    o := fillMat(HB0, WT, o)
-    for i = 0 to 63
-        array.set(H3, i, array.get(WT, o + i))
-    HB3 := array.get(WT, o + 64)
+var array<float> WT = loadWeights()
+{matrices}
+var array<float>  H3  = array.copy(array.slice(WT, {off_h3}, {off_h3_end}))
+var float         HB3 = array.get(WT, {off_hb3})
 
 // ---------------------------------------------------------------- state
 var array<float> RNG  = array.new<float>(0)        // ranges of the last 200 bars
@@ -189,6 +177,57 @@ reluInto(matrix<float> y, matrix<float> R, int depth, int cnt) =>
         matrix.set(R, i, 2 * s + 1, math.max(matrix.get(y, i, 1), 0.0))
     true
 
+// one bar of the two conv streams: inputs u (stream +), ring writes for layers 1..4
+convStep(int cnt, float u0, float u1, float u2, float u3) =>
+    int p0 = slot(cnt, 3, 0)
+    matrix.set(R0, 0, 2 * p0, u0)
+    matrix.set(R0, 1, 2 * p0, u1)
+    matrix.set(R0, 2, 2 * p0, u2)
+    matrix.set(R0, 3, 2 * p0, u3)
+    matrix.set(R0, 0, 2 * p0 + 1, -u0)
+    matrix.set(R0, 1, 2 * p0 + 1, -u1)
+    matrix.set(R0, 2, 2 * p0 + 1, -u2)
+    matrix.set(R0, 3, 2 * p0 + 1, u3)
+    reluInto(conv3(R0, 3, cnt, 1, K1_0, K1_1, K1_2), R1, 5, cnt)
+    reluInto(conv3(R1, 5, cnt, 2, K2_0, K2_1, K2_2), R2, 9, cnt)
+    reluInto(conv3(R2, 9, cnt, 4, K3_0, K3_1, K3_2), R3, 17, cnt)
+    matrix<float> y4 = conv3(R3, 17, cnt, 8, K4_0, K4_1, K4_2)
+    int p4 = slot(cnt, 33, 0)
+    for i = 0 to 31
+        matrix.set(R4P, i, p4, math.max(matrix.get(y4, i, 0), 0.0))
+        matrix.set(R4M, i, p4, math.max(matrix.get(y4, i, 1), 0.0))
+    true
+
+// logit of the window ending at this bar; mv = 11 unsigned moves before the window (1d, 3d, 7d, 8 blocks), nrm1 =
+// EMA |r| (1 day) at the bar before the window; tm = bar open time
+computeLogit(int cnt, array<float> mv, float nrm1, int tm) =>
+    float D = math.max(array.median(WABS), FLOOR)
+    float xe = 0.0
+    for i = 0 to L - 1
+        xe += i * array.get(WR, i)
+    xe /= L
+    float sgn = xe < -EPS * D ? -1.0 : 1.0
+    matrix<float> M4 = sgn > 0 ? R4P : R4M
+    matrix<float> mean4 = matrix.mult(M4, ONES33)
+    int p4 = slot(cnt, 33, 0)
+    for i = 0 to 31
+        matrix.set(FEAT, i, 0, matrix.get(mean4, i, 0) / D)
+        matrix.set(FEAT, 32 + i, 0, array.max(matrix.row(M4, i)) / D)
+        matrix.set(FEAT, 64 + i, 0, matrix.get(M4, i, p4) / D)
+    float mins = math.floor(tm / 60000.0) % 1440
+    float hr = mins / 60.0 * (2.0 * math.pi / 24.0)
+    float dw = ((math.floor(tm / 86400000.0) + 3) % 7) * (2.0 * math.pi / 7.0)
+    array<float> side = array.from(math.log(D) - math.log(s7 / w7), math.sin(hr), math.cos(hr), math.sin(dw), math.cos(dw))
+    for j = 0 to 10
+        array.push(side, array.get(mv, j) / nrm1 * sgn)
+    for j = 0 to 15
+        matrix.set(FEAT, 96 + j, 0, (array.get(side, j) - array.get(SIDE_MU, j)) / array.get(SIDE_SD, j))
+    matrix<float> z = matrix.sum(matrix.mult(H0, FEAT), HB0)
+    float acc = HB3
+    for i = 0 to 63
+        acc += math.max(matrix.get(z, i, 0), 0.0) * array.get(H3, i)
+    acc
+
 // ---------------------------------------------------------------- per-bar inputs (closed='left' norm)
 float rngNow = high - low
 float nrm    = array.size(RNG) == NN ? array.median(RNG) : na
@@ -230,78 +269,28 @@ float csS = csum
 float e1S = w1 > 0 ? s1 / w1 : na
 max_bars_back(csS, 2100)
 max_bars_back(e1S, 80)
+float csA = csS[L + 1]                             // sum up to the bar before the window's previous bar
+array<float> MV = array.from((csA - csS[L + 1 + DAY]) / math.sqrt(DAY), (csA - csS[L + 1 + 3 * DAY]) / math.sqrt(3 * DAY), (csA - csS[L + 1 + 7 * DAY]) / math.sqrt(7 * DAY), (csS[L + 113] - csS[L + 129]) / 4.0, (csS[L + 97] - csS[L + 113]) / 4.0, (csS[L + 81] - csS[L + 97]) / 4.0, (csS[L + 65] - csS[L + 81]) / 4.0, (csS[L + 49] - csS[L + 65]) / 4.0, (csS[L + 33] - csS[L + 49]) / 4.0, (csS[L + 17] - csS[L + 33]) / 4.0, (csA - csS[L + 17]) / 4.0)
+float nrm1 = e1S[L]
 
 if barstate.isconfirmed and bar_index >= heavyFrom
     hc += 1
-    int p0 = slot(hc, 3, 0)
-    float u0 = ok ? r / S_SD : 0.0
-    float u1 = ok ? st1 / S_SD : 0.0
-    float u2 = ok ? st2 / S_SD : 0.0
-    float u3 = ok ? gg / LVL_SD : 0.0
-    matrix.set(R0, 0, 2 * p0, u0)
-    matrix.set(R0, 1, 2 * p0, u1)
-    matrix.set(R0, 2, 2 * p0, u2)
-    matrix.set(R0, 3, 2 * p0, u3)
-    matrix.set(R0, 0, 2 * p0 + 1, -u0)
-    matrix.set(R0, 1, 2 * p0 + 1, -u1)
-    matrix.set(R0, 2, 2 * p0 + 1, -u2)
-    matrix.set(R0, 3, 2 * p0 + 1, u3)
-    reluInto(conv3(R0, 3, hc, 1, K1_0, K1_1, K1_2), R1, 5, hc)
-    reluInto(conv3(R1, 5, hc, 2, K2_0, K2_1, K2_2), R2, 9, hc)
-    reluInto(conv3(R2, 9, hc, 4, K3_0, K3_1, K3_2), R3, 17, hc)
-    matrix<float> y4 = conv3(R3, 17, hc, 8, K4_0, K4_1, K4_2)
-    int p4 = slot(hc, 33, 0)
-    for i = 0 to 31
-        matrix.set(R4P, i, p4, math.max(matrix.get(y4, i, 0), 0.0))
-        matrix.set(R4M, i, p4, math.max(matrix.get(y4, i, 1), 0.0))
-
-    bool ready = okRun >= L and firstR >= 0 and bar_index - firstR >= BURN and hc >= L - 1
-    if ready
-        float D = math.max(array.median(WABS), FLOOR)
-        float xe = 0.0
-        for i = 0 to L - 1
-            xe += i * array.get(WR, i)
-        xe /= L
-        float sgn = xe < -EPS * D ? -1.0 : 1.0
-        matrix<float> M4 = sgn > 0 ? R4P : R4M
-        matrix<float> mean4 = matrix.mult(M4, ONES33)
-        for i = 0 to 31
-            matrix.set(FEAT, i, 0, matrix.get(mean4, i, 0) / D)
-            matrix.set(FEAT, 32 + i, 0, array.max(matrix.row(M4, i)) / D)
-            matrix.set(FEAT, 64 + i, 0, matrix.get(M4, i, p4) / D)
-        // side inputs ('v7tcp'): vol to 7-day norm, hour, weekday, moves before the window
-        float nrm1 = e1S[L]
-        float mins = math.floor(time / 60000.0) % 1440
-        float hr = mins / 60.0 * (2.0 * math.pi / 24.0)
-        float dw = ((math.floor(time / 86400000.0) + 3) % 7) * (2.0 * math.pi / 7.0)
-        array<float> side = array.new<float>(0)
-        array.push(side, math.log(D) - math.log(s7 / w7))
-        array.push(side, math.sin(hr))
-        array.push(side, math.cos(hr))
-        array.push(side, math.sin(dw))
-        array.push(side, math.cos(dw))
-        array.push(side, (csS[L + 1] - csS[L + 1 + DAY]) / (math.sqrt(DAY) * nrm1) * sgn)
-        array.push(side, (csS[L + 1] - csS[L + 1 + 3 * DAY]) / (math.sqrt(3 * DAY) * nrm1) * sgn)
-        array.push(side, (csS[L + 1] - csS[L + 1 + 7 * DAY]) / (math.sqrt(7 * DAY) * nrm1) * sgn)
-        for k = 7 to 0
-            array.push(side, (csS[L + 1 + 16 * k] - csS[L + 1 + 16 * (k + 1)]) / (4.0 * nrm1) * sgn)
-        for j = 0 to 15
-            matrix.set(FEAT, 96 + j, 0, (array.get(side, j) - array.get(SIDE_MU, j)) / array.get(SIDE_SD, j))
-        matrix<float> z = matrix.sum(matrix.mult(H0, FEAT), HB0)
-        float acc = HB3
-        for i = 0 to 63
-            acc += math.max(matrix.get(z, i, 0), 0.0) * array.get(H3, i)
-        logit := acc
+    convStep(hc, ok ? r / S_SD : 0.0, ok ? st1 / S_SD : 0.0, ok ? st2 / S_SD : 0.0, ok ? gg / LVL_SD : 0.0)
+    if okRun >= L and firstR >= 0 and bar_index - firstR >= BURN and hc >= L - 1
+        logit := computeLogit(hc, MV, nrm1, time)
 
 plot(logit, "logit", color = color.new(color.orange, 0), linewidth = 1)
 '''
 
 
-def make_script(p, store='literals', floor=0.2, burn=2981, chunk=1000, title='', note='', name='MRI limits prototype',
-                short='MRI-proto'):
+def make_script(p, store='literals', floor=0.2, burn=2981, chunk=250, str_max=4000, title='', note='',
+                name='MRI limits prototype', short='MRI-proto'):
     vals = flat_weights(p)
     assert len(vals) == p.n_params
+    mats, off = matrix_offsets()
+    mdecl = '\n'.join(f"var matrix<float> {nm:<4} = toMat(WT, {o}, {r}, {c})" for nm, r, c, o in mats)
+    weights, n_fn = weights_block(vals, store, chunk, str_max)
     return TEMPLATE.format(title=title, note=note, name=name, short=short, burn=burn, s_sd=fmt(p.s_sd),
                            lvl_sd=fmt(p.lvl_sd), floor=fmt(floor), side_mu=float_list(p.side_mu),
-                           side_sd=float_list(p.side_sd), n_w=len(vals),
-                           weights=weights_block(vals, store, chunk))
+                           side_sd=float_list(p.side_sd), n_w=len(vals), n_fn=n_fn, weights=weights,
+                           matrices=mdecl, off_h3=off, off_h3_end=off + 64, off_hb3=off + 64)

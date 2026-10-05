@@ -54,11 +54,12 @@ def build_export(seed=SEED):
     p, _ = load_npz(os.path.join(ROOT, f'artifacts/weights/prod_F3_g_L64_{seed}_slim.npz'))
     with open(os.path.join(ROOT, f'artifacts/weights/prod_F3_g_L64_{seed}.json'), encoding='utf-8') as fh:
         prod = json.load(fh)
-    with open(os.path.join(ROOT, 'artifacts/pack/floors.json'), encoding='utf-8') as fh:
-        fl_all = json.load(fh)
+    with open(os.path.join(ROOT, 'artifacts/pack/floors_by_folder.json'), encoding='utf-8') as fh:
+        fl_dir = json.load(fh)
     with open(os.path.join(ROOT, 'docs/checks/calibration.json'), encoding='utf-8') as fh:
         cal = json.load(fh)
-    floors = {a: _num(fl_all[f'smc_series_{a}_5M_N200.npz']['floor_L64']) for a in POOL_ALL}
+    # rule R6: the folder the prod model trained on — fresh for BTC / ETH, research for the rest
+    floors = {a: _num(fl_dir['SMC/data_fresh/' if a in FRESH else 'SMC/data/'][a]['floor_L64']) for a in POOL_ALL}
     unknown_floor = _num(np.median(list(floors.values())))
     model = {'conv': [_nums(w) for w in p.conv], 'dilations': [1, 2, 4, 8],
              'head0_w': _nums(p.head0_w), 'head0_b': _nums(p.head0_b),
@@ -105,10 +106,8 @@ def build_export(seed=SEED):
                      'eps': TIE_EPS, 'rule': 'sgn = -1 if x_end < -eps * D else +1; one sign for the stream and the side inputs'},
         'floors': {'floor_L64': floors, 'unknown_symbol': unknown_floor,
                    'unknown_rule': 'median of floor_L64 of the 31 table symbols',
-                   'provisional': list(FRESH),
-                   'provisional_note': 'BTC / ETH: values of the research data folder (verified end to end on BTC VAL); '
-                                       'the prod model trained BTC / ETH on the fresh folder - its floors to be exported '
-                                       '(scripts/colab_export_floors.py)'},
+                   'source': 'smc_series files of the prod training: fresh data folder for '
+                             + ', '.join(FRESH) + ', research data folder for the rest'},
         'calibration': {'platt_a': _num(pa), 'platt_b': _num(pb), 'lift': 'exp(platt_a * logit + platt_b)',
                         'M': 'max(lift, 1 / lift) = exp(|platt_a * logit + platt_b|)',
                         'fit_on': cal['platt_final']['fit_on'], 'rule': 'docs/rules.md R4',
