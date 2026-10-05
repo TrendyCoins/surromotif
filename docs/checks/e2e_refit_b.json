@@ -1,0 +1,15 @@
+{
+ "seed": "b",
+ "windows": 104599,
+ "same_window_set": true,
+ "last_end": "2026-06-30 02:25:00",
+ "floor": 0.17530229687690735,
+ "ties": 6,
+ "floor_binding": 299,
+ "max_dlogit_non_tie": 8.44229937757568e-06,
+ "p99": 2.1726307591385386e-06,
+ "max_dlogit_tie": 4.1798887506772076e-07,
+ "max_dlogit_floor_binding": 1.544193235836211e-06,
+ "n_dlogit_gt_1e-4": 0,
+ "pass_R3": true
+}
