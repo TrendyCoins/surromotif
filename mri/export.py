@@ -5,7 +5,7 @@
 The JSON is self-contained: weights, buffers, floors, rules (tie, unknown symbol, warm-up), Platt, thresholds,
 passport. Any platform (Pine, MQL, web) computes the same numbers from it; the golden file lets it check bar by bar
 from the first bar of the slice (warm-up included and marked).
-Weights are written as the shortest decimals that round-trip their float32 values (the same literals as in Pine).
+Weights are written as exact decimals of their float32 values (Pine decodes the same float32 bits from dense strings).
 """
 import datetime as dt
 import json
