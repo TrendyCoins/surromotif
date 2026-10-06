@@ -56,3 +56,19 @@ def test_parity_catches_errors(fake_csv, ex, tmp_path):
     assert not run(tmp_path / 'a.csv', ex)['pass_R10']
     df.drop(index=10).to_csv(tmp_path / 'b.csv', index=False, float_format='%.10f', na_rep='NaN')
     assert not run(tmp_path / 'b.csv', ex)['pass_R10']
+
+
+def test_live_last_bar_is_excluded_only_if_state_did_not_advance(fake_csv, ex, tmp_path):
+    df = pd.read_csv(fake_csv)
+    live = df.copy()
+    live.loc[len(live) - 1, 'dbg logit'] = np.nan                       # forming bar: no value, state not advanced
+    for c in ('dbg ema7', 'dbg ema1'):
+        live.loc[len(live) - 1, c] = live.loc[len(live) - 2, c]
+    live.to_csv(tmp_path / 'c.csv', index=False, float_format='%.10f', na_rep='NaN')
+    res = run(tmp_path / 'c.csv', ex)
+    assert res['live_last_bar_excluded'] and res['pass_R10']
+    gone = df.copy()
+    gone.loc[len(gone) - 1, 'dbg logit'] = np.nan                       # value missing, but the state did advance
+    gone.to_csv(tmp_path / 'd.csv', index=False, float_format='%.10f', na_rep='NaN')
+    res = run(tmp_path / 'd.csv', ex)
+    assert not res['live_last_bar_excluded'] and not res['pass_R10']

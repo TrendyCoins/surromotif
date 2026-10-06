@@ -41,15 +41,24 @@ def test_weights_from_strings_are_exact(ex, script):
     assert [ord(c) - ALPHA0 for c in alpha] == list(range(2048))
 
 
+def table(script, fn):
+    body = re.search(rf'{fn}\(\) =>\n(.*?)\n    m\n', script, flags=re.S).group(1)
+    return {k: float(v) for k, v in re.findall(r'map\.put\(m, "([A-Z]+)", ([0-9.]+)\)', body)}
+
+
 def test_constants_match_export(ex, script):
-    floors = dict(re.findall(r'map\.put\(m, "([A-Z]+)", ([0-9.]+)\)', script))
-    assert {k: float(v) for k, v in floors.items()} == ex['floors']['floor_L64']
+    assert table(script, 'buildFloors') == ex['floors']['floor_L64']
+    ceil = ex['display']['ceiling']
+    assert table(script, 'buildCeilMore') == {a: v['more'] for a, v in ceil['by_symbol'].items()}
+    assert table(script, 'buildCeilLess') == {a: v['less'] for a, v in ceil['by_symbol'].items()}
+    assert len(ceil['by_symbol']) == 31 and all(v['more'] <= 21 and v['less'] <= 21 for v in ceil['by_symbol'].values())
     num = lambda name: float(re.search(rf'const float {name}\s*=\s*(-?[0-9.]+)', script).group(1))
     assert num('PLATT_A') == ex['calibration']['platt_a'] and num('PLATT_B') == ex['calibration']['platt_b']
-    assert num('CEIL_O') == ex['display']['ceiling']['more'] and num('CEIL_B') == ex['display']['ceiling']['less']
+    unk = lambda name: float(re.search(rf'var float {name} = known \? map\.get\(\w+, syminfo\.ticker\) : ([0-9.]+)',
+                                       script).group(1))
+    assert unk('CEIL_O') == ceil['unknown_symbol']['more'] and unk('CEIL_B') == ceil['unknown_symbol']['less']
+    assert unk('FLOOR') == ex['floors']['unknown_symbol']
     assert int(re.search(r'const int   BURN   = (\d+)', script).group(1)) == ex['warmup']['burn_bars_from_first_valid_r']
-    unknown = re.search(r'map\.get\(FLOORS, syminfo\.ticker\) : ([0-9.]+)', script).group(1)
-    assert float(unknown) == ex['floors']['unknown_symbol']
 
 
 def test_header_wording_colors_literals(script):

@@ -59,6 +59,8 @@ def build_export(seed=SEED):
         cal = json.load(fh)
     with open(os.path.join(ROOT, 'docs/checks/calib_curve.json'), encoding='utf-8') as fh:
         curve = json.load(fh)
+    with open(os.path.join(ROOT, 'docs/checks/ceilings.json'), encoding='utf-8') as fh:
+        ceil = json.load(fh)
     # rule R6: the folder the prod model trained on — fresh for BTC / ETH, research for the rest
     floors = {a: _num(fl_dir['SMC/data_fresh/' if a in FRESH else 'SMC/data/'][a]['floor_L64']) for a in POOL_ALL}
     unknown_floor = _num(np.median(list(floors.values())))
@@ -117,9 +119,12 @@ def build_export(seed=SEED):
         'display': {'line': 'M = exp(|platt_a * logit + platt_b|); more frequent than random if platt_a * logit + platt_b > 0, '
                             'less frequent if < 0; floor 1.0',
                     'threshold': 'visual only: input >= 1, default 3 (bright above, pale below, dashed line, optional marks)',
-                    'ceiling': {'more': curve['ceiling_pool']['orange'], 'less': curve['ceiling_pool']['blue']},
-                    'ceiling_rule': 'docs/rules.md R9: the line does not rise above the lower edge of the lowest bin of its '
-                                    'color that failed the calibration curve check; drawn as "N+"',
+                    'ceiling': {'pool': {'more': curve['ceiling_pool']['orange'], 'less': curve['ceiling_pool']['blue']},
+                                'by_symbol': {a: ceil['ceilings'][a] for a in POOL_ALL},
+                                'unknown_symbol': ceil['unknown_symbol']},
+                    'ceiling_rule': 'docs/rules.md R9 (pool, at most 21) and R11 (per symbol: the lower edge of the first bin '
+                                    'of the symbol where factual / expected < 0.8 or < 1000 windows of a class; unknown '
+                                    'symbol: the lowest of FIL, LINK, XLM); above the ceiling the line stays at it, "N+"',
                     'unknown_symbol': 'not Binance spot from the table (prefix BINANCE, no .P): floor unknown_symbol + note',
                     'timeframe': '5M only checked; other timeframes: drawn with a note'},
         'warmup': {'burn_bars_from_first_valid_r': BURN, 'ema_start': 'normalized (adjust=True)',
