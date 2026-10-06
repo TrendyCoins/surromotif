@@ -308,10 +308,11 @@ HEAD_PROD = r'''//@version=6
 // (blue) in real markets than in a random walk with the same volatility (bar-mirror surrogate in blocks of 4 bars).
 // M = 1 — indistinguishable from random. The SuMo classifier (a streaming CNN, {n_w} weights inside this script) scores
 // the window; Platt calibration turns the score into M. M is a frequency ratio of the window's shape, not a forecast.
-// Calibration was checked out of sample up to M = {ceil_txt}; the line does not rise above that ("{ceil_txt}+").
+// Calibration was checked out of sample per symbol: each symbol and side has its ceiling (at most {ceil_txt}; for symbols
+// outside the table {ceil_unknown}); above it the line stays at the ceiling, marked "N+".
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
 // Passport: weights {source}, data up to {data_end}, export of code {code_version}.
-indicator("Market Randomness Index", shorttitle = "MRI", overlay = false, precision = 2)
+indicator("Market Randomness Index", shorttitle = "MRI", overlay = false, precision = 2, max_labels_count = 500)
 
 // ---------------------------------------------------------------- inputs
 float thr      = input.float(3.0, "Threshold M", minval = 1.0, step = 0.25, tooltip = "Visual only: above the threshold the line is bright, below it is pale; dashed line at the threshold; optional marks on the price chart at M >= threshold.")
@@ -328,15 +329,28 @@ buildFloors() =>
 {floor_puts}
     m
 
+// ceilings of M by symbol: more frequent / less frequent side (rule R11)
+buildCeilMore() =>
+    map<string, float> m = map.new<string, float>()
+{ceil_more_puts}
+    m
+
+buildCeilLess() =>
+    map<string, float> m = map.new<string, float>()
+{ceil_less_puts}
+    m
+
 var map<string, float> FLOORS = buildFloors()
+var map<string, float> CEILO  = buildCeilMore()
+var map<string, float> CEILB  = buildCeilLess()
 bool  known = syminfo.prefix == "BINANCE" and not str.endswith(syminfo.ticker, ".P") and map.contains(FLOORS, syminfo.ticker)
 var float FLOOR = known ? map.get(FLOORS, syminfo.ticker) : {floor_unknown}
 bool  tf5   = timeframe.period == "5"
 float GAPMS = 1.5 * timeframe.in_seconds() * 1000.0   // interval > 1.5 bars -> grid gap
 const float PLATT_A = {platt_a}
 const float PLATT_B = {platt_b}
-const float CEIL_O  = {ceil_o}   // checked range of M, more frequent side (rule R9)
-const float CEIL_B  = {ceil_b}   // checked range of M, less frequent side
+var float CEIL_O = known ? map.get(CEILO, syminfo.ticker) : {ceil_o_unknown}   // checked range of M, more frequent side
+var float CEIL_B = known ? map.get(CEILB, syminfo.ticker) : {ceil_b_unknown}   // checked range of M, less frequent side
 
 '''
 
@@ -350,8 +364,13 @@ color baseC = more ? colMore : colLess
 plot(Mshow, "M", color = Mraw >= thr ? baseC : color.new(baseC, paleT), linewidth = 2)
 hline(1.0, "Random (M = 1)", color = color.gray, linestyle = hline.style_solid)
 hline(thr, "Threshold", color = color.gray, linestyle = hline.style_dashed)
-plotshape(more and Mraw >= CEIL_O ? CEIL_O : na, "Above the checked range (more frequent)", shape.circle, location.absolute, colMore, text = "{ceil_o_txt}+", textcolor = colMore, size = size.tiny)
-plotshape(less and Mraw >= CEIL_B ? CEIL_B : na, "Above the checked range (less frequent)", shape.circle, location.absolute, colLess, text = "{ceil_b_txt}+", textcolor = colLess, size = size.tiny)
+// at the ceiling: "N+" once at the start of each run
+bool atO = more and Mraw >= CEIL_O
+bool atB = less and Mraw >= CEIL_B
+if barstate.isconfirmed and atO and not atO[1]
+    label.new(bar_index, CEIL_O, str.tostring(CEIL_O) + "+", style = label.style_none, textcolor = colMore, size = size.small)
+if barstate.isconfirmed and atB and not atB[1]
+    label.new(bar_index, CEIL_B, str.tostring(CEIL_B) + "+", style = label.style_none, textcolor = colLess, size = size.small)
 plotshape(showMarks and more and Mraw >= thr, "Mark: more frequent than random", shape.circle, location.abovebar, colMore, size = size.tiny, force_overlay = true)
 plotshape(showMarks and less and Mraw >= thr, "Mark: less frequent than random", shape.circle, location.abovebar, colLess, size = size.tiny, force_overlay = true)
 
@@ -399,24 +418,28 @@ def make_indicator(ex):
     mdecl = '\n'.join(f"var matrix<float> {nm:<4} = toMat(WT, {o}, {r}, {c})" for nm, r, c, o in mats)
     weights, n_str, n_chars = weights_block(vals)
     ceil = ex['display']['ceiling']
-    co, cb = ceil['more'], ceil['less']
     txt = lambda v: f"{v:g}"
     floor_puts = '\n'.join(f'    map.put(m, "{a}", {fmt(v)})' for a, v in ex['floors']['floor_L64'].items())
+    ceil_puts = {k: '\n'.join(f'    map.put(m, "{a}", {fmt(v[k])})' for a, v in ceil['by_symbol'].items())
+                 for k in ('more', 'less')}
     dbg_side = '\n'.join(f'plot(array.get(DBG, {3 + j}), "dbg side_{nm}", display = display_dbg, precision = 10)'
                          for j, nm in enumerate(SIDE_NAMES))
     pa = ex['passport']
-    head = HEAD_PROD.format(n_w=len(vals), ceil_txt=txt(min(co, cb)) if co == cb else f"{txt(co)} / {txt(cb)}",
+    pool, unk = ceil['pool'], ceil['unknown_symbol']
+    head = HEAD_PROD.format(n_w=len(vals), ceil_txt=txt(max(pool['more'], pool['less'])),
+                            ceil_unknown=f"{txt(unk['more'])} / {txt(unk['less'])}",
+                            ceil_more_puts=ceil_puts['more'], ceil_less_puts=ceil_puts['less'],
+                            ceil_o_unknown=fmt(unk['more']), ceil_b_unknown=fmt(unk['less']),
                             source=pa['weights_source'], data_end=pa['data_end'], code_version=pa['code_version'],
                             floor_puts=floor_puts, floor_unknown=fmt(ex['floors']['unknown_symbol']),
-                            platt_a=fmt(ex['calibration']['platt_a']), platt_b=fmt(ex['calibration']['platt_b']),
-                            ceil_o=fmt(co), ceil_b=fmt(cb))
+                            platt_a=fmt(ex['calibration']['platt_a']), platt_b=fmt(ex['calibration']['platt_b']))
     if ex['tie_rule']['eps'] != 1e-4:
         raise ValueError("CONSTS has EPS = 0.0001")
     consts = CONSTS.format(burn=ex['warmup']['burn_bars_from_first_valid_r'], s_sd=fmt(p.s_sd), lvl_sd=fmt(p.lvl_sd),
                            side_mu=float_list(p.side_mu), side_sd=float_list(p.side_sd))
     core = CORE.format(n_w=len(vals), n_str=n_str, n_chars=n_chars, weights=weights, matrices=mdecl, off_h3=off,
                        off_h3_end=off + 64, off_hb3=off + 64)
-    foot = FOOT_PROD.format(ceil_o_txt=txt(co), ceil_b_txt=txt(cb), dbg_side=dbg_side)
+    foot = FOOT_PROD.format(dbg_side=dbg_side)
     return head + consts + core + foot
 
 
