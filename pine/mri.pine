@@ -7,10 +7,11 @@
 // (blue) in real markets than in a random walk with the same volatility (bar-mirror surrogate in blocks of 4 bars).
 // M = 1 — indistinguishable from random. The SuMo classifier (a streaming CNN, 16897 weights inside this script) scores
 // the window; Platt calibration turns the score into M. M is a frequency ratio of the window's shape, not a forecast.
-// Calibration was checked out of sample up to M = 21; the line does not rise above that ("21+").
+// Calibration was checked out of sample per symbol: each symbol and side has its ceiling (at most 21; for symbols
+// outside the table 8 / 2); above it the line stays at the ceiling, marked "N+".
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
-// Passport: weights prod_F3_g_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code ef40163.
-indicator("Market Randomness Index", shorttitle = "MRI", overlay = false, precision = 2)
+// Passport: weights prod_F3_g_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 123029c.
+indicator("Market Randomness Index", shorttitle = "MRI", overlay = false, precision = 2, max_labels_count = 500)
 
 // ---------------------------------------------------------------- inputs
 float thr      = input.float(3.0, "Threshold M", minval = 1.0, step = 0.25, tooltip = "Visual only: above the threshold the line is bright, below it is pale; dashed line at the threshold; optional marks on the price chart at M >= threshold.")
@@ -57,15 +58,88 @@ buildFloors() =>
     map.put(m, "XLMUSDT", 0.19565217196941376)
     m
 
+// ceilings of M by symbol: more frequent / less frequent side (rule R11)
+buildCeilMore() =>
+    map<string, float> m = map.new<string, float>()
+    map.put(m, "BTCUSDT", 8.0)
+    map.put(m, "ETHUSDT", 1.0)
+    map.put(m, "DOGEUSDT", 8.0)
+    map.put(m, "SOLUSDT", 8.0)
+    map.put(m, "ADAUSDT", 8.0)
+    map.put(m, "BNBUSDT", 8.0)
+    map.put(m, "BCHUSDT", 8.0)
+    map.put(m, "DOTUSDT", 8.0)
+    map.put(m, "UNIUSDT", 8.0)
+    map.put(m, "XRPUSDT", 8.0)
+    map.put(m, "LTCUSDT", 8.0)
+    map.put(m, "DASHUSDT", 8.0)
+    map.put(m, "ZECUSDT", 8.0)
+    map.put(m, "SPELLUSDT", 8.0)
+    map.put(m, "ICPUSDT", 8.0)
+    map.put(m, "NEARUSDT", 8.0)
+    map.put(m, "ZENUSDT", 8.0)
+    map.put(m, "AVAXUSDT", 8.0)
+    map.put(m, "FETUSDT", 8.0)
+    map.put(m, "RAYUSDT", 8.0)
+    map.put(m, "CAKEUSDT", 8.0)
+    map.put(m, "INJUSDT", 8.0)
+    map.put(m, "RUNEUSDT", 8.0)
+    map.put(m, "PHAUSDT", 5.0)
+    map.put(m, "QNTUSDT", 8.0)
+    map.put(m, "HBARUSDT", 8.0)
+    map.put(m, "AAVEUSDT", 8.0)
+    map.put(m, "VTHOUSDT", 5.0)
+    map.put(m, "FILUSDT", 8.0)
+    map.put(m, "LINKUSDT", 8.0)
+    map.put(m, "XLMUSDT", 8.0)
+    m
+
+buildCeilLess() =>
+    map<string, float> m = map.new<string, float>()
+    map.put(m, "BTCUSDT", 8.0)
+    map.put(m, "ETHUSDT", 5.0)
+    map.put(m, "DOGEUSDT", 5.0)
+    map.put(m, "SOLUSDT", 8.0)
+    map.put(m, "ADAUSDT", 8.0)
+    map.put(m, "BNBUSDT", 13.0)
+    map.put(m, "BCHUSDT", 3.0)
+    map.put(m, "DOTUSDT", 8.0)
+    map.put(m, "UNIUSDT", 8.0)
+    map.put(m, "XRPUSDT", 8.0)
+    map.put(m, "LTCUSDT", 5.0)
+    map.put(m, "DASHUSDT", 8.0)
+    map.put(m, "ZECUSDT", 8.0)
+    map.put(m, "SPELLUSDT", 3.0)
+    map.put(m, "ICPUSDT", 5.0)
+    map.put(m, "NEARUSDT", 5.0)
+    map.put(m, "ZENUSDT", 8.0)
+    map.put(m, "AVAXUSDT", 8.0)
+    map.put(m, "FETUSDT", 8.0)
+    map.put(m, "RAYUSDT", 8.0)
+    map.put(m, "CAKEUSDT", 8.0)
+    map.put(m, "INJUSDT", 2.0)
+    map.put(m, "RUNEUSDT", 8.0)
+    map.put(m, "PHAUSDT", 5.0)
+    map.put(m, "QNTUSDT", 1.5)
+    map.put(m, "HBARUSDT", 1.5)
+    map.put(m, "AAVEUSDT", 3.0)
+    map.put(m, "VTHOUSDT", 3.0)
+    map.put(m, "FILUSDT", 8.0)
+    map.put(m, "LINKUSDT", 8.0)
+    map.put(m, "XLMUSDT", 2.0)
+    m
+
 var map<string, float> FLOORS = buildFloors()
+var map<string, float> CEILO  = buildCeilMore()
+var map<string, float> CEILB  = buildCeilLess()
 bool  known = syminfo.prefix == "BINANCE" and not str.endswith(syminfo.ticker, ".P") and map.contains(FLOORS, syminfo.ticker)
 var float FLOOR = known ? map.get(FLOORS, syminfo.ticker) : 0.20000000298023224
 bool  tf5   = timeframe.period == "5"
 float GAPMS = 1.5 * timeframe.in_seconds() * 1000.0   // interval > 1.5 bars -> grid gap
 const float PLATT_A = 0.8216076493263245
 const float PLATT_B = -0.22872847318649292
-const float CEIL_O  = 21.0   // checked range of M, more frequent side (rule R9)
-const float CEIL_B  = 21.0   // checked range of M, less frequent side
+var float CEIL_O = known ? map.get(CEILO, syminfo.ticker) : 8.0   // checked range of M, more frequent side
+var float CEIL_B = known ? map.get(CEILB, syminfo.ticker) : 2.0   // checked range of M, less frequent side
 
 // ---------------------------------------------------------------- constants
 const int   L      = 64
@@ -302,8 +376,13 @@ color baseC = more ? colMore : colLess
 plot(Mshow, "M", color = Mraw >= thr ? baseC : color.new(baseC, paleT), linewidth = 2)
 hline(1.0, "Random (M = 1)", color = color.gray, linestyle = hline.style_solid)
 hline(thr, "Threshold", color = color.gray, linestyle = hline.style_dashed)
-plotshape(more and Mraw >= CEIL_O ? CEIL_O : na, "Above the checked range (more frequent)", shape.circle, location.absolute, colMore, text = "21+", textcolor = colMore, size = size.tiny)
-plotshape(less and Mraw >= CEIL_B ? CEIL_B : na, "Above the checked range (less frequent)", shape.circle, location.absolute, colLess, text = "21+", textcolor = colLess, size = size.tiny)
+// at the ceiling: "N+" once at the start of each run
+bool atO = more and Mraw >= CEIL_O
+bool atB = less and Mraw >= CEIL_B
+if barstate.isconfirmed and atO and not atO[1]
+    label.new(bar_index, CEIL_O, str.tostring(CEIL_O) + "+", style = label.style_none, textcolor = colMore, size = size.small)
+if barstate.isconfirmed and atB and not atB[1]
+    label.new(bar_index, CEIL_B, str.tostring(CEIL_B) + "+", style = label.style_none, textcolor = colLess, size = size.small)
 plotshape(showMarks and more and Mraw >= thr, "Mark: more frequent than random", shape.circle, location.abovebar, colMore, size = size.tiny, force_overlay = true)
 plotshape(showMarks and less and Mraw >= thr, "Mark: less frequent than random", shape.circle, location.abovebar, colLess, size = size.tiny, force_overlay = true)
 
