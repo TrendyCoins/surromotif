@@ -84,9 +84,23 @@ def ema_series(df, ex):
     return out
 
 
+def live_last_bar(tv, ref):
+    """The last exported row is the forming (unconfirmed) bar if Pine did not advance its state there: no logit while the
+       reference has one, EMA values equal to the previous row. Pine computes only on confirmed bars (no repaint)."""
+    if len(tv) < 2 or not {'logit', 'ema7', 'ema1'} <= set(tv.columns):
+        return False
+    a = tv.iloc[-1]
+    b = tv.iloc[-2]
+    return bool(np.isnan(a['logit']) and np.isfinite(ref['logit'].iloc[-1])
+                and a['ema7'] == b['ema7'] and a['ema1'] == b['ema1'])
+
+
 def compare(tv, dec, ref):
     res, ok = {'bars': int(len(tv))}, True
-    bi = tv.get('bar_index')
+    res['live_last_bar_excluded'] = live_last_bar(tv, ref)
+    if res['live_last_bar_excluded']:
+        tv, ref = tv.iloc[:-1], ref.iloc[:-1]
+    bi = tv['bar_index'] if 'bar_index' in tv else None
     res['bar_index_contiguous_from_0'] = bool(bi is not None and np.array_equal(bi.to_numpy(), np.arange(len(tv))))
     ok &= res['bar_index_contiguous_from_0']
     rnd = lambda c: 0.5 * 10.0 ** -dec.get(c, 10)
