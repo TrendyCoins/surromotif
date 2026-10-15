@@ -1,0 +1,49 @@
+{
+ "model": "NT3_PRV_ch48",
+ "bars": "btc_fresh_tail.csv.gz",
+ "n_bars": 26000,
+ "floor": 0.17530229687690735,
+ "eps": 0.0001,
+ "models": {
+  "prod_NT3_PRV_ch48_L64_a_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 5.413743096482904e-06,
+   "p99_dlogit_non_tie": 1.8513585375290462e-06,
+   "max_dlogit_tie": 6.337481515128474e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 15.5
+  },
+  "prod_NT3_PRV_ch48_L64_b_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 6.671140377889628e-06,
+   "p99_dlogit_non_tie": 2.0784282619090686e-06,
+   "max_dlogit_tie": 5.014522785340425e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 8.9
+  },
+  "prod_NT3_PRV_ch48_L64_c_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 7.762937532795888e-06,
+   "p99_dlogit_non_tie": 2.1186644231274695e-06,
+   "max_dlogit_tie": 4.4197601289930333e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 6.0
+  }
+ },
+ "first_window_end": 264
+}

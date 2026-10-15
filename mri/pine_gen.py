@@ -1,4 +1,5 @@
-"""Pine Script v6 generator: the streaming F3_g computation with weights inside the script.
+"""Pine Script v6 generator: the streaming F3_g computation with weights inside the script (legacy model since session 3:
+python -m mri.pine_gen writes pine/legacy/mri_f3g.pine; the NT3 indicator pine/mri.pine — mri/pine_nt3.py).
 
 Limits met so far (TradingView compiler):
     - a local block (if / function body) has a size limit: 'The if statement is too long', 'The body of the ... function
@@ -450,7 +451,7 @@ def main():
     with open(os.path.join(root, 'export/mri_model.json'), encoding='utf-8') as fh:
         ex = json.load(fh)
     s = make_indicator(ex)
-    path = os.path.join(root, 'pine/mri.pine')
+    path = os.path.join(root, 'pine/legacy/mri_f3g.pine')          # F3_g: legacy since session 3 (pine/mri.pine is NT3)
     with open(path, 'w', encoding='utf-8') as fh:
         fh.write(s)
     print(path, len(s), 'chars', len(s.splitlines()), 'lines')

@@ -5,6 +5,8 @@ Modules:
     features - per-bar inputs from OHLC (vectorized, pandas semantics of research)
     batch    - vectorized inference over a whole bar series
     stream   - bar-by-bar inference with ring buffers, exactly as the Pine indicator computes
+    nt3      - NT3_PRV_ch48 (the indicator model since session 3): history inputs from OHLC, vectorized and bar-by-bar
+    export_nt3, pine_nt3 - NT3 export JSON / golden file and the Pine generator (export, pine_gen: legacy F3_g)
 """
 
 L = 64                  # window length, bars

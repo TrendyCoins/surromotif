@@ -1,0 +1,313 @@
+{
+ "model": "NT3_PRV_ch48",
+ "manifest_created": "2026-10-15 09:43:06",
+ "a": {
+  "files": 50,
+  "bad_files": [],
+  "runs": {
+   "pool_ALL_NT3_PRV_ch48_L64_a_refit": {
+    "parts": 5,
+    "keys": 201,
+    "repeated_keys": [],
+    "n_repeated": 0
+   },
+   "pool_ALL_NT3_PRV_ch48_L64_b_refit": {
+    "parts": 5,
+    "keys": 201,
+    "repeated_keys": [],
+    "n_repeated": 0
+   },
+   "pool_C_NT3_PRV_ch48_L64_a": {
+    "parts": 5,
+    "keys": 201,
+    "repeated_keys": [],
+    "n_repeated": 0
+   },
+   "pool_C_NT3_PRV_ch48_L64_a_refit": {
+    "parts": 5,
+    "keys": 201,
+    "repeated_keys": [],
+    "n_repeated": 0
+   },
+   "pool_C_NT3_PRV_ch48_L64_b": {
+    "parts": 5,
+    "keys": 201,
+    "repeated_keys": [],
+    "n_repeated": 0
+   },
+   "pool_C_NT3_PRV_ch48_L64_b_refit": {
+    "parts": 5,
+    "keys": 201,
+    "repeated_keys": [],
+    "n_repeated": 0
+   }
+  },
+  "ok": true
+ },
+ "b": {
+  "summary": "pool_summary_20261015_093848.json",
+  "recipe_ok": true,
+  "calib_ok": true,
+  "nt_flag": false,
+  "pine": "NT3_PRV_ch48",
+  "epochs_rule_summary": 20,
+  "chain_log": "smc_chain__20261015_093029.log",
+  "log_lines": {
+   "recipe": "✅ NT3_PRV_ch48 'refit' (20 эпох) против 'stop': панель Δ VAL +0.0030 ± 0.0007 (сидов 2) | BTC Δ VAL +0.0038 ± 0.0010 | H Δ VAL +0.0029 ± 0.0007 — рецепт подтверждён",
+   "transfer": "✅ NT3_PRV_ch48 (сидов 2): перенос ×0.963 / ×0.963 (рынок ×0.969 / ×0.945, поколение ×0.995 / ×1.018) | Платт a / b: пок. 1 на TUNE 0.814 / -0.354, пок. 2 на VAL 0.814 / -0.317",
+   "nt_vs_f3g": "· NT3_PRV_ch48 − F3_g: панель Δ TUNE +0.0113 ± 0.0010 (сидов 2), Δ VAL +0.0103 ± 0.0011 | BTC Δ TUNE +0.0147 ± 0.0018, Δ VAL +0.0128 ± 0.0019 | H Δ TUNE +0.0120 ± 0.0019, Δ VAL +0.0094 ± 0.0021 | все 31 Δ VAL +0.0114 ± 0.0013 — справочно"
+  },
+  "recipe_delta": [
+   0.003,
+   0.0007
+  ],
+  "transfer": [
+   0.963,
+   0.963
+  ],
+  "nt_vs_f3g_panel_val": [
+   0.0103,
+   0.0011
+  ],
+  "log_consistent": true,
+  "ok": true
+ },
+ "c": {
+  "prod": {
+   "a": {
+    "t_cut": "2026-09-26 09:15:00",
+    "overlay": "data_fresh",
+    "epochs_cfg": 20,
+    "epochs_run": 20,
+    "set": "ALL",
+    "mode": "prod"
+   },
+   "b": {
+    "t_cut": "2026-09-26 09:15:00",
+    "overlay": "data_fresh",
+    "epochs_cfg": 20,
+    "epochs_run": 20,
+    "set": "ALL",
+    "mode": "prod"
+   },
+   "c": {
+    "t_cut": "2026-09-26 09:15:00",
+    "overlay": "data_fresh",
+    "epochs_cfg": 20,
+    "epochs_run": 20,
+    "set": "ALL",
+    "mode": "prod"
+   }
+  },
+  "refit": {
+   "C_a": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 20,
+    "epochs_run": 20,
+    "set": "C",
+    "mode": "refit"
+   },
+   "C_b": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 20,
+    "epochs_run": 20,
+    "set": "C",
+    "mode": "refit"
+   },
+   "ALL_a": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 20,
+    "epochs_run": 20,
+    "set": "ALL",
+    "mode": "refit"
+   },
+   "ALL_b": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 20,
+    "epochs_run": 20,
+    "set": "ALL",
+    "mode": "refit"
+   }
+  },
+  "stop_best_ep_plus1": [
+   21,
+   20
+  ],
+  "epochs_rule_v4_9": 20,
+  "epochs_rule_half_up": 21,
+  "prod_F3_g_t_cut": {
+   "a": "2026-09-26 09:15:00",
+   "b": "2026-09-26 09:15:00",
+   "c": "2026-09-26 09:15:00"
+  },
+  "one_data_end": true,
+  "one_overlay": true,
+  "epochs_all_equal_rule": true,
+  "same_end_as_F3_g": true,
+  "ok": true
+ },
+ "d": {
+  "models": {
+   "prod_NT3_PRV_ch48_L64_a": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "prod_NT3_PRV_ch48_L64_b": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "prod_NT3_PRV_ch48_L64_c": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "pool_C_NT3_PRV_ch48_L64_a_refit": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "pool_C_NT3_PRV_ch48_L64_b_refit": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "pool_ALL_NT3_PRV_ch48_L64_a_refit": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "pool_ALL_NT3_PRV_ch48_L64_b_refit": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "pool_C_NT3_PRV_ch48_L64_a": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   },
+   "pool_C_NT3_PRV_ch48_L64_b": {
+    "n_params": 36961,
+    "lvl_mu": 0.0,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "ok": true
+   }
+  },
+  "research": {
+   "side_cols": [
+    28,
+    29,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    77,
+    78,
+    79,
+    86,
+    87,
+    88,
+    89
+   ],
+   "cnn_ch": 48,
+   "cnn_k": 3,
+   "cnn_dil": [
+    1,
+    2,
+    4,
+    8
+   ],
+   "head_hidden": [
+    96
+   ],
+   "side": "nt_PRV",
+   "price": "multi_g",
+   "side_names": [
+    "log медианы |шага| окна",
+    "log среднего |шага| окна",
+    "путь до окна, кусок 1/8 (71 бар.), медиана диапазона",
+    "путь до окна, кусок 2/8 (64 бар.), медиана диапазона",
+    "путь до окна, кусок 3/8 (32 бар.), медиана диапазона",
+    "путь до окна, кусок 4/8 (16 бар.), медиана диапазона",
+    "путь до окна, кусок 5/8 (8 бар.), медиана диапазона",
+    "путь до окна, кусок 6/8 (4 бар.), медиана диапазона",
+    "путь до окна, кусок 7/8 (2 бар.), медиана диапазона",
+    "путь до окна, кусок 8/8 (2 бар.), медиана диапазона",
+    "положение close в диапазоне 200 баров",
+    "log ширины диапазона 200 баров, медиана диапазона",
+    "отклонение close от средней за 200 баров, медиана диапазона",
+    "log(ср. диапазон 16 / 200 баров)",
+    "log(ср. диапазон 64 / 200 баров)",
+    "log(среднее / медиана диапазона, 200 баров)",
+    "log(медиана |close − open| / медиана диапазона, 200 баров)"
+   ]
+  },
+  "research_skipped": null,
+  "side_cols_match": true,
+  "ok": true
+ },
+ "e": {
+  "a": {
+   "train_assets": 31,
+   "same_as_prod": true,
+   "epochs": 20,
+   "epochs_run": 20,
+   "t_cut": "2026-06-30 02:25:00"
+  },
+  "b": {
+   "train_assets": 31,
+   "same_as_prod": true,
+   "epochs": 20,
+   "epochs_run": 20,
+   "t_cut": "2026-06-30 02:25:00"
+  },
+  "section_5z": {
+   "BTC": [
+    -0.0001,
+    0.0008
+   ],
+   "панель": [
+    -0.0001,
+    0.0004
+   ],
+   "B + C без панели": [
+    -0.0011,
+    0.0008
+   ],
+   "H (у ALL — в обучении)": [
+    -0.0001,
+    0.0006
+   ]
+  },
+  "report_2se": [],
+  "ok": true
+ },
+ "all_ok": true
+}

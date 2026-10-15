@@ -17,7 +17,7 @@
 - Нужен файл, которого нет (он на моём Google Drive), — напиши короткий Colab-скрипт выгрузки в компактный файл. Значения не угадывай.
 
 ## Устройство репо
-- research/ — исследовательские скрипты Colab как есть: sumo_class_train.py (в логах — TrendyCoins_SMC_Train, v5.8), sumo_class_data.py, sumo_class_prices.py, sumo_class_range.py, sumo_class_profiles.py (в логах — TrendyCoins_SMC_Data / _Prices / _Range / _Profiles). Не править и не рефакторить. Нужное бери импортом, если файл импортируется без побочных эффектов; иначе копией в новый модуль со ссылкой на источник и тестом совпадения с оригиналом.
+- research/ — исследовательские скрипты Colab как есть: sumo_class_train.py (в логах — TrendyCoins_SMC_Train, v6.2), sumo_class_data.py, sumo_class_prices.py, sumo_class_range.py, sumo_class_profiles.py (в логах — TrendyCoins_SMC_Data / _Prices / _Range / _Profiles), sumo_class_bars.py (TrendyCoins_SMC_Bars), sumo_class_pack.py (TrendyCoins_SMC_Pack). Не править и не рефакторить. Нужное бери импортом, если файл импортируется без побочных эффектов; иначе копией в новый модуль со ссылкой на источник и тестом совпадения с оригиналом.
 - mri/ — Python-пакет индикатора (эталон инференса, калибровка, экспорт); tests/ — pytest, tests/golden/ — golden-файл; pine/ — индикатор (Pine Script v6); docs/ — заметки и progress.md.
 
 ## Правила проекта

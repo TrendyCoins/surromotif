@@ -4,6 +4,8 @@ Series: fresh BTC (golden file: prod a + Platt, shown bars) and VAL of the 'refi
 (consecutive windows in time order; the final Platt of R4 — in sample for the Platt, descriptive only).
 
     python scripts/display_metrics.py [--out docs/checks/display.json]
+    python scripts/display_metrics.py --model NT3_PRV_ch48      # NT3 (R5 amendment of session 3): fresh BTC from the NT3
+        golden file with the Platt of BTC; VAL 'refit' on ALL (seeds a, b) per asset with the export Platt of that asset
 """
 import argparse
 import json
@@ -17,7 +19,7 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from mri import BARS_DAY  # noqa: E402
-from mri.calibration import THR, load_val  # noqa: E402
+from mri.calibration import THR, load_part, load_val  # noqa: E402
 
 
 def segments(ll):
@@ -62,19 +64,35 @@ def metrics(ll):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/display.json'))
+    ap.add_argument('--model', default='F3_g', choices=['F3_g', 'NT3_PRV_ch48'])
+    ap.add_argument('--out', default=None)
     a = ap.parse_args()
-    with open(os.path.join(ROOT, 'export/mri_model.json'), encoding='utf-8') as fh:
+    nt = a.model != 'F3_g'
+    out = a.out or os.path.join(ROOT, 'docs/checks/nt3/display.json' if nt else 'docs/checks/display.json')
+    with open(os.path.join(ROOT, 'export/mri_model_nt3.json' if nt else 'export/mri_model.json'), encoding='utf-8') as fh:
         ex = json.load(fh)
-    pa, pb = ex['calibration']['platt_a'], ex['calibration']['platt_b']
-    g = pd.read_csv(os.path.join(ROOT, 'tests/golden/btc5m_fresh.csv.gz'))
+    if nt:
+        platt = {k: (v['platt_a'], v['platt_b']) for k, v in ex['calibration']['per_symbol'].items()}
+    else:
+        platt = {None: (ex['calibration']['platt_a'], ex['calibration']['platt_b'])}
+    pa, pb = platt.get('BTCUSDT', platt.get(None))
+    g = pd.read_csv(os.path.join(ROOT, 'tests/golden/btc5m_fresh_nt3.csv.gz' if nt else 'tests/golden/btc5m_fresh.csv.gz'))
     ll = np.where(g['shown'] > 0, pa * g['logit'] + pb, np.nan)
-    res = {'platt': [pa, pb], 'btc_fresh_prod_a': metrics(ll), 'val_refit': {}}
+    res = {'model': a.model, 'platt': {k or 'all': v for k, v in platt.items()}, 'btc_fresh_prod_a': metrics(ll),
+           'val_refit': {}}
     print('BTC fresh (prod a):', json.dumps(res['btc_fresh_prod_a']))
+    if nt:                                    # reference (R11): share of shown bars of fresh BTC at the ceiling of BTC
+        c = ex['display']['ceiling']['by_symbol']['BTCUSDT']
+        lv = ll[np.isfinite(ll)]
+        res['btc_fresh_at_ceiling'] = {'ceiling': c, 'more': float(np.mean(lv >= np.log(c['more']))),
+                                       'less': float(np.mean(-lv >= np.log(c['less'])))}
+        print('BTC fresh at the ceiling:', res['btc_fresh_at_ceiling'])
     rows = []
     for s in ('a', 'b'):
-        val = load_val(os.path.join(ROOT, 'artifacts/calib'), s)
+        val = (load_part(os.path.join(ROOT, 'artifacts/calib'), f'pool_ALL_{a.model}_L64_{s}_refit') if nt
+               else load_val(os.path.join(ROOT, 'artifacts/calib'), s))
         for asset, (sp, _, _) in val.items():
+            pa, pb = platt.get(asset, platt.get(None))
             m = metrics(pa * sp + pb)
             res['val_refit'][f'{asset}_{s}'] = m
             rows.append({'asset': asset, 'seed': s, **m})
@@ -86,7 +104,7 @@ def main():
     res['val_refit_jumpy'] = int(df['jumpy'].sum())
     print(df.groupby('asset')[cols].mean().round(3).to_string())
     print('summary', json.dumps(res['val_refit_summary']), '| jumpy cells', res['val_refit_jumpy'], 'of', len(df))
-    with open(a.out, 'w') as fh:
+    with open(out, 'w') as fh:
         json.dump(res, fh, indent=1)
 
 

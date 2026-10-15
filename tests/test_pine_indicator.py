@@ -1,4 +1,4 @@
-"""The generated indicator (pine/mri.pine from export/mri_model.json): weights decoded from its strings are the export
+"""The legacy F3_g indicator (pine/legacy/mri_f3g.pine from export/mri_model.json): weights decoded from its strings are the export
 weights bit for bit; floors, Platt, ceiling and warm-up are the export values; project rules on wording and colors;
 Pine-safe literals. The arithmetic of the shared core is checked by tests/pine_sim.py (test_reference.py)."""
 import json
@@ -27,7 +27,7 @@ def script(ex):
 
 
 def test_committed_script_is_generated_from_export(script):
-    with open(os.path.join(ROOT, 'pine/mri.pine'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, 'pine/legacy/mri_f3g.pine'), encoding='utf-8') as fh:
         assert fh.read() == script
 
 
