@@ -225,5 +225,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# MRI: exceptions — small golden file and model export are committed on purpose
+# MRI: exceptions — small golden file, model export and the Pine weight libraries are committed on purpose
 !tests/golden/*.csv.gz
+!pine/lib/

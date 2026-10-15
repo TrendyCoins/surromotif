@@ -1,6 +1,7 @@
 """NT3 Pine template: its line-by-line transliteration (tests/pine_sim_nt3.py) == the reference stream (mri.nt3), with
-and without 'compute only the last N bars'; the generated prototype holds the prod a weights bit for bit; project rules on
-wording, colors, literals; history offsets of the path chunks."""
+and without 'compute only the last N bars'; the weights decoded from the libraries (and from the single-script variants)
+are the export weights bit for bit; every compiled unit is smaller than the F3_g script that TradingView compiles; project
+rules on wording, colors, literals; history offsets of the path chunks."""
 import os
 import re
 import sys
@@ -15,7 +16,8 @@ import pine_sim_nt3  # noqa: E402
 import synth  # noqa: E402
 from mri import L, nt3  # noqa: E402
 from mri.pine_gen import ALPHA0, decode_dense  # noqa: E402
-from mri.pine_nt3 import chunk_offsets, flat_values, make_script  # noqa: E402
+from mri.pine_nt3 import (ASCII_ALPHA, LIB_ALIASES, LIB_NAMES, chunk_offsets, decode_ascii, encode_ascii,  # noqa: E402
+                           flat_values, make_script)
 
 FLOOR = 0.2
 
@@ -47,27 +49,78 @@ def test_chunk_offsets():
     assert all(ch[i][1] == ch[i + 1][2] + 1 for i in range(len(ch) - 1))
 
 
+TABLE = {'BTCUSDT': {'floor': 0.17, 'platt_a': 0.8, 'platt_b': -0.3, 'ceil_more': 8.0, 'ceil_less': 5.0}}
+UNKNOWN = {'floor': 0.2, 'platt_a': 0.81, 'platt_b': -0.33, 'ceil_more': 8.0, 'ceil_less': 2.0}
+PASSPORT = {'weights_source': 'random', 'data_end': '-', 'code_version': 'test'}
+
+
 @pytest.fixture(scope='module')
 def proto():
     p = nt3.random_params(seed=11)
-    table = {'BTCUSDT': {'floor': 0.17, 'platt_a': 0.8, 'platt_b': -0.3, 'ceil_more': 8.0, 'ceil_less': 5.0}}
-    unknown = {'floor': 0.2, 'platt_a': 0.81, 'platt_b': -0.33, 'ceil_more': 8.0, 'ceil_less': 2.0}
-    passport = {'weights_source': 'random', 'data_end': '-', 'code_version': 'test'}
-    return p, make_script(p, table, unknown, passport)
+    return p, make_script(p, TABLE, UNKNOWN, PASSPORT)
 
 
-def test_weights_from_strings_are_exact(proto):
-    p, script = proto
-    strs = re.findall(r'decodeInto\(WT, ALPHA, "([^"]*)"\)', script)
-    assert len(strs) >= 28 and all(len(s) <= 3999 for s in strs)
+def lib_weights(script, libs):
+    """Weights the indicator assembles: library strings in the order of its appendW calls."""
+    calls = re.findall(r'var bool WOK(\d\d) = appendW\(WT, (\w+)\.w(\d\d)\(ALPHA\)\)', script)
+    alias = dict(zip(LIB_ALIASES, LIB_NAMES))
+    strs = []
+    for j, (k, al, w) in enumerate(calls):
+        assert int(k) == int(w) == j
+        body = libs[alias[al]]
+        assert f'export w{w}(map<string, int> A) =>\n    decodeArr(S{w}, A)' in body
+        strs.append(re.search(rf'const string S{w} = "([^"]*)"', body).group(1))
+    return strs
+
+
+def test_weights_from_libraries_are_exact(proto):
+    p, (script, libs) = proto
+    assert sorted(libs) == sorted(LIB_NAMES)
+    for name, alias in zip(LIB_NAMES, LIB_ALIASES):
+        assert f'import TrendyCoins/{name}/1 as {alias}' in script
+        assert f'library("{name}", overlay = false)' in libs[name]
+    strs = lib_weights(script, libs)
+    assert len(strs) == 28 and all(len(s) <= 3999 for s in strs)
     got = np.array(decode_dense(''.join(strs)))
     assert np.array_equal(got, flat_values(p).astype(np.float64)) and len(got) == 36961
     alpha = re.search(r'str\.split\("([^"]{2048})", ""\)', script).group(1)
     assert [ord(c) - ALPHA0 for c in alpha] == list(range(2048))
+    assert script.index('import ') > script.index('indicator(')
+
+
+def test_compiled_units_smaller_than_f3g_script(proto):
+    """TradingView compiles the F3_g script and refused the single NT3 script ('compilation request too large'):
+       the indicator and each library stay below the F3_g script in characters, UTF-8, UTF-16 and escaped bytes."""
+    _, (script, libs) = proto
+    with open(os.path.join(ROOT, 'pine/legacy/mri_f3g.pine'), encoding='utf-8') as fh:
+        ref = fh.read()
+
+    def sizes(t):
+        n_wide = sum(ord(c) > 127 for c in t)
+        return len(t), len(t.encode()), len(t.encode('utf-16-le')), len(t) + 5 * n_wide
+    for t in [script] + list(libs.values()):
+        assert all(a < 0.8 * b for a, b in zip(sizes(t), sizes(ref)))
+
+
+def test_ascii_single_script_weights_are_exact():
+    x = np.concatenate([np.random.default_rng(0).normal(0, 1, 2000).astype(np.float32),
+                        np.array([0.0, -0.0, 1e-40, -3e-39, 1.0, -2.0, 3.4e38, -1.1754944e-38], dtype=np.float32)])
+    s = encode_ascii(x)
+    assert len(s) == 5 * len(x) and set(s) <= set(ASCII_ALPHA) and len(ASCII_ALPHA) == 91
+    assert not set('"\\/') & set(ASCII_ALPHA)
+    assert np.array_equal(np.array(decode_ascii(s)), x.astype(np.float64))
+    p = nt3.random_params(seed=12)
+    script, libs = make_script(p, TABLE, UNKNOWN, PASSPORT, weights='ascii')
+    assert not libs and 'import ' not in script
+    strs = re.findall(r'decodeInto\(WT, ALPHA, "([^"]*)"\)', script)
+    assert np.array_equal(np.array(decode_ascii(''.join(strs))), flat_values(p).astype(np.float64))
+    assert re.search(r'str\.split\("([^"]*)", ""\)', script).group(1) == ASCII_ALPHA
 
 
 def test_wording_colors_literals(proto):
-    _, script = proto
+    _, (script, libs) = proto
+    for lib in libs.values():
+        assert lib.startswith('//@version=6\n// SPDX-License-Identifier: Apache-2.0\n// © TrendyCoins\n')
     assert script.startswith('//@version=6\n// SPDX-License-Identifier: Apache-2.0\n// © TrendyCoins\n')
     code = re.sub(r'"[一-嗿]+"', '""', script)
     banned = r'\b(buy|sell|long|short|bull\w*|bear\w*|arrow\w*|triangle\w*|label_?up|label_?down)\b'
@@ -87,10 +140,13 @@ def test_production_indicator_is_generated_from_export():
     from mri.params import from_dict
     from mri.pine_nt3 import make_indicator
     ex = load_export(os.path.join(ROOT, EXPORT))
-    script = make_indicator(ex)
+    script, libs = make_indicator(ex)
     with open(os.path.join(ROOT, 'pine/mri.pine'), encoding='utf-8') as fh:
         assert fh.read() == script
-    strs = re.findall(r'decodeInto\(WT, ALPHA, "([^"]*)"\)', script)
+    for name, text in libs.items():
+        with open(os.path.join(ROOT, f'pine/lib/{name}.pine'), encoding='utf-8') as fh:
+            assert fh.read() == text
+    strs = lib_weights(script, libs)
     assert np.array_equal(np.array(decode_dense(''.join(strs))), flat_values(from_dict(ex['model'])).astype(np.float64))
 
     def table(fn):
