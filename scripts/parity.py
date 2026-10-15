@@ -180,12 +180,17 @@ def main():
     ap.add_argument('csv')
     ap.add_argument('--symbol', default='BTCUSDT')
     ap.add_argument('--export', default=os.path.join(ROOT, 'export/mri_model_nt3.json'))
+    ap.add_argument('--calc-bars', type=int, default=0, help="the indicator's 'Compute only the last N bars' at export")
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
     with open(a.export, encoding='utf-8') as fh:
         ex = json.load(fh)
     tv, dec = load_tv(a.csv)
     ref = reference(tv, ex, a.symbol)
+    if a.calc_bars:          # Pine: the network starts at heavyFrom = last_bar_index - N - 64; first window 63 bars later
+        heavy0 = max(len(tv) - 1 - a.calc_bars - 64, 0)
+        cols = [c for c in ref.columns if c not in ('norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'ema7', 'ema1')]
+        ref.loc[:heavy0 + 62, cols] = np.nan
     res = compare(tv, dec, ref, INPUTS_NT3 if is_nt3(ex) else INPUTS)
     res['model'] = ex['model'].get('id', 'F3_g')
     res['symbol'] = a.symbol

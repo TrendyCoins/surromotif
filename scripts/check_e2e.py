@@ -10,7 +10,11 @@ NT3 (rules R3 amendment, session 3): the history inputs run over consecutive CSV
 research nt_segment / SeriesData._nt_arrays), not clipped at the part start, and there is no EMA: the reference computes
 on the continuous bars of the tail without exclusions.
 
-    python scripts/check_e2e.py [--seed a] [--model NT3_PRV_ch48 --set ALL]
+    python scripts/check_e2e.py [--seed a] [--model NT3_PRV_ch48 --set ALL] [--logits artifacts/calib/nt3_btc_val_logits.npz]
+
+--logits: the research logits of the same windows recomputed in Colab with TF32 off / on (scripts/colab_nt3_val_logits.py,
+after the R3 failure of session 3): the reference is compared with the TF32-off logits as well (the rule's threshold), and
+the TF32-on logits with the stored ones.
 """
 import argparse
 import json
@@ -35,6 +39,7 @@ def main():
     ap.add_argument('--seed', default='a')
     ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID])
     ap.add_argument('--set', default='C', choices=['C', 'ALL'], help="training set of the 'refit' model")
+    ap.add_argument('--logits', default=None, help='npz of scripts/colab_nt3_val_logits.py')
     ap.add_argument('--floor', type=float, default=None)
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
@@ -77,6 +82,18 @@ def main():
            'max_dlogit_floor_binding': float(d[floor_bind].max()) if floor_bind.any() else 0.0,
            'n_dlogit_gt_1e-4': int((d > 1e-4).sum())}
     res['pass_R3'] = bool(res['same_window_set'] and res['max_dlogit_non_tie'] <= 1e-4)
+    if a.logits:
+        run = f'pool_{a.set}_{a.model}_L64_{a.seed}_refit'
+        with np.load(a.logits) as z:
+            off, on = z[f'{run}__tf32_off'].astype(np.float64), z[f'{run}__tf32_on'].astype(np.float64)
+            res['colab_device'] = str(z['device'])
+        d2 = np.abs(ref['logit'] - off)
+        res['tf32_off'] = {'max_dlogit_non_tie': float(d2[~tie].max()), 'p99': float(np.percentile(d2, 99)),
+                           'max_dlogit_tie': float(d2[tie].max()) if tie.any() else 0.0,
+                           'max_dlogit_floor_binding': float(d2[floor_bind].max()) if floor_bind.any() else 0.0,
+                           'n_dlogit_gt_1e-4': int((d2 > 1e-4).sum())}
+        res['tf32_on_vs_stored_max'] = float(np.abs(on - sp).max())
+        res['pass_R3_tf32_off'] = bool(res['same_window_set'] and res['tf32_off']['max_dlogit_non_tie'] <= 1e-4)
     print(json.dumps(res, indent=1))
     if a.out:
         with open(a.out, 'w') as fh:
