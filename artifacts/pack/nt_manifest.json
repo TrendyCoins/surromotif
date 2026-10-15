@@ -1,0 +1,535 @@
+{
+ "model": "NT3_PRV_ch48",
+ "L": 64,
+ "created": "2026-10-15 09:43:06",
+ "checks_ok": true,
+ "epochs_rule": 20,
+ "gate": {
+  "summary": "pool_summary_20261015_093848.json",
+  "recipe_ok": true,
+  "calib_ok": true,
+  "nt_flag": false,
+  "pine": "NT3_PRV_ch48"
+ },
+ "runs": {
+  "prod_NT3_PRV_ch48_L64_a": {
+   "tag": "prod_NT3_PRV_ch48_L64_a",
+   "mode": "prod",
+   "seed": "a",
+   "set": "ALL",
+   "epochs": 20,
+   "best_ep": 19,
+   "epochs_run": 20,
+   "t_cut": "2026-09-26 09:15:00",
+   "data_overlay": "/content/drive/MyDrive/TrendyCoins/SMC/data_fresh/",
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-07 09:13:01",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7983018057880508,
+   "panel_val": 0.7895128714103392,
+   "btc_val": 0.7916293738344212,
+   "holdout_val": 0.7703263515539013
+  },
+  "prod_NT3_PRV_ch48_L64_b": {
+   "tag": "prod_NT3_PRV_ch48_L64_b",
+   "mode": "prod",
+   "seed": "b",
+   "set": "ALL",
+   "epochs": 20,
+   "best_ep": 19,
+   "epochs_run": 20,
+   "t_cut": "2026-09-26 09:15:00",
+   "data_overlay": "/content/drive/MyDrive/TrendyCoins/SMC/data_fresh/",
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-07 09:33:07",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7981346222211501,
+   "panel_val": 0.7897039246339536,
+   "btc_val": 0.7918912135017888,
+   "holdout_val": 0.769792011586076
+  },
+  "prod_NT3_PRV_ch48_L64_c": {
+   "tag": "prod_NT3_PRV_ch48_L64_c",
+   "mode": "prod",
+   "seed": "c",
+   "set": "ALL",
+   "epochs": 20,
+   "best_ep": 19,
+   "epochs_run": 20,
+   "t_cut": "2026-09-26 09:15:00",
+   "data_overlay": "/content/drive/MyDrive/TrendyCoins/SMC/data_fresh/",
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-07 09:53:14",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7974671781220776,
+   "panel_val": 0.78937584875811,
+   "btc_val": 0.7919735340263533,
+   "holdout_val": 0.7694905999015195
+  },
+  "pool_C_NT3_PRV_ch48_L64_a_refit": {
+   "tag": "pool_C_NT3_PRV_ch48_L64_a_refit",
+   "mode": "refit",
+   "seed": "a",
+   "set": "C",
+   "epochs": 20,
+   "best_ep": 19,
+   "epochs_run": 20,
+   "t_cut": "2026-06-30 02:25:00",
+   "data_overlay": null,
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-07 08:33:53",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7962022868167313,
+   "panel_val": 0.7792415278984796,
+   "btc_val": 0.7820003929382444,
+   "holdout_val": 0.7577751489302823
+  },
+  "pool_C_NT3_PRV_ch48_L64_b_refit": {
+   "tag": "pool_C_NT3_PRV_ch48_L64_b_refit",
+   "mode": "refit",
+   "seed": "b",
+   "set": "C",
+   "epochs": 20,
+   "best_ep": 19,
+   "epochs_run": 20,
+   "t_cut": "2026-06-30 02:25:00",
+   "data_overlay": null,
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-07 08:48:33",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7970751121329963,
+   "panel_val": 0.7801446398615324,
+   "btc_val": 0.7828762281078098,
+   "holdout_val": 0.758377749818138
+  },
+  "pool_C_NT3_PRV_ch48_L64_a": {
+   "tag": "pool_C_NT3_PRV_ch48_L64_a",
+   "mode": "stop",
+   "seed": "a",
+   "set": "C",
+   "epochs": 60,
+   "best_ep": 20,
+   "epochs_run": 31,
+   "t_cut": "2026-06-30 02:25:00",
+   "data_overlay": null,
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-07 07:53:20",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7879564667040255,
+   "panel_val": 0.7766384891238182,
+   "btc_val": 0.7781615045487489,
+   "holdout_val": 0.7548625157037055
+  },
+  "pool_C_NT3_PRV_ch48_L64_b": {
+   "tag": "pool_C_NT3_PRV_ch48_L64_b",
+   "mode": "stop",
+   "seed": "b",
+   "set": "C",
+   "epochs": 60,
+   "best_ep": 19,
+   "epochs_run": 30,
+   "t_cut": "2026-06-30 02:25:00",
+   "data_overlay": null,
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-07 08:11:03",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7888369025659531,
+   "panel_val": 0.7766921525129219,
+   "btc_val": 0.7790439591612968,
+   "holdout_val": 0.7554297641795967
+  },
+  "pool_ALL_NT3_PRV_ch48_L64_a_refit": {
+   "tag": "pool_ALL_NT3_PRV_ch48_L64_a_refit",
+   "mode": "refit",
+   "seed": "a",
+   "set": "ALL",
+   "epochs": 20,
+   "best_ep": 19,
+   "epochs_run": 20,
+   "t_cut": "2026-06-30 02:25:00",
+   "data_overlay": null,
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-09 02:02:40",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.795903130367972,
+   "panel_val": 0.779270070019738,
+   "btc_val": 0.781865627502697,
+   "holdout_val": 0.7577375677510219
+  },
+  "pool_ALL_NT3_PRV_ch48_L64_b_refit": {
+   "tag": "pool_ALL_NT3_PRV_ch48_L64_b_refit",
+   "mode": "refit",
+   "seed": "b",
+   "set": "ALL",
+   "epochs": 20,
+   "best_ep": 19,
+   "epochs_run": 20,
+   "t_cut": "2026-06-30 02:25:00",
+   "data_overlay": null,
+   "data_dir": "/content/drive/MyDrive/TrendyCoins/SMC/data/",
+   "when": "2026-10-09 02:19:11",
+   "ver": 1,
+   "side": "nt_PRV",
+   "cnn_ch": 48,
+   "head_hidden": [
+    96
+   ],
+   "price": "multi_g",
+   "panel_tune": 0.7967584578163304,
+   "panel_val": 0.7799136593674064,
+   "btc_val": 0.7827413462290004,
+   "holdout_val": 0.7581478647396761
+  }
+ },
+ "files": [
+  {
+   "path": "artifacts/weights/prod_NT3_PRV_ch48_L64_a.json",
+   "bytes": 24816,
+   "sha256": "92d944abbcbebcadeebd92989e4d779301f2706446142b82c252c36464c0cf79",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/prod/prod_NT3_PRV_ch48_L64_a.json"
+  },
+  {
+   "path": "artifacts/weights/prod_NT3_PRV_ch48_L64_a_slim.npz",
+   "bytes": 141963,
+   "sha256": "06ebbc72dc703566f6222800c62cad70a52efa0bcc7b0d5661bcfd85ee0dc291",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/prod/prod_NT3_PRV_ch48_L64_a.npz (только sd_*)"
+  },
+  {
+   "path": "artifacts/weights/prod_NT3_PRV_ch48_L64_b.json",
+   "bytes": 24788,
+   "sha256": "402c607db4fbcab8a16f5b2277413634a48ce7118f9c4dec462f70bfc6db02cc",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/prod/prod_NT3_PRV_ch48_L64_b.json"
+  },
+  {
+   "path": "artifacts/weights/prod_NT3_PRV_ch48_L64_b_slim.npz",
+   "bytes": 141897,
+   "sha256": "2aad64b1ba132edfcc00f43479aad78299f72dc8884d96dd219fd64be6068d79",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/prod/prod_NT3_PRV_ch48_L64_b.npz (только sd_*)"
+  },
+  {
+   "path": "artifacts/weights/prod_NT3_PRV_ch48_L64_c.json",
+   "bytes": 24785,
+   "sha256": "6aa4b436e2384a0761abd10ef0e3289df5d3843873e51ec9df8952e394ffbce3",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/prod/prod_NT3_PRV_ch48_L64_c.json"
+  },
+  {
+   "path": "artifacts/weights/prod_NT3_PRV_ch48_L64_c_slim.npz",
+   "bytes": 141982,
+   "sha256": "3626ce374a24b914b23fefb643b8af7bf83bcd090992b4fc41fcf02a7ff1ec73",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/prod/prod_NT3_PRV_ch48_L64_c.npz (только sd_*)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_refit.json",
+   "bytes": 24406,
+   "sha256": "8061acaafcb482b3746f1089c477487c92ec36a5231596b3f25fd38749655217",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a_refit.json"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_refit_part0.npz",
+   "bytes": 10523100,
+   "sha256": "7f5063b8b11b2389423c4ec6e750d5144c1dbef2b2b34be20710edd5f34b1f99",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_refit_part1.npz",
+   "bytes": 10814001,
+   "sha256": "25b4cd1aa3421fb61b84448ee32631472aa07b3fb2f1bd9dd73b0336d9abe997",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_refit_part2.npz",
+   "bytes": 10704919,
+   "sha256": "3bdc3aba731b53b156bb763e9a9ef88492f60783479ea5969a901d3183740859",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_refit_part3.npz",
+   "bytes": 11284458,
+   "sha256": "d33785f0a0a750531363bce5022503a96e0be9b47783a352b6c8a61e24b6c374",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_refit_part4.npz",
+   "bytes": 4636680,
+   "sha256": "43add1307ea0479ff6ada5a1d857f48c90a9bef1b3884943b379b33b911a5d59",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_refit.json",
+   "bytes": 24376,
+   "sha256": "89be3727b282d64a772c765dd7b258f4049ed8bd6c6e786c98be99fbbcde7bf2",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b_refit.json"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_refit_part0.npz",
+   "bytes": 10527579,
+   "sha256": "959def07eefab6c04b75c483115a985685b9c4782a76b8ba21c63dac7a22884c",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_refit_part1.npz",
+   "bytes": 10818576,
+   "sha256": "3271df93732e26e2fc4c374f73e8a1fc1af6174fef903b6ba2d28fa733c6a420",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_refit_part2.npz",
+   "bytes": 10709006,
+   "sha256": "86e184eb0b6114daf71795b70373f79d6d8b002f2b4438cbcc69ede9ff763872",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_refit_part3.npz",
+   "bytes": 11288601,
+   "sha256": "c60135c674726cd1bb82adf81da9fed884c73bde3b8becd0d2385ff41831a5b5",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_refit_part4.npz",
+   "bytes": 4638140,
+   "sha256": "2ed6284a3d9abb31767beff58adcc32a7470120ef3fbd48a11c134848ad3ee41",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a.json",
+   "bytes": 29549,
+   "sha256": "47420447d3d0a00d34463e85754376777fa3850063893863df3533aee3ab68d9",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a.json"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_part0.npz",
+   "bytes": 10530216,
+   "sha256": "7ef35431ba78eee3352084123c2a4fb7c3c54c55a1ec8298c31a63d5baf4d8f5",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_part1.npz",
+   "bytes": 10821239,
+   "sha256": "3d4e3b1bc1923fe4922430ebc6909223280933707b4fdc038a1d01ca173a5bad",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_part2.npz",
+   "bytes": 10712749,
+   "sha256": "d9ab7533a191da08b6277ff5f68630a0af86d351f826d936a2cbd221950aa057",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_part3.npz",
+   "bytes": 11289862,
+   "sha256": "b2c15abde8e791bc03ebfff129b2ca5a03a3c41f789687727645392c98fce875",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_a_part4.npz",
+   "bytes": 4638212,
+   "sha256": "4899e2d007ccff285afb437c5b72d60b0e26fbdb649f002c612f1bbaf17cb636",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_a.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b.json",
+   "bytes": 29063,
+   "sha256": "1bafae079a4c6495fcc58c59cc376e691ee4ba88ca2310c78307dadd8f14af62",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b.json"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_part0.npz",
+   "bytes": 10516582,
+   "sha256": "c63b254172c5f90fbdebd290214fd1fed97250a109270089bc5b046fd6f998dc",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_part1.npz",
+   "bytes": 10806282,
+   "sha256": "18407135ae09ce9be6fd8def1c689908885a3b56a4d919004d94e8e17d247c26",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_part2.npz",
+   "bytes": 10697688,
+   "sha256": "8848429ae3113cf1788b95a726bec16a63664b20ba7175d50c309fd8e3b7549c",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_part3.npz",
+   "bytes": 11273996,
+   "sha256": "b440e6363d6b381f75e9bca71c8da3c6b547f7fd47cddee5d5c68c22c82accbb",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_C_NT3_PRV_ch48_L64_b_part4.npz",
+   "bytes": 4631482,
+   "sha256": "bbc01975eb5a6d9804c786ec93f0df9b8b28e539af3fab7b5fc3cf52dce726c8",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_C_NT3_PRV_ch48_L64_b.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit.json",
+   "bytes": 24766,
+   "sha256": "1496edf6f369f50dd80f34bd90bd166beed3ad2a8e7432f0a33723f72c584b17",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_a_refit.json"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part0.npz",
+   "bytes": 10519126,
+   "sha256": "f11138a8a46f7ce379e0ddba53b67d39540e42532776094f89db9aa15f7036a6",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part1.npz",
+   "bytes": 10809783,
+   "sha256": "486f23c50c460b92401dfe8d1e6d3cfd253558afbd5ac4136ffe6727da07bb6e",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part2.npz",
+   "bytes": 10702237,
+   "sha256": "5b5610a39ef0b1b7a71a681344592196b6414734d4469cc29e62a7491587921b",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part3.npz",
+   "bytes": 11283457,
+   "sha256": "a1c4bed1b0f8c00f8b9521b6c7539c8b4cfe07aab00ee2dff160fdb8415fc61b",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part4.npz",
+   "bytes": 4634295,
+   "sha256": "f4db41724a2117de18ba6b07a444e5a2bac96cca344151713923738b7156dbc6",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_a_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_b_refit.json",
+   "bytes": 24781,
+   "sha256": "bcc7816f867d57e7f524c3b01369b01c963f1b66cd2b9011dcb3b38469157a33",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_b_refit.json"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_b_refit_part0.npz",
+   "bytes": 10521127,
+   "sha256": "6cc994f3ce970bfc2cefce643e6b84d0874162433b271891a52420bc86eaccb6",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_b_refit_part1.npz",
+   "bytes": 10812302,
+   "sha256": "1bb8a89ce59ca749c829b7648d2630fd6f6c70adc3ed52db19eafcb1bf919105",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_b_refit_part2.npz",
+   "bytes": 10703097,
+   "sha256": "1f39d9b77ca7c1ea131759eeb80e8113ec3fa3d73b876aa15044f79ee40fefd6",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_b_refit_part3.npz",
+   "bytes": 11281432,
+   "sha256": "4f64fa57f8c989327738faaca01329e9ea6461eac196a3ca14c4e9e8222476ce",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_b_refit_part4.npz",
+   "bytes": 4635050,
+   "sha256": "1bf9c5763929ca19ec4d68a09972e878e4d16735c2be7f667b50e4768728dad0",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_ALL_NT3_PRV_ch48_L64_b_refit.npz (часть)"
+  },
+  {
+   "path": "artifacts/logs/nt/pool_summary_20261015_093848.json",
+   "bytes": 3400,
+   "sha256": "16641276519b5e864a0f813e3f41f0646b8a02c9c6afc4e5c657d7e26ce85de2",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/pool/pool_summary_20261015_093848.json"
+  },
+  {
+   "path": "artifacts/logs/nt/smc_check__20261006_165540.log",
+   "bytes": 20362,
+   "sha256": "a195bb0a801a47ea6652c4de8b3e61d36949197cef893ec40eda1f8483b13e42",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/logs/smc_check__20261006_165540.log"
+  },
+  {
+   "path": "artifacts/logs/nt/smc_check__20261006_165844.log",
+   "bytes": 96,
+   "sha256": "ccf5dd2a47900b958ef02a84808c12d35952c21a70ae1bd653edaa7f04e05ab5",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/logs/smc_check__20261006_165844.log"
+  },
+  {
+   "path": "artifacts/logs/nt/smc_nt_sum__20261007_040039.log",
+   "bytes": 17300,
+   "sha256": "68a68017ade280772f8f570d7333f5f1bf5c0ebf50dcd24c6afe5a01f8ec1b52",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/logs/smc_nt_sum__20261007_040039.log"
+  },
+  {
+   "path": "artifacts/logs/nt/smc_chain__20261007_072732.log",
+   "bytes": 161489,
+   "sha256": "877c170bf1ce86a3979f39d971eca45113dbf5fddfa095a1d89e885dbac7306b",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/logs/smc_chain__20261007_072732.log"
+  },
+  {
+   "path": "artifacts/logs/nt/smc_chain__20261009_014046.log",
+   "bytes": 69509,
+   "sha256": "1db6ebe3b753d596ae41d5de58850c6256713797022974c08742f8ccaaab76d1",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/logs/smc_chain__20261009_014046.log"
+  },
+  {
+   "path": "artifacts/logs/nt/smc_chain__20261015_093029.log",
+   "bytes": 50437,
+   "sha256": "0675705b687861d1d14b67f629d13fb551800d52dae5b9a0af3633f7ec56021c",
+   "from": "/content/drive/MyDrive/TrendyCoins/SMC/runs/logs/smc_chain__20261015_093029.log"
+  },
+  {
+   "path": "artifacts/pack/npz_inventory_nt.txt",
+   "bytes": 150952,
+   "sha256": "4b39c56850db2d0f8c355afca9c483cc7ec01b6a6ec2b3503e6c144c3e473a8a",
+   "from": "опись исходных npz"
+  }
+ ],
+ "note": "части *_partK.npz — один исходный npz прогона пула, разрезанный по ключам: объединить словари"
+}
