@@ -199,6 +199,41 @@ v5.8 (боевые модели): по правилам v5.6-5.7 сайт / MQL 
 smc_series / smc_prices / smc_range из одной выгрузки CSV (контрольные суммы проверяются до старта, prod_overlay). MODE 'chain'
 — шаги CHAIN по порядку в одной консоли: 'pool:G1' → 'pool_sum' (рецепт F3_g) → 'pool:T'; ошибка шага (например, закрытые
 ворота рецепта) останавливает цепочку. Исследовательские прогоны и проверка не менялись.
+
+v6.0 (модели без времени): новые F1 и F3 не видят ничего, привязанного ко времени: ни часа суток и дня недели, ни норм волы
+за 30 / 7 / 1 сутки, ни хода за сутки / 3 суток / неделю, ни грубого пути с нормой за сутки (столбцы side_feats 0-25 у новых
+моделей не используются; у старых — как были). Взамен — признаки истории В БАРАХ (столбцы 37-89; файл smc_bars из
+TrendyCoins_SMC_Bars: сырые OHLC баров smc_series и 200 баров перед каждой частью). Глубина — 200 баров перед окном, вместе с
+окном 264 бара; глубже ничего не читается (проверка возмущением бара — MODE 'check'). Нормировки (NT_SCALES): медиана и
+среднее диапазона бара (high − low) и медиана и среднее |close − open| за 200 баров перед окном; первая — тот же нормировщик,
+что у r. Группы: P — путь до окна 8 кусками (71, 64, 32, 16, 8, 4, 2, 2 бара, от старого к свежему; PU — 8 равных кусков):
+ход куска / (√длины · нормировка), со знаком ориентации формы; R — положение close в диапазоне 200 баров (со знаком
+ориентации), log ширины диапазона, отклонение close от средней close за 200 баров (со знаком); V — log(ср. диапазон 16 / 200
+баров), log(ср. диапазон 64 / 200), log(среднее / медиана диапазона), log(медиана |close − open| / медиана диапазона).
+Знакозависимое прошлое кончается на баре start − 2 (бар прямо перед окном не берётся, как раньше), нормировки и V — на
+start − 1. Правило ничьей ориентации (решено 2026-10-04, так же в экспорте MRI): форма переворачивается только при конце
+центрированного пути < −ORIENT_EPS · делитель окна, один и тот же знак — в to_shapes и side_feats. Варианты NT1_*
+(архитектура F1 = RG_den) и NT3_* (архитектура F3 = F3_g, Pine), контроль C0_null_nt; задания NTa / NTb / NTc (сиды a / b /
+c, один BTC); MODE 'nt_sum' — вердикт по правилам и сравнение со старыми F1 / F3 (RG_den, F3_g: те же окна и суррогаты,
+парно). MODE 'check' — сверки файла баров, глубины истории, честности новых признаков и старые RG_den / F3_g через новый код.
+
+v6.1 (F3 без времени — на пул и в бой): по вердикту 'nt_sum' (2026-10-07) новая F3 для Pine — NT3_PRV_ch48 (F3_g без времени:
+48 каналов, голова 96, боковые входы nt_PRV — знаменатель окна и история в барах P + R + V, медиана диапазона), новая F1 —
+NT1_PRV (запомнена, на пуле пока не учится). Пул: признаки истории у всех 31 ассета (smc_bars в SMC/data/, у BTC / ETH накладки
+— в SMC/data_fresh/: накладка проверяет теперь и smc_bars, контрольная сумма — от того же ряда); на устройстве — только столбцы
+истории моделей задания (NT_KEEP), у моделей без них файлы баров не читаются. Эпохи фиксированного расписания модели, которой
+нет в POOL['cos_epochs'], — по правилу v4.9 прямо из её прогонов 'stop' на наборе C (сиды рецепта a / b): цепочка 'stop' →
+сводка → 'refit' → сводка → 'prod' идёт в одной консоли без правки кода между шагами. Задания: NS ('stop' a / b; NS1 / NS2 — по
+сиду), NG ('refit' a / b), NP ('prod' a / b / c; NP1 / NP2 / NP3); CHAIN — всё по порядку. В сводке пула — раздел (5ж): NT3 против
+F3_g на наборе C ('stop', те же сиды, парно; справочно, без ворот: ❗ при Δ панели VAL <= −2 SE — разбор до экспорта), эпохи
+'refit' / 'prod' против правила. Для экспорта — ноутбук TrendyCoins_SMC_Pack (sumo_class_pack.py): архив artifacts/ для репо.
+
+v6.2 (поассетная калибровка Платта): калибровка индикатора — по каждому ассету (решение Фёдора). Источник — 'refit' Pine-модели
+на наборе ALL (31 ассет, как у боевой, те же эпохи; задание NR, сиды a / b): боевой рецепт на год раньше, VAL вне выборки у всех
+31. У 'refit' на C ассеты H (FIL, LINK, XLM) невиданные, а в бою они в обучении — Платт для них по 'refit' на C подогнан бы на
+другом состоянии модели. 'refit' на C остаётся: ворота рецепта и калибровка незнакомого символа (H невиданные). Набор ALL теперь
+допускает и 'refit' (раньше — только 'prod'). Сводка пула, раздел (5з): ALL против C по ассетам, общий и поассетный Платт,
+устойчивость по полугодиям (справочно; правила калибровки — в репо).
 """
 
 import gc
@@ -403,6 +438,10 @@ LEVEL_SIGNED = (False, True)
 LEVEL_KINDS = ('multi_g', 'multi_gc')       # цены с диапазоном бара (нужен smc_range)
 LVL_EPS = 0.1                               # v5.7, lvl_log: log(g / делитель окна + 0.1) — бар без движения не уходит в −∞
 SIDE_DAYS = (30, 7, 1)             # v4.5: нормы |r| для боковых входов — EMA за 30 / 7 / 1 сутки
+# v6.0, правило ничьей ориентации (как в экспорте MRI): форма переворачивается, только если конец центрированного пути
+# close < −ORIENT_EPS · делитель окна. Без запаса на сетке цены конец пути бывает ровно 0, и знак решал шум float32 (на GPU —
+# разный при разной пачке), причём to_shapes и side_feats могли разойтись. 0 — старое правило (переворот при конце < 0)
+ORIENT_EPS = 1e-4
 
 
 class SeriesData:
@@ -433,14 +472,18 @@ class SeriesData:
                 raise FileNotFoundError(f"🍆 АЙ, ОШИБКА! нет {path} — сначала TrendyCoins_SMC_Data")
             d = np.load(path, allow_pickle=False)
             s = {'asset': a, 'meta': json.loads(str(d['meta'])), 'floors': {}, 'probe': {},
-                 'bank': {}, 'off': {}, 'fin': {}, 'n': {}}
+                 'bank': {}, 'off': {}, 'fin': {}, 'n': {}, 'bars': {}}
             px = self._load_prices(a, d) if price != 'close' else None
             pxs = MULTI_PRICES if price in MULTI_KINDS else (price,)
             gx = self._load_range(a, d) if price in LEVEL_KINDS else None     # v5.6: диапазон бара
+            # v6.0: сырые OHLC (None — нет файла); v6.1: NT_KEEP = () — столбцы истории не нужны, файл не читается
+            bx = None if NT_KEEP == () else self._load_bars(a, d)
             for key, code in (('tr', 0), ('va', 1)):
                 r = d[f'r_{key}'].astype(np.float32)
                 s['off'][key], s['n'][key] = off, len(r)
                 s['fin'][key] = d[f'fin_{key}'].astype(np.int64)
+                s['bars'][key] = None if bx is None else {k_: bx[f'{k_}_{key}'] for k_ in
+                                                         ('o', 'h', 'l', 'c', 'pre_o', 'pre_h', 'pre_l', 'pre_c')}
                 for arr, fill, lst in ((r, np.nan, rr), (d[f't_{key}'], -1, tt),
                                        (np.full(len(r), code, np.int8), -1, pp),
                                        (np.full(len(r), i, np.int16), -1, ss)):
@@ -536,6 +579,7 @@ class SeriesData:
         self.seg0_t = torch.from_numpy(seg0).to(DEVICE)
         self._win, self._fin_vals = {}, {}
         self._side_arrays()
+        self._nt_arrays()
 
     def _load_prices(self, asset, d):
         """v4.5: сдвиги цены бара из TrendyCoins_SMC_Prices; контрольная сумма ряда обязана совпасть со smc_series."""
@@ -571,6 +615,33 @@ class SeriesData:
             if len(gx[f'g_{key}']) != len(d[f'r_{key}']):
                 raise ValueError(f"🍆 АЙ, ОШИБКА! {asset}: длина диапазона {len(gx[f'g_{key}'])} против {len(d[f'r_{key}'])} у ряда")
         return {k: gx[k] for k in gx.files if k != 'meta'}
+
+    def _load_bars(self, asset, d):
+        """v6.0: сырые OHLC баров smc_series и NT_HIST баров перед первым баром каждой части (TrendyCoins_SMC_Bars) — для
+           признаков истории в барах. Контрольная сумма r обязана совпасть со smc_series, close — бит в бит с close_tr /
+           close_va. Нет файла — None: признаки истории — нули, модели с ними не запустятся (check_absv)."""
+        path = data_path(f"smc_bars_{asset}_{self.tf}_N{self.N}.npz")
+        if not os.path.isfile(path):
+            return None
+        bx = np.load(path, allow_pickle=False)
+        meta = json.loads(str(bx['meta']))
+        out = {}
+        for key in ('tr', 'va'):
+            crc = zlib.crc32(d[f'r_{key}'].astype(np.float32).tobytes())
+            if (meta.get('crc') or {}).get(key) != crc:
+                raise ValueError(f"🍆 АЙ, ОШИБКА! {os.path.basename(path)} посчитан для другого ряда (smc_series менялся или "
+                                 f"файлы из разных папок) — перезапусти TrendyCoins_SMC_Bars")
+            n = len(d[f'r_{key}'])
+            for k_ in ('o', 'h', 'l', 'c'):
+                v, pre = bx[f'{k_}_{key}'].astype(np.float64), bx[f'pre_{k_}_{key}'].astype(np.float64)
+                if len(v) != n or len(pre) < NT_HIST:
+                    raise ValueError(f"🍆 АЙ, ОШИБКА! {asset}: в {os.path.basename(path)} баров {len(v)} (у ряда {n}), "
+                                     f"перед частью {len(pre)} (нужно {NT_HIST})")
+                out[f'{k_}_{key}'], out[f'pre_{k_}_{key}'] = v, pre[-NT_HIST:]
+            if f'close_{key}' in d.files and not np.array_equal(out[f'c_{key}'], d[f'close_{key}'].astype(np.float64)):
+                raise ValueError(f"🍆 АЙ, ОШИБКА! {asset}: close в {os.path.basename(path)} не совпадает с smc_series бит в бит "
+                                 f"— файлы из разных выгрузок CSV, перезапусти TrendyCoins_SMC_Bars")
+        return out
 
     def gw(self, starts, L):
         """v4.6: окна модели: (n, L) — приращения своей цены; у 'multi' — (n, 3, L): close, HL/2, HLC/3; v5.6: у 'multi_g' —
@@ -696,6 +767,44 @@ class SeriesData:
         self.absv_log_t = torch.from_numpy(np.log(np.maximum(np.nan_to_num(out, nan=1.0), 1e-6)).astype(np.float32)).to(DEVICE)
         self.close_px = None                                     # цены больше не нужны (у пула — сотни МБ)
 
+    def _nt_arrays(self):
+        """v6.0, признаки истории в барах (столбцы side_feats NT_COL0 …, см. nt_segment): считаются один раз по сырым OHLC
+           каждой части вместе с NT_HIST барами перед ней — у каждого окна полная история, и на первых барах части тоже. Знак
+           ориентации формы ставит side_feats (у реала и суррогата он свой). NT_KEEP — какие столбцы держать на устройстве
+           (None — все). Нет файла баров хотя бы у одного ассета — nt_ok = False, признаки — нули. Сверка по пути: медиана
+           диапазона за 200 баров перед баром — тот же нормировщик, что у r (r · медиана = Δclose). Сырые цены после счёта не
+           хранятся; для проверки глубины (MODE 'check') остаётся проба — первые 1200 баров первой части с разогревом."""
+        n = len(self.r)
+        rows = tuple(range(NT_N)) if NT_KEEP is None else tuple(sorted(c - NT_COL0 for c in NT_KEEP))
+        base = np.zeros((len(rows), n), np.float32)
+        self.nt_ok = all(s['bars'][k] is not None for s in self.series for k in ('tr', 'va'))
+        self.nt_rows, self.nt_probe, self.nt_stats = rows, None, {}
+        if self.nt_ok:
+            rc = getattr(self, 'rc', self.r)
+            err, n_gap, n_bar, br = 0.0, 0, 0, []
+            for s in self.series:
+                for key in ('tr', 'va'):
+                    b = s['bars'][key]
+                    ext = [np.concatenate([b[f'pre_{k_}'], b[k_]]) for k_ in ('o', 'h', 'l', 'c')]
+                    o, m = s['off'][key], s['n'][key]
+                    f, sc = nt_segment(*ext, with_scales=True)
+                    base[:, o:o + m] = f[list(rows)]
+                    r_ = rc[o:o + m].astype(np.float64)
+                    dc = ext[3][NT_HIST:] - ext[3][NT_HIST - 1:-1]
+                    ok = np.isfinite(r_) & (np.abs(r_) > 0.05) & (dc != 0)
+                    if ok.any():
+                        err = max(err, float(np.max(np.abs(r_[ok] * sc['rmed'][ok] - dc[ok]) / np.abs(dc[ok]))))
+                    n_gap += int((ext[0][NT_HIST:] != ext[3][NT_HIST - 1:-1]).sum())
+                    n_bar += m
+                    rng_ = ext[1][NT_HIST:] - ext[2][NT_HIST:]
+                    br.append(np.median(np.abs(ext[3][NT_HIST:] - ext[0][NT_HIST:])[rng_ > 0] / rng_[rng_ > 0]))
+                    if self.nt_probe is None:
+                        self.nt_probe = [x[:1200].copy() for x in ext]
+                    s['bars'][key] = None
+            self.nt_stats = {'norm_err': err, 'open_gap': n_gap / max(n_bar, 1), 'body_rng': float(np.median(br))}
+        self.nt_t = torch.from_numpy(base).to(DEVICE)
+        self.nt_orient_t = torch.from_numpy(NT_ORIENT[list(rows)]).to(DEVICE)
+
     def floor(self, i, L):
         """Пол делителя ряда i для окна L: из файла данных или по TRAINING (как в SuMo)."""
         s = self.series[i]
@@ -787,7 +896,8 @@ def to_shapes(W, floor, chunk=262144):
        v5.6: каналы после N_PATH (диапазон бара у 'multi_g') — уровни: не суммируются, не центрируются и не переворачиваются
        ориентацией (у зеркального окна диапазоны те же), только делятся на тот же делитель окна.
        v5.7: знаковый уровень (положение close в баре у 'multi_gc') переворачивается вместе с ориентацией формы: перевернуть
-       форму — то же, что перевернуть все бары окна, а у перевёрнутого бара положение close — с другим знаком."""
+       форму — то же, что перевернуть все бары окна, а у перевёрнутого бара положение close — с другим знаком.
+       v6.0: правило ничьей — переворот только при конце пути < −ORIENT_EPS · делитель окна (тот же знак — в side_feats)."""
     if W.dim() == 3:
         out = []
         for i in range(0, len(W), chunk):
@@ -795,23 +905,25 @@ def to_shapes(W, floor, chunk=262144):
             lv = None
             if w.shape[1] > N_PATH:                      # v5.6: каналы-уровни отдельно
                 w, lv = w[:, :N_PATH], w[:, N_PATH:]
+            div = torch.maximum(median_abs(w[:, 0]), f)
             X = torch.cumsum(w, dim=2)
             X = X - X.mean(dim=2, keepdim=True)
-            flip = (X[:, 0, -1] < 0)[:, None, None]
+            flip = (X[:, 0, -1] < -ORIENT_EPS * div)[:, None, None]
             X = torch.where(flip, -X, X)
             if lv is not None and any(LEVEL_SIGNED[:lv.shape[1]]):    # v5.7: знаковые уровни — с ориентацией формы
                 lv = torch.stack([torch.where(flip[:, 0], -lv[:, j], lv[:, j]) if LEVEL_SIGNED[j] else lv[:, j]
                                   for j in range(lv.shape[1])], dim=1)
-            div = torch.maximum(median_abs(w[:, 0]), f)[:, None, None]
+            div = div[:, None, None]
             out.append(X / div if lv is None else torch.cat([X / div, lv / div], dim=1))
         return torch.cat(out) if len(out) > 1 else out[0]
     out = []
     for i in range(0, len(W), chunk):
         w, f = W[i:i + chunk], floor[i:i + chunk]
+        div = torch.maximum(median_abs(w), f)
         X = torch.cumsum(w, dim=1)
         X = X - X.mean(dim=1, keepdim=True)
-        X = torch.where((X[:, -1] < 0)[:, None], -X, X)
-        out.append(X / torch.maximum(median_abs(w), f)[:, None])
+        X = torch.where((X[:, -1] < -ORIENT_EPS * div)[:, None], -X, X)
+        out.append(X / div[:, None])
     return torch.cat(out) if len(out) > 1 else out[0]
 
 
@@ -859,6 +971,133 @@ CHAN_COLS = {'tok': TOK_COLS}          # v5.5: признаки токена п�
 # крошечный, и окно с одним нулевым шагом в TUNE дало бы вход в десятки sd; граница — один нулевой шаг из 64
 SIDE_SD_FLOOR = {30: 1.0 / 64}
 
+# v6.0: признаки истории В БАРАХ (без времени) — столбцы side_feats NT_COL0 … NT_COL0 + NT_N − 1, см. nt_segment.
+# История окна с началом s — бары s − 200 … s − 1 (вместе с окном 64 бара — 264): глубже ничего не читается
+NT_HIST = 200
+NT_SCALES = ('rmed', 'rmean', 'bmed', 'bmean')     # нормировки за 200 баров перед окном:
+NT_SCALE_NAMES = {'rmed': 'медиана диапазона',      # медиана high − low (тот же нормировщик, что у r)
+                  'rmean': 'среднее диапазона',     # среднее high − low
+                  'bmed': 'медиана |close − open|',
+                  'bmean': 'среднее |close − open|'}
+NT_GEO = (71, 64, 32, 16, 8, 4, 2, 2)    # куски пути до окна, от старого к свежему: бары s − 200 … s − 2 (199 баров)
+NT_UNI = (24, 25, 25, 25, 25, 25, 25, 25)  # то же равными кусками
+NT_SHORT = (16, 64)                      # короткие средние диапазона (V): последние 16 и 64 бара
+NT_BODY_FLOOR = 0.05                     # пол медианы / среднего |close − open| — доля медианы диапазона (сплошные доджи)
+NT_CLIP_Z, NT_CLIP_LOG = 20.0, 5.0       # обрезка ходов в единицах нормировки и логарифмов (обвалы, мёртвые бары)
+
+
+def _nt_layout():
+    """Столбцы признаков истории: (имя, со знаком ориентации формы, группа)."""
+    cols = []
+    for x in NT_SCALES:
+        cols += [(f'путь до окна, кусок {j + 1}/8 ({n} бар.), {NT_SCALE_NAMES[x]}', True, f'P_{x}')
+                 for j, n in enumerate(NT_GEO)]
+    cols += [(f'путь до окна, равный кусок {j + 1}/8 ({n} бар.), {NT_SCALE_NAMES["rmed"]}', True, 'PU')
+             for j, n in enumerate(NT_UNI)]
+    cols.append(('положение close в диапазоне 200 баров', True, 'R1'))
+    for x in NT_SCALES:
+        cols.append((f'log ширины диапазона 200 баров, {NT_SCALE_NAMES[x]}', False, f'R2_{x}'))
+        cols.append((f'отклонение close от средней за 200 баров, {NT_SCALE_NAMES[x]}', True, f'R3_{x}'))
+    cols += [(nm, False, 'V') for nm in (f'log(ср. диапазон {NT_SHORT[0]} / 200 баров)',
+                                          f'log(ср. диапазон {NT_SHORT[1]} / 200 баров)',
+                                          'log(среднее / медиана диапазона, 200 баров)',
+                                          'log(медиана |close − open| / медиана диапазона, 200 баров)')]
+    return cols
+
+
+_NT = _nt_layout()
+NT_COL0 = TOK_COLS[-1] + 1                                   # 37
+NT_N = len(_NT)                                              # 53
+NT_ORIENT = np.array([o for _, o, _ in _NT], dtype=bool)
+NT_GROUP = {}
+for _j, (_, _, _g) in enumerate(_NT):
+    NT_GROUP.setdefault(_g, []).append(NT_COL0 + _j)
+NT_GROUP = {k: tuple(v) for k, v in NT_GROUP.items()}
+SIDE_NAMES = SIDE_NAMES + tuple(nm for nm, _, _ in _NT)
+NT_KEEP = None            # какие столбцы истории держать на устройстве (None — все; для пула — только нужные модели)
+
+
+def _nt_cols(x='rmed', groups='PRV'):
+    """Столбцы групп признаков истории: P (путь, геометрические куски), U (путь, равные куски), R, V; x — нормировка."""
+    out = ()
+    for g in groups:
+        out += {'P': NT_GROUP[f'P_{x}'], 'U': NT_GROUP['PU'], 'V': NT_GROUP['V'],
+                'R': NT_GROUP['R1'] + NT_GROUP[f'R2_{x}'] + NT_GROUP[f'R3_{x}']}[g]
+    return out
+
+
+_DEN = (28, 29)          # знаменатель окна (медиана и среднее |шага|) — в F1 с v5.6, от времени не зависит
+SIDE_COLS.update({'nt_den': _DEN,                              # v6.0: без времени, без замены
+                  'nt_P': _DEN + _nt_cols(groups='P'),
+                  'nt_PU': _DEN + _nt_cols(groups='U'),
+                  'nt_R': _DEN + _nt_cols(groups='R'),
+                  'nt_V': _DEN + _nt_cols(groups='V'),
+                  'nt_PR': _DEN + _nt_cols(groups='PR'),
+                  'nt_PV': _DEN + _nt_cols(groups='PV'),
+                  'nt_PRV': _DEN + _nt_cols(groups='PRV')})
+SIDE_COLS.update({f'nt_PRV_{x}': _DEN + _nt_cols(x, 'PRV') for x in NT_SCALES[1:]})
+# столбцы, которых у моделей без времени быть не должно: время суток и дня недели, нормы волы в сутках, ход за L баров /
+# сутки / 3 суток / неделю и грубый путь в долях нормы за сутки, H_k (7 суток), абсолютная вола (б.п., глубже 200 баров)
+NT_OLD_COLS = tuple(range(0, 26)) + (36,)
+
+
+def nt_segment(o, h, l, c, n_pre=NT_HIST, with_scales=False):
+    """v6.0, признаки истории в барах для окон, начинающихся на барах n_pre … len − 1 куска. o, h, l, c — сырые цены куска
+       (float64) вместе с n_pre >= 200 баров перед ним. История окна с началом s — бары s − 200 … s − 1:
+         нормировки (NT_SCALES) — медиана / среднее диапазона high − low и медиана / среднее |close − open| за все 200 баров
+             (медиана диапазона — тот же нормировщик, что у r на баре s); у |close − open| пол — 5% медианы диапазона;
+         P — ход close куска пути (close последнего бара − open первого) / (√длины · нормировка), куски NT_GEO по барам
+             s − 200 … s − 2; PU — то же кусками NT_UNI, нормировка — медиана диапазона;
+         R1 — положение close бара s − 2 в диапазоне [min low, max high] баров s − 200 … s − 2, от −1 (низ) до +1 (верх);
+         R2 — log((max high − min low) / (√199 · нормировка)); R3 — (close s − 2 − средняя close тех же баров) / (√199 · норм.);
+         V — log(ср. диапазон последних 16 баров / ср. за 200), то же для 64, log(среднее / медиана диапазона за 200),
+             log(медиана |close − open| / медиана диапазона за 200).
+       Знакозависимое (P, PU, R1, R3) кончается на баре s − 2: бар прямо перед окном не берётся, как в прошлых волнах;
+       нормировки и V — по s − 1. Глубже s − 200 ничего не читается. Знак ориентации формы окна ставит side_feats (у реала
+       и его суррогата он свой), здесь его нет. Возвращает (NT_N, число окон) float32 (и нормировки при with_scales)."""
+    nh, nh2 = NT_HIST, NT_HIST - 1
+    m = len(c) - n_pre
+    idx = np.arange(n_pre, len(c))
+    rng_, body = h - l, np.abs(c - o)
+
+    def roll(x, n, how, lag):
+        """Статистика how по барам s − lag − n + 1 … s − lag для каждого начала окна s."""
+        v = getattr(pd.Series(x).rolling(n, min_periods=n), how)().to_numpy()
+        return v[idx - lag]
+
+    with np.errstate(invalid='ignore', divide='ignore'):
+        rmed, rmean = roll(rng_, nh, 'median', 1), roll(rng_, nh, 'mean', 1)
+        sc = {'rmed': rmed, 'rmean': rmean,
+              'bmed': np.maximum(roll(body, nh, 'median', 1), NT_BODY_FLOOR * rmed),
+              'bmean': np.maximum(roll(body, nh, 'mean', 1), NT_BODY_FLOOR * rmed)}
+        hmax, lmin, cma = roll(h, nh2, 'max', 2), roll(l, nh2, 'min', 2), roll(c, nh2, 'mean', 2)
+        c2 = c[idx - 2]
+
+        def blocks(lens):
+            res, end = [], idx - 2                     # последний бар куска; идём от свежего куска к старому
+            for n in lens[::-1]:
+                start = end - n + 1
+                res.append((c[end] - o[start]) / math.sqrt(n))
+                end = start - 1
+            return res[::-1]
+
+        geo, out = blocks(NT_GEO), []
+        for x in NT_SCALES:
+            out += [np.clip(v / sc[x], -NT_CLIP_Z, NT_CLIP_Z) for v in geo]
+        out += [np.clip(v / rmed, -NT_CLIP_Z, NT_CLIP_Z) for v in blocks(NT_UNI)]
+        w = hmax - lmin
+        out.append(np.where(w > 0, 2.0 * (c2 - lmin) / np.where(w > 0, w, 1.0) - 1.0, 0.0))
+        for x in NT_SCALES:
+            out.append(np.clip(np.log(np.maximum(w, 1e-12) / (math.sqrt(nh2) * sc[x])), -NT_CLIP_LOG, NT_CLIP_LOG))
+            out.append(np.clip((c2 - cma) / (math.sqrt(nh2) * sc[x]), -NT_CLIP_Z, NT_CLIP_Z))
+        r16, r64 = roll(rng_, NT_SHORT[0], 'mean', 1), roll(rng_, NT_SHORT[1], 'mean', 1)
+        for v in (r16 / rmean, r64 / rmean, rmean / rmed, sc['bmed'] / rmed):
+            out.append(np.clip(np.log(np.maximum(v, 1e-3)), -NT_CLIP_LOG, NT_CLIP_LOG))
+    f = np.nan_to_num(np.stack(out), nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
+    if m <= 0:
+        f = np.zeros((NT_N, 0), np.float32)
+    return (f, sc) if with_scales else f
+
 
 def side_sd(Z, cols):
     """sd столбцов cols по окнам FIT (Z — их значения) с нижней границей: 1e-6 у всех, SIDE_SD_FLOOR — у своих столбцов."""
@@ -892,16 +1131,19 @@ def side_feats(data, starts, L, W, floor):
              26, 27, 31-35 зависят от знаков — у суррогата они свои (по его окну); 28-30, 36 у реала и его суррогата
              совпадают (модули шагов у sflip те же).
        Сами по себе входы 0-25, 28-30 и 36 реал и суррогат не различают — только через взаимодействие с узором знаков окна.
+       37-89 — признаки истории в барах (v6.0, nt_segment): у реала и его суррогата одни и те же (история реальная, глубина
+             200 баров), кроме знака ориентации формы — его получают P, PU, R1, R3 (у суррогата знак — по его окну).
        У окон 'multi' (n, 3, L) всё считается по close-каналу."""
     if W.dim() == 3:
         W = W[:, 0]
     end = starts + (L - 1)
-    ld = torch.log(torch.maximum(median_abs(W), floor))
+    div = torch.maximum(median_abs(W), floor)
+    ld = torch.log(div)
     v = ld[:, None] - torch.log(data.ema_abs_t[:, end].t())
     h = data.hod_t[end] * (2.0 * math.pi / 24.0)
     d = data.dow_t[end] * (2.0 * math.pi / 7.0)
     cs = torch.cumsum(W, dim=1)
-    sgn = torch.where(cs[:, -1] - cs.mean(dim=1) < 0, -1.0, 1.0)      # ориентация формы — как в to_shapes
+    sgn = torch.where(cs[:, -1] - cs.mean(dim=1) < -ORIENT_EPS * div, -1.0, 1.0)   # ориентация формы — как в to_shapes
     a1 = (starts - 1).clamp_min(0)
     norm = data.ema_abs_t[2, a1]
     ctx = []
@@ -923,7 +1165,13 @@ def side_feats(data, starts, L, W, floor):
         ctx.append((data.cs0_t[hi] - data.cs0_t[lo]).float() / (torch.sqrt(n_eff) * norm) * sgn)
     g = ld[:, None] - data.hist_log_t[:, (starts - 2).clamp_min(0)].t()      # v5.4: log(делитель окна / H_k)
     tok = tok_feats(W, ld, floor, data.absv_log_t[(starts - 2).clamp_min(0)])  # v5.5: признаки токена
-    return torch.cat([v, torch.stack([torch.sin(h), torch.cos(h), torch.sin(d), torch.cos(d)] + ctx, dim=1), g, tok], dim=1)
+    nt = data.nt_t[:, starts].t() * torch.where(data.nt_orient_t[None, :], sgn[:, None], torch.ones_like(sgn)[:, None])
+    if len(data.nt_rows) < NT_N:                                             # v6.0: не все столбцы истории на устройстве
+        full = torch.zeros(len(starts), NT_N, device=nt.device, dtype=nt.dtype)
+        full[:, list(data.nt_rows)] = nt
+        nt = full
+    return torch.cat([v, torch.stack([torch.sin(h), torch.cos(h), torch.sin(d), torch.cos(d)] + ctx, dim=1), g, tok, nt],
+                     dim=1)
 
 
 def tok_feats(W, ld, floor, absv):
@@ -2796,6 +3044,13 @@ def check_absv(cfg, data):
     if TOK_COLS[-1] in cols and not data.absv_ok:
         raise ValueError(f"🍆 АЙ, ОШИБКА! {cfg['name']}: признаку абсолютной волы нужен close в smc_series (close_tr / "
                          f"close_va) — в файлах данных его нет, перезапусти TrendyCoins_SMC_Data")
+    nt = sorted(c for c in cols if c >= NT_COL0)          # v6.0: признаки истории в барах
+    if nt and not data.nt_ok:
+        raise ValueError(f"🍆 АЙ, ОШИБКА! {cfg['name']}: признакам истории нужен smc_bars у всех ассетов — сначала "
+                         f"TrendyCoins_SMC_Bars (в той же папке, что smc_series)")
+    lost = [c for c in nt if c - NT_COL0 not in data.nt_rows]
+    if lost:
+        raise ValueError(f"🍆 АЙ, ОШИБКА! {cfg['name']}: столбцы истории {lost} не загружены — добавь их в NT_KEEP")
 
 
 def run_one(name, over, seed_key, datas, stores, job):
@@ -3473,6 +3728,7 @@ def check_mode(data):
     check_tok(mdata)                       # v5.5: признаки токена
     gdata = check_range(data, mdata)       # v5.6: диапазон бара
     check_rx(gdata)                        # v5.7: положение close в баре, ориентация знаковых уровней, старые RG_den
+    check_nt(gdata)                        # v6.0: признаки истории в барах, глубина, честность, старые F3_g
 
 
 def check_range(close_data, mdata, L=64):
@@ -3524,13 +3780,14 @@ def check_range(close_data, mdata, L=64):
 
 def _orient_invariant(data, st, fl, L):
     """v5.7: форма окна не меняется, если перевернуть все его бары (зеркало бара со всеми −1): путь становится −X, ориентация
-       возвращает его обратно, знаковые уровни — тоже. Окна с центрированным концом close-пути ровно 0 (ничья ориентации)
-       не считаются. Возвращает (совпало бит в бит, окон в сверке)."""
+       возвращает его обратно, знаковые уровни — тоже. Окна в полосе ничьей ориентации (|конец центрированного close-пути|
+       <= ORIENT_EPS · делитель, v6.0) не считаются: там не переворачиваются ни окно, ни его зеркало. Возвращает (совпало бит в
+       бит, окон в сверке)."""
     W = data.gw(st, L)
     Wm = data.flip_multi(st, L, -torch.ones(len(st), L + 1, device=DEVICE), W)
     X, Xm = to_shapes(W, fl), to_shapes(Wm, fl)
     cs = torch.cumsum(W[:, 0], dim=1)
-    keep = (cs[:, -1] - cs.mean(dim=1)) != 0
+    keep = (cs[:, -1] - cs.mean(dim=1)).abs() > ORIENT_EPS * torch.maximum(median_abs(W[:, 0]), fl)
     return bool(torch.equal(X[keep], Xm[keep])), int(keep.sum())
 
 
@@ -3592,6 +3849,104 @@ def check_rx(gdata, L=64):
               f"{r['val']['auc']:.4f}" + ("" if ok else " — проверка изменилась, сравнение с RG_den не читать"))
         del model
     del store, storeg
+
+
+def orient_sign(W, floor):
+    """v6.0: знак ориентации формы окна (−1 — форма перевёрнута): то же правило ничьей, что в to_shapes и side_feats."""
+    if W.dim() == 3:
+        W = W[:, 0]
+    div = torch.maximum(median_abs(W), floor)
+    cs = torch.cumsum(W, dim=1)
+    return torch.where(cs[:, -1] - cs.mean(dim=1) < -ORIENT_EPS * div, -1.0, 1.0)
+
+
+def check_nt(gdata, L=64):
+    """v6.0: признаки истории в барах (цена 'multi_g', BTC): (1) файл smc_bars (при загрузке — контрольная сумма r, длины,
+       close бит в бит): медиана диапазона за 200 баров перед баром — тот же нормировщик, что у r; (2) глубина — на пробе
+       (первые 1200 баров первой части с разогревом) бар j возмущается: признаки меняются только у окон с началом s в
+       [j + 1, j + 200], последнее — ровно s = j + 200; сдвиг бара j целиком (диапазон и тело те же) не меняет окно s = j + 1
+       (бар перед окном в знакозависимое не идёт); (3) честность — у реального окна и его суррогата (зеркало sflip4, VAL)
+       столбцы без знака совпадают бит в бит, со знаком — с точностью до знака ориентации своего окна; (4) справочно — средние
+       и sd признаков на FIT, AUC одного признака «реал против суррогата» на VAL; (5) старая F3_g через новый код (с правилом
+       ничьей) — VAL AUC как в json (старая RG_den — в сверке v5.7 выше); (6) правило ничьей — доля окон в полосе ничьей."""
+    print("\n🔎 ПРИЗНАКИ ИСТОРИИ В БАРАХ И ПРАВИЛО НИЧЬЕЙ (v6.0)")
+    if gdata is None:
+        print("   ⏭️ нет данных с диапазоном бара ('multi_g')")
+        return
+    if not gdata.nt_ok:
+        print("   ❌ нет smc_bars — сначала TrendyCoins_SMC_Bars (в той же папке, что smc_series): модели NT1 / NT3 не запустятся")
+        return
+    st_ = gdata.nt_stats
+    print(f"   {'✅' if st_['norm_err'] < 1e-5 else '❌'} медиана диапазона за 200 баров перед баром = нормировщик r: max отн. "
+          f"|r · медиана − Δclose| / |Δclose| = {st_['norm_err']:.1e} | open ≠ прошлого close у {100 * st_['open_gap']:.2f}% баров "
+          f"| медиана |close − open| / (high − low) {st_['body_rng']:.3f}")
+    o, h, l, c = gdata.nt_probe
+    f0 = nt_segment(o, h, l, c)
+    j = 600
+    rng0 = h[j] - l[j]
+    p = [x.copy() for x in (o, h, l, c)]
+    p[0][j] += 0.3 * rng0
+    p[3][j] -= 0.4 * rng0
+    p[1][j] = max(p[0][j], p[3][j], h[j]) + 0.2 * rng0
+    p[2][j] = min(p[0][j], p[3][j], l[j]) - 0.2 * rng0
+    ch = np.where(np.any(nt_segment(*p) != f0, axis=0))[0] + NT_HIST          # начала окон, у которых что-то поменялось
+    ok_depth = len(ch) > 0 and ch.min() >= j + 1 and ch.max() == j + NT_HIST
+    q = [x.copy() for x in (o, h, l, c)]
+    for x in q:
+        x[j] += 0.37 * rng0                                                  # бар j целиком: диапазон и тело те же
+    ch2 = np.where(np.any(nt_segment(*q) != f0, axis=0))[0] + NT_HIST
+    ok_prev = len(ch2) > 0 and ch2.min() == j + 2
+    print(f"   {'✅' if ok_depth else '❌'} глубина: возмущение бара {j} меняет признаки окон с началом {ch.min() if len(ch) else '—'} … "
+          f"{ch.max() if len(ch) else '—'} (обязано: {j + 1} … {j + NT_HIST}, не глубже 200 баров) | "
+          f"{'✅' if ok_prev else '❌'} сдвиг бара {j} целиком — первое изменённое окно {ch2.min() if len(ch2) else '—'} "
+          f"(обязано {j + 2}: бар перед окном в знакозависимое не идёт)")
+    w = gdata.windows(L)
+    pick = w['val'][:20000]
+    st = torch.from_numpy(w['st'][pick]).to(DEVICE)
+    fl = w['floor_t'][torch.from_numpy(w['sid'][pick]).to(DEVICE)]
+    W = gdata.gw(st, L)
+    gen = torch.Generator()
+    gen.manual_seed(11)
+    Wn = gdata.flip_multi(st, L, block_signs_prev(len(st), L, 4, gen, 'cpu').to(DEVICE), W)
+    cols = slice(NT_COL0, NT_COL0 + NT_N)
+    Sp, Sn = side_feats(gdata, st, L, W, fl)[:, cols], side_feats(gdata, st, L, Wn, fl)[:, cols]
+    gp, gn = orient_sign(W, fl), orient_sign(Wn, fl)
+    ori = torch.from_numpy(NT_ORIENT).to(DEVICE)
+    free_same = bool(torch.equal(Sp[:, ~ori], Sn[:, ~ori]))
+    or_same = bool(torch.equal(Sp[:, ori] * gp[:, None], Sn[:, ori] * gn[:, None]))
+    flip_share = float((gp != gn).float().mean())
+    print(f"   {'✅' if free_same and or_same else '❌'} честность (зеркало sflip4, {len(st)} окон VAL): столбцы без знака у реала и "
+          f"суррогата бит в бит — {free_same} | со знаком — те же с точностью до знака ориентации своего окна — {or_same} "
+          f"(ориентация у суррогата другая в {100 * flip_share:.0f}% пар)")
+    X0 = W[:, 0]
+    cs = torch.cumsum(X0, dim=1)
+    endv = (cs[:, -1] - cs.mean(dim=1)).abs() / torch.maximum(median_abs(X0), fl)
+    print(f"   правило ничьей: окон в полосе |конец пути| <= {ORIENT_EPS:g} · делитель — {100 * float((endv <= ORIENT_EPS).float().mean()):.4f}%, "
+          f"конец пути ровно 0 — {100 * float((endv == 0).float().mean()):.4f}%")
+    store = EvalStore(gdata, L)
+    fp = store.get('fitprobe', 'sflip4')
+    ev = store.get('val', 'sflip4')
+    print(f"   {'':>3} {'признак':<66} {'ср. FIT':>8} {'sd FIT':>7} {'AUC одного':>10}")
+    for jj, (nm, orient, _) in enumerate(_NT):
+        cidx = NT_COL0 + jj
+        zf = fp['Sp'][:, cidx]
+        a_ = (auc_parts(ev['Sp'][:, cidx].double().cpu().numpy(), ev['Sn'][:, cidx].double().cpu().numpy())[0]
+              if orient else np.nan)
+        print(f"   {cidx:>3} {nm[:66]:<66} {float(zf.mean()):>8.3f} {float(zf.std()):>7.3f} {_f(a_, '.4f', width=10)}")
+    print("   «AUC одного» — реал против суррогата по одному признаку (выше — реал); у столбцов без знака он ровно 0.5 (—): сами "
+          "по себе реал от суррогата они не отличают, только через узор знаков окна")
+    for seed in ('a', 'b', 'c'):
+        try:
+            model, r = load_finalist('F3_g', seed, L)
+        except FileNotFoundError as e:
+            print(f"   ⏭️ {e}")
+            continue
+        a_ = auc_se(score(model, ev['Xp'], S=ev['Sp']), score(model, ev['Xn'], S=ev['Sn']), ev['wp'], ev['wn'])[0]
+        ok = abs(a_ - r['val']['auc']) < 2e-4
+        print(f"   {'✅' if ok else '❌'} старая F3_g через новый код ({r['tag']}): VAL AUC {a_:.4f}, в json прогона "
+              f"{r['val']['auc']:.4f}" + ("" if ok else " — проверка изменилась, сравнение с F3_g не читать"))
+        del model
+    del store
 
 
 def check_tok(data, L=64):
@@ -3912,6 +4267,7 @@ def summary():
           "(exp энтропии, медиана); «эпох» — "
           "номер лучшей эпохи.")
     for L in Ls:
+        nt_verdict(by, L)                      # v6.0: модели без времени (признаки истории в барах)
         rx_verdict(by, L)                      # v5.7: точечные добавки поверх RG_den, F3 + диапазон
         rg_verdict(by, L)                      # v5.6: диапазон бара на F1
         tok_verdict(by, L)                     # v5.5: признаки токена на F1
@@ -4659,6 +5015,110 @@ def rx_summary():
     rx_verdict(by, 64)
     if not any(_lab(n_, 64) in by for n_ in list(RX_SWEEP) + list(RX_PINE)):
         print("⚠️ прогонов волны ещё нет (MODE 'night', JOB 'RXa' / 'RXb' / 'RXc')")
+    return by
+
+
+def _nt_vs_old(by, L, win, old, title):
+    """v6.0, справочно: победитель без времени против старой модели со временем (те же окна и суррогаты, парно)."""
+    sc = _sc_for(by, [win, old])
+    dt, st, nt = _seed_delta(by, sc, win, old, 'tune')
+    dv, sv, _ = _seed_delta(by, sc, win, old, 'val')
+    nulls = ('sflip1', 'sflip8', 'sflip16', 'sflip32')
+
+    def cross(lab, n_):
+        return _mean_of(by, lab, lambda r: (r.get('cross') or {}).get(n_, {}).get('auc'))
+
+    def c125(lab):
+        c = next(x for x in by[lab][0]['cov']['lift'] if abs(x['thr'] - 1.25) < 1e-9)
+        return f"{100 * _mean_of(by, lab, _cov125):.1f}% окон (lift {_f(c['up'][2], '.2f')} / {_f(c['down'][2], '.2f')})"
+    print(f"\n   {title}: {win} против {old} (со временем), разница AUC — парно, среднее по общим сидам ({nt})")
+    print(f"      TUNE {_mean_of(by, win, lambda r: r['tune']['auc']):.4f} против {_mean_of(by, old, lambda r: r['tune']['auc']):.4f}: "
+          f"Δ {_f(dt, '+.4f')} ± {_f(st, '.4f')} | VAL {_mean_of(by, win, lambda r: r['val']['auc']):.4f} против "
+          f"{_mean_of(by, old, lambda r: r['val']['auc']):.4f}: Δ {_f(dv, '+.4f')} ± {_f(sv, '.4f')}")
+    print("      против других нулевых (VAL, разница средних AUC): "
+          + " | ".join(f"{n_} {_f(cross(win, n_) - cross(old, n_), '+.4f')}" for n_ in nulls))
+    print(f"      сила >= 1.25: {c125(win)} против {c125(old)} | Pine {by[win][0]['pine']} против {by[old][0]['pine']} умножений на бар")
+    print(f"      полугодия, без времени: {_halves_line(by, win)}\n      полугодия, со временем: {_halves_line(by, old)}")
+
+
+def nt_verdict(by, L=64):
+    """v6.0, модели без времени, один BTC (правила записаны до прогона, STATUS 2026-10-06):
+       (0) контроль C0_null_nt (суррогат против суррогата на новых путях кода): VAL AUC = 0.5 ± max(0.005, 3·SE); иначе выводы
+           волны не читаются до разбора;
+       (1) справочно — группы признаков истории против NT1_0 (F1 без времени и без замены) и против NT3_0: «помогает» при Δ TUNE
+           >= +2 SE, «вредит» при <= −2 SE (парно, среднее по сидам; SE — шум окон по неделям + разброс сидов);
+       (2) F1: кандидаты — все NT1_*; лучший по TUNE, в полосе 1 SE от него — самый простой по NT1_SIMPLE; VAL подтверждает, если
+           выбранный не ниже лучшего по VAL больше чем на 2 SE, иначе ❗ — решение за Фёдором;
+       (3) F3 (Pine): кандидаты — NT3_* с ценой в Pine <= NT_PINE_MAX; лучший по TUNE, в полосе 1 SE — самый дешёвый в Pine;
+           VAL подтверждает так же;
+       (4) справочно, без ворот — победители против старых F1 / F3 со временем (RG_den, F3_g): Δ TUNE и Δ VAL ± SE, профиль по
+           нулевым, сила >= 1.25, полугодия, цена в Pine. Хуже старых — ожидаемо (решение Фёдора: время убираем в любом случае).
+       Возвращает (победитель F1, победитель F3) — метки или None."""
+    have1 = [_lab(n_, L) for n_ in NT1_SWEEP if _lab(n_, L) in by]
+    have3 = [_lab(n_, L) for n_ in NT3_SWEEP if _lab(n_, L) in by]
+    if not have1 and not have3:
+        return None, None
+    print(f"\n{'=' * 78}\n🧾 v6.0: МОДЕЛИ БЕЗ ВРЕМЕНИ — признаки истории в барах (200 баров до окна), один BTC, L={L}\n{'=' * 78}")
+    lab_c = _lab('C0_null_nt', L)
+    if lab_c in by:
+        rs = by[lab_c]
+        m_, se_ = _mean_sd([r['val']['auc'] for r in rs])[0], rs[0]['val']['auc_se']
+        ok = abs(m_ - 0.5) <= max(0.005, 3 * se_)
+        print(f"   {'✅' if ok else '❌'} (0) контроль C0_null_nt — суррогат против суррогата на новых путях кода (признаки истории, "
+              f"правило ничьей): VAL AUC {m_:.4f} ± {se_:.4f} — обязан быть 0.5 ± max(0.005, 3·SE)"
+              + ("" if ok else " — ❗ ВЫВОДЫ ВОЛНЫ НЕ ЧИТАТЬ ДО РАЗБОРА"))
+    else:
+        print("   · (0) контроля C0_null_nt нет (задание NTa) — честность новых путей подтверждена только сверками check и стендом")
+    for nm in (NT1_REF, NT3_REF):
+        lab = _lab(nm, L)
+        if lab in by:
+            print(f"   · старая {'F1' if nm == NT1_REF else 'F3'} ({nm}, со временем): TUNE "
+                  f"{_mean_of(by, lab, lambda r: r['tune']['auc']):.4f}, VAL {_mean_of(by, lab, lambda r: r['val']['auc']):.4f} "
+                  f"(сидов {len(by[lab])}), Pine {by[lab][0]['pine']}")
+        else:
+            print(f"   ⚠️ нет прогонов {lab} — сравнение со старой моделью не считается")
+    w1 = w3 = None
+    if have1:
+        if _lab('NT1_0', L) in by:
+            sweep_verdict(by, L, 'NT1_0', {k: v for k, v in NT1_SWEEP.items() if k != 'NT1_0'},
+                          '(1) F1 БЕЗ ВРЕМЕНИ: ПРИЗНАКИ ИСТОРИИ ПРОТИВ NT1_0 (справочно)')
+        if _lab(NT1_REF, L) in by:
+            sweep_verdict(by, L, NT1_REF, NT1_SWEEP, f'F1 БЕЗ ВРЕМЕНИ ПРОТИВ СТАРОЙ F1 ({NT1_REF}, со временем; справочно)')
+        if len(have1) >= 2:
+            w1 = _final_table(by, L, have1, '(2) F1 БЕЗ ВРЕМЕНИ: ВЫБОР ПО ПРАВИЛУ (v6.0)',
+                              lambda r: NT1_SIMPLE.index(r['name']), 'F1 по правилу (самая простая в полосе 1 SE)')
+    if have3:
+        if _lab('NT3_0', L) in by:
+            sweep_verdict(by, L, 'NT3_0', {k: v for k, v in NT3_SWEEP.items() if k != 'NT3_0'},
+                          '(1) F3 БЕЗ ВРЕМЕНИ: ПРИЗНАКИ ИСТОРИИ И ЁМКОСТЬ ПРОТИВ NT3_0 (справочно)')
+        if _lab(NT3_REF, L) in by:
+            sweep_verdict(by, L, NT3_REF, NT3_SWEEP, f'F3 БЕЗ ВРЕМЕНИ ПРОТИВ СТАРОЙ F3 ({NT3_REF}, со временем; справочно)')
+        over = [l_ for l_ in have3 if by[l_][0]['pine'] > NT_PINE_MAX]
+        if over:
+            print(f"   ⛔ дороже бюджета Pine ({NT_PINE_MAX} умножений на бар): " + ", ".join(f"{l_} ({by[l_][0]['pine']})" for l_ in over))
+        cands = [l_ for l_ in have3 if l_ not in over]
+        if len(cands) >= 2:
+            w3 = _final_table(by, L, cands, f'(3) F3 БЕЗ ВРЕМЕНИ (Pine, <= {NT_PINE_MAX} умножений на бар): ВЫБОР ПО ПРАВИЛУ',
+                              lambda r: r['pine'], 'F3 по правилу (самая дешёвая в Pine в полосе 1 SE)')
+    print(f"\n{'=' * 78}\n🧾 (4) ПОБЕДИТЕЛИ ПРОТИВ СТАРЫХ F1 / F3 СО ВРЕМЕНЕМ (справочно, без ворот)\n{'=' * 78}")
+    for win, old, title in ((w1, NT1_REF, 'F1'), (w3, NT3_REF, 'F3')):
+        if win is not None and _lab(old, L) in by:
+            _nt_vs_old(by, L, win, _lab(old, L), title)
+    if w3 is not None:
+        print(f"      прогрев Pine: у старой F3_g ~3 182 бара (норма волы за 7 суток), без времени — {NT_HIST + L} баров (история + окно)")
+    print("   Дальше (следующий этап, правила — до прогона): победители — на пул C ('stop' сиды a / b против старых F1 / F3 на "
+          "пуле), затем 'refit' и боевое обучение; для пула — smc_bars всех 31 ассета (и в data_fresh у BTC / ETH)")
+    return w1, w3
+
+
+def nt_summary():
+    """v6.0, MODE 'nt_sum': только вердикт моделей без времени (без остальной сводки)."""
+    by = {}
+    for r in _load_runs():
+        by.setdefault(r['label'], []).append(r)
+    print(f"\n\n{'#' * 78}\n# SMC: МОДЕЛИ БЕЗ ВРЕМЕНИ (v6.0) | прогонов в {RUN_DIR}: {sum(len(v) for v in by.values())}\n{'#' * 78}")
+    if nt_verdict(by, 64) == (None, None) and not any(_lab(n_, 64) in by for n_ in list(NT1_SWEEP) + list(NT3_SWEEP)):
+        print("⚠️ прогонов волны ещё нет (MODE 'train', JOB 'NTa' / 'NTb' / 'NTc')")
     return by
 
 
@@ -5752,7 +6212,7 @@ def core_summary(results, info, groups):
 # v4.8: ПУЛ АССЕТОВ — тест границы ядра (MODE 'pool' — обучение, 'pool_sum' — сводка)
 # =====================================================================
 POOL_VER = 1               # версия: прогоны пула (RUN_DIR/pool/) другой версии пересчитываются
-POOL_REL = '5.8'           # выпуск кода пула (для заголовков логов)
+POOL_REL = '6.2'           # выпуск кода пула (для заголовков логов)
 
 
 class SubStore(EvalStore):
@@ -5840,21 +6300,37 @@ def pool_starts(assets):
     return starts
 
 
-def pool_data(common_end=False, price='multi'):
+def pool_data(common_end=False, price='multi', nt_cols=()):
     """v4.8: один массив на все ассеты теста (цена 'multi'), календарь VALIDATION по BTC, старт истории, наборы проверки
        панели (TUNE строится один раз и живёт всё задание). v5.1, common_end (боевое обучение): конец данных — общий для
        всех ассетов, самый ранний из их концов (окна позже него не участвуют ни в обучении, ни в проверке). v5.6: price —
-       'multi' или 'multi_g' (+ диапазон бара: у каждого ассета нужен smc_range); v5.7: или 'multi_gc' (+ положение close)."""
+       'multi' или 'multi_g' (+ диапазон бара: у каждого ассета нужен smc_range); v5.7: или 'multi_gc' (+ положение close).
+       v6.1: nt_cols — столбцы истории в барах, нужные моделям задания: у каждого ассета нужен smc_bars, на устройстве — только
+       они (NT_KEEP); пусто — файлы баров не читаются."""
+    global NT_KEEP
     t0 = time.time()
     L = POOL['L']
     assets = pool_assets()
     tf_, N_ = DATA['timeframe'].upper(), DATA['N']
-    kinds = ('series', 'prices') + (('range',) if price in LEVEL_KINDS else ())
+    kinds = ('series', 'prices') + (('range',) if price in LEVEL_KINDS else ()) + (('bars',) if nt_cols else ())
     miss = [f_ for a in assets for f_ in (f"smc_{k}_{a}_{tf_}_N{N_}.npz" for k in kinds) if not os.path.isfile(data_path(f_))]
     if miss:
         raise FileNotFoundError(f"🍆 АЙ, ОШИБКА! нет файлов данных: {', '.join(miss[:6])}{' …' if len(miss) > 6 else ''}"
-                                + (" — диапазон бара: TrendyCoins_SMC_Range" if any('smc_range_' in f_ for f_ in miss) else ""))
+                                + (" — диапазон бара: TrendyCoins_SMC_Range" if any('smc_range_' in f_ for f_ in miss) else "")
+                                + (" — сырые бары: TrendyCoins_SMC_Bars" if any('smc_bars_' in f_ for f_ in miss) else ""))
+    NT_KEEP = tuple(sorted(set(nt_cols)))                     # v6.1: на устройстве — только нужные столбцы истории
     data = SeriesData(assets, DATA['timeframe'], N_, DATA['tune_start'], price)
+    if nt_cols:
+        if not data.nt_ok:
+            raise RuntimeError("🍆 АЙ, ОШИБКА! признаки истории в барах не посчитаны (нет smc_bars у части ассетов)")
+        ne = data.nt_stats['norm_err']
+        print(f"🧾 история в барах (v6.1): {len(data.nt_rows)} столбцов на устройстве | smc_bars у всех {len(assets)} ассетов | "
+              f"{'✅' if ne < 1e-5 else '❌'} медиана диапазона за 200 баров = нормировщик r: max отн. ошибка {ne:.1e}"
+              + ("" if ne < 1e-5 else " — бары не от того CSV, что ряд: признаки истории не читать, разобраться до прогона")
+              + f" | open ≠ прошлого close у {100 * data.nt_stats['open_gap']:.2f}% баров")
+        if ne >= 1e-5:
+            raise RuntimeError("🍆 АЙ, ОШИБКА! сырые бары не сходятся с нормировщиком r — пересчитай TrendyCoins_SMC_Bars из "
+                               "тех же CSV, что smc_series")
     sid = {a: i for i, a in enumerate(assets)}
     w = data.windows(L)
     ref_val = w['val'][w['sid'][w['val']] == sid[CORE['ref']]]
@@ -5909,8 +6385,10 @@ def _pool_items(job):
         mkey = it[2] if len(it) > 2 else 'F2'
         mode = it[3] if len(it) > 3 else 'stop'
         if (mkey not in POOL['models'] or mode not in POOL_MODES or (set_name == 'REF' and mode != 'stop')
-                or set_name not in ('REF',) + tuple(POOL['sets']) or (set_name == 'ALL') != (mode == 'prod')):
-            raise ValueError(f"🍆 АЙ, ОШИБКА! задание {job}: непонятная запись {it} (боевое 'prod' — только с набором 'ALL')")
+                or set_name not in ('REF',) + tuple(POOL['sets']) or (mode == 'prod' and set_name != 'ALL')
+                or (set_name == 'ALL' and mode not in ('prod', 'refit'))):
+            raise ValueError(f"🍆 АЙ, ОШИБКА! задание {job}: непонятная запись {it} (боевое 'prod' — только с набором 'ALL'; "
+                             f"с 'ALL' — только 'prod' и (v6.2) 'refit')")
         out.append((set_name, seed_key, mkey, mode))
     return out
 
@@ -5918,6 +6396,40 @@ def _pool_items(job):
 def _pool_price(mkey):
     """v5.8: цена бара модели пула (ключ POOL['models'])."""
     return {**SMC_BASE, **RUNS[POOL['models'][mkey]]}['price']
+
+
+def _reset_nt_keep():
+    """v6.1: после задания пула — снова все столбцы истории (NT_KEEP = None), как у данных одного BTC."""
+    global NT_KEEP
+    NT_KEEP = None
+
+
+def _pool_nt_cols(mkey):
+    """v6.1: столбцы истории в барах (side_feats >= NT_COL0), которые нужны модели пула; () — не нужны."""
+    side = {**SMC_BASE, **RUNS[POOL['models'][mkey]]}.get('side')
+    return tuple(c for c in (SIDE_COLS[side] if side else ()) if c >= NT_COL0)
+
+
+def pool_epochs(mkey):
+    """v6.1: эпох фиксированного расписания ('cos' / 'refit' / 'prod') у модели пула и откуда число. Есть в POOL['cos_epochs'] —
+       оттуда (записано по прошлым сводкам); нет — по правилу v4.9 прямо из прогонов 'stop' этой модели на наборе C сидов
+       рецепта POOL['recipe_seeds']: среднее лучших эпох (с единицы), округлённое (так же считает сводка, раздел (6))."""
+    if mkey in POOL['cos_epochs']:
+        return int(POOL['cos_epochs'][mkey]), "POOL['cos_epochs']"
+    best = []
+    for s_ in POOL['recipe_seeds']:
+        tag = _pool_tag('C', s_, mkey, 'stop')
+        p = _pool_dir('stop') + f"{tag}.json"
+        if not os.path.isfile(p):
+            raise FileNotFoundError(f"🍆 АЙ, ОШИБКА! эпохи фиксированного расписания {mkey}: нет прогона 'stop' {tag} (правило "
+                                    f"v4.9 — по лучшим эпохам 'stop' на C сидов {' / '.join(POOL['recipe_seeds'])}); сначала "
+                                    f"задание 'stop' (или впиши число в POOL['cos_epochs'])")
+        with open(p, encoding='utf-8') as fh:
+            r = json.load(fh)
+        if r.get('ver') != POOL_VER or r.get('best_ep', -1) < 0:
+            raise ValueError(f"🍆 АЙ, ОШИБКА! эпохи {mkey}: прогон {tag} другой версии или без лучшей эпохи")
+        best.append(int(r['best_ep']) + 1)
+    return int(round(float(np.mean(best)))), f"правило v4.9: лучшие эпохи 'stop' на C {' / '.join(map(str, best))}"
 
 
 def _pool_panel_auc(model, pdata, part='tune'):
@@ -5950,10 +6462,12 @@ def run_pool(set_name, seed_key, pdata, mkey='F2', mode='stop'):
     name = P['models'][mkey]
     fixed = mode in ('cos', 'refit', 'prod')
     cfg = make_cfg(name, {'L': L}, seed_key)
+    ep_src = None
     if set_name != 'REF':
         cfg.update(P['over'])
-        if fixed:
-            cfg.update({'epochs': P['cos_epochs'][mkey], 'lr_plateau': 0})
+        if fixed:                                    # v6.1: эпохи — POOL['cos_epochs'] или правило v4.9 по прогонам 'stop'
+            n_ep, ep_src = pool_epochs(mkey)
+            cfg.update({'epochs': n_ep, 'lr_plateau': 0})
     if cfg['arch'] != 'cnn' or cfg.get('price') not in MULTI_KINDS or cfg['aug_mag'] or cfg['ema'] or cfg.get('fit_halflife'):
         raise ValueError("🍆 АЙ, ОШИБКА! пул — только CNN на трёх ценах бара без aug / ema / веса свежести")
     if cfg['price'] != pdata['data'].price:                  # v5.6: данные пула — той же цены, что у модели
@@ -6027,8 +6541,8 @@ def run_pool(set_name, seed_key, pdata, mkey='F2', mode='stop'):
         pm = PairMaker(data, L, cfg, thr, gen)
         ev_fit = _pool_set(SubStore(data, L, {'fit': fit}), 'fitprobe')
         if fixed:
-            how = (f"ровно {cfg['epochs']} эпох, lr по косинусу {cfg['lr']:.1e} -> {cfg['lr'] * cfg['lr_min_frac']:.1e}, "
-                   f"итог — последняя эпоха; панель TUNE — только в лог"
+            how = (f"ровно {cfg['epochs']} эпох ({ep_src}), lr по косинусу {cfg['lr']:.1e} -> "
+                   f"{cfg['lr'] * cfg['lr_min_frac']:.1e}, итог — последняя эпоха; панель TUNE — только в лог"
                    + (" (TUNE в выборке: обучение на FIT + TUNE)" if mode == 'refit' else "")
                    + (" (БОЕВОЕ: FIT + TUNE + VALIDATION — оценки в выборке)" if mode == 'prod' else ""))
         else:
@@ -6152,7 +6666,7 @@ def run_pool(set_name, seed_key, pdata, mkey='F2', mode='stop'):
         json.dump(_jsonable(res), fh, ensure_ascii=False, indent=1)
     print(f"\n📋 {tag}{' (оценки в выборке)' if mode == 'prod' else ''} | панель TUNE {summ['tune']['panel']:.4f} VAL "
           f"{summ['val']['panel']:.4f} | BTC TUNE "
-          f"{summ['tune']['btc']:.4f} VAL {summ['val']['btc']:.4f} | {'H' if mode == 'prod' else 'невиданные H'} TUNE "
+          f"{summ['tune']['btc']:.4f} VAL {summ['val']['btc']:.4f} | {'H' if set_name == 'ALL' else 'невиданные H'} TUNE "
           f"{summ['tune']['holdout']:.4f} VAL "
           f"{summ['val']['holdout']:.4f} | эпох {epochs_run} ({ep_secs:.1f} c) | {(time.time() - t_run) / 60:.1f} мин")
     print(f"💾 {pdir}{tag}.json / .npz")
@@ -6188,8 +6702,15 @@ def _pool_rules():
         f"F3_gc — против F3) Δ средней AUC панели на TUNE >= +{P['rule_rx']:g} SE и Δ панели на VAL > 0; остальные строки — справочно",
         f"пересчёт под новые модели (v5.7-5.8): у {', '.join(P['recalc'])} — рецепт ('refit' против 'stop'), калибровка и эпохи "
         f"боевого обучения по тем же правилам v4.9-5.2",
-        f"боевые модели (v5.8, по правилам v5.6-5.7): сайт / MQL — {P['prod_models']['site']}, Pine — {P['prod_models']['pine']}; "
-        f"боевое обучение — только при подтверждённом рецепте модели (правило v5.0)",
+        f"боевые модели (v5.8, по правилам v5.6-5.7; v6.1 — Pine по вердикту 'nt_sum'): сайт / MQL — "
+        f"{P['prod_models']['site']}, Pine — {P['prod_models']['pine']}; боевое обучение — только при подтверждённом рецепте "
+        f"модели (правило v5.0)",
+        f"F3 без времени на пуле (v6.1): эпохи фиксированного расписания — по правилу v4.9 из её прогонов 'stop' на C (сиды "
+        f"{' / '.join(P['recipe_seeds'])}); против {P['nt_ref']} ('stop', C, те же сиды) — справочно, без ворот; ❗ (разбор до "
+        f"экспорта), если Δ панели VAL <= −{P['nt_flag']:g} SE",
+        "поассетная калибровка Платта (v6.2): источник — 'refit' Pine-модели на наборе ALL (31 ассет, как у боевой; те же эпохи), "
+        "его VAL вне выборки; 'refit' на C — ворота рецепта и калибровка незнакомого символа (H там невиданные); справочно — "
+        "ALL против C по ассетам (у C ≈ 0, у H — прибавка «виданный против невиданного»)",
     ]
 
 
@@ -6213,10 +6734,11 @@ def _prod_gate(items):
           f"{', '.join(sorted({mkey for _, _, mkey, _ in items}))}, набор {len(POOL['sets']['ALL'])} ассетов совпадает")
 
 
-def prod_overlay(price):
+def prod_overlay(price, bars=False):
     """v5.3 / v5.8: накладка свежих данных боевого обучения (POOL['prod_data']). У ассета в накладке — все файлы цены
-       (smc_series, smc_prices, у цен с диапазоном — smc_range) или ни одного; контрольные суммы сдвигов цены и диапазона —
-       от ряда той же накладки (иначе файлы из разных выгрузок CSV). Возвращает папку накладки (со слэшем) или None."""
+       (smc_series, smc_prices, у цен с диапазоном — smc_range; v6.1: у моделей с историей в барах — и smc_bars) или ни
+       одного; контрольные суммы сдвигов цены, диапазона и баров — от ряда той же накладки (иначе файлы из разных выгрузок
+       CSV). Возвращает папку накладки (со слэшем) или None."""
     if not POOL.get('prod_data'):
         print(f"📂 данные боевого обучения: {DATA_DIR}")
         return None
@@ -6224,14 +6746,16 @@ def prod_overlay(price):
     if not os.path.isdir(ov):
         raise FileNotFoundError(f"🍆 АЙ, ОШИБКА! нет папки накладки POOL['prod_data'] = {ov}")
     tf_, N_ = DATA['timeframe'].upper(), DATA['N']
-    kinds = ('series', 'prices') + (('range',) if price in LEVEL_KINDS else ())     # v5.6: + диапазон бара
+    kinds = (('series', 'prices') + (('range',) if price in LEVEL_KINDS else ())      # v5.6: + диапазон бара
+             + (('bars',) if bars else ()))                                          # v6.1: + сырые бары
     pair = {a: [os.path.isfile(ov + f"smc_{k}_{a}_{tf_}_N{N_}.npz") for k in kinds] for a in POOL['sets']['ALL']}
     half = [a for a, fl_ in pair.items() if any(fl_) and not all(fl_)]
     if half:                                         # ряд, сдвиги цены (и диапазон) — только вместе, иначе ряды разных выгрузок
         raise FileNotFoundError(
             f"🍆 АЙ, ОШИБКА! в накладке {ov} у {', '.join(half)} не все файлы из "
             f"{' / '.join('smc_' + k for k in kinds)} — положи все (TrendyCoins_SMC_Data, TrendyCoins_SMC_Prices"
-            + (", TrendyCoins_SMC_Range" if price in LEVEL_KINDS else "") + ") или ни одного")
+            + (", TrendyCoins_SMC_Range" if price in LEVEL_KINDS else "")
+            + (", TrendyCoins_SMC_Bars" if bars else "") + ") или ни одного")
     fresh = [a for a, fl_ in pair.items() if fl_[0]]
     for a in fresh:                                  # v5.8: сдвиги цены и диапазон — от этого же ряда (контрольная сумма r)
         d = np.load(ov + f"smc_series_{a}_{tf_}_N{N_}.npz", allow_pickle=False)
@@ -6269,6 +6793,8 @@ def run_pool_job(job):
     if prod and len(prices) != 1:                    # боевое: одна цена на задание (одна накладка, один общий конец)
         raise ValueError(f"🍆 АЙ, ОШИБКА! задание {job}: боевые прогоны на разных ценах бара ({', '.join(prices)}) — раздели")
     price = prices[0]
+    nt_need = {p_: tuple(sorted({c for _, _, m_, _ in items if price_of(m_) == p_ for c in _pool_nt_cols(m_)}))
+               for p_ in prices}                     # v6.1: столбцы истории в барах — по ценам (данные грузятся по цене)
     print(f"\n{'#' * 78}\n# SMC v{POOL_REL} | ПУЛ АССЕТОВ | задание {job}: "
           + ", ".join(f"{s_}-{k_}-{m_}" + ("" if mo_ == 'stop' else f"-{mo_}") for s_, k_, m_, mo_ in items)
           + f" | {DEVICE}\n{'#' * 78}")
@@ -6277,7 +6803,7 @@ def run_pool_job(job):
           f"{', '.join(a[:-4] for a in POOL['holdout'])}")
     if prod:
         _prod_gate(items)
-        DATA_OVERLAY = prod_overlay(price)           # v5.8: проверка накладки — общая с MODE 'chain' (до долгих шагов)
+        DATA_OVERLAY = prod_overlay(price, bars=bool(nt_need[price]))   # v5.8: проверка накладки — общая с MODE 'chain'
     # v5.7: прогоны — группами по цене бара (данные пула одной цены в памяти за раз); у группы, где всё уже посчитано,
     # данные не грузятся вовсе
     order = [it for p_ in prices for it in items if price_of(it[2]) == p_]
@@ -6300,7 +6826,7 @@ def run_pool_job(job):
                 gc.collect()
                 if DEVICE.type == 'cuda':
                     torch.cuda.empty_cache()
-            pdata = pool_data(common_end=bool(prod), price=price_of(mkey))
+            pdata = pool_data(common_end=bool(prod), price=price_of(mkey), nt_cols=nt_need[price_of(mkey)])
         if r is not None and mode == 'prod':         # боевой: кэш — только если данные те же (накладка и общий конец)
             same_data = (r.get('data_overlay') == DATA_OVERLAY and r.get('t_cut') == str(pd.Timestamp(pdata['t_cut'])))
             if r.get('ver') == POOL_VER and same_data:
@@ -6317,6 +6843,7 @@ def run_pool_job(job):
             traceback.print_exc(file=sys.stdout)
         if DEVICE.type == 'cuda':
             torch.cuda.empty_cache()
+    _reset_nt_keep()
     print(f"\n👑 ЗАДАНИЕ {job}: {len(done)} из {len(order)} прогонов | {(time.time() - t0) / 60:.0f} мин")
     for r in done:
         s_ = r['summary']
@@ -6474,15 +7001,16 @@ def pool_summary():
         return float(np.mean(v_)) if v_ else None
 
     def table(variants):
-        print(f"\n   {'вариант':<10} {'ассетов':>7} {'сиды':<5} {'эпоха':>5} {'FIT−TUNE':>8} {'панель TUNE':>11} {'VAL':>6} "
+        wl = max([10] + [len(lab) for lab, _ in variants])          # v6.1: длинные имена моделей не сбивают колонки
+        print(f"\n   {'вариант':<{wl}} {'ассетов':>7} {'сиды':<5} {'эпоха':>5} {'FIT−TUNE':>8} {'панель TUNE':>11} {'VAL':>6} "
               f"{'BTC TUNE':>8} {'VAL':>6} {'H TUNE':>6} {'VAL':>6} {'все TUNE':>8} {'VAL':>6} {'с/эп':>5} {'мин':>4}")
         for lab, v in variants:
             rs = runs_of(v)
             if not rs:
-                print(f"   {lab:<10} — нет прогонов")
+                print(f"   {lab:<{wl}} — нет прогонов")
                 continue
             s_ = lambda part, key: avg(rs, lambda r: r['summary'][part].get(key))
-            print(f"   {lab:<10} {len(rs[0]['train_assets']):>7} {','.join(r['seed_key'] for r in rs):<5} "
+            print(f"   {lab:<{wl}} {len(rs[0]['train_assets']):>7} {','.join(r['seed_key'] for r in rs):<5} "
                   f"{_f(avg(rs, lambda r: r['best_ep'] + 1 if r['best_ep'] >= 0 else None), '.0f', width=5)} "
                   f"{_f(avg(rs, gap), '+.4f', width=8)} {_f(s_('tune', 'panel'), '.4f', width=11)} "
                   f"{_f(s_('val', 'panel'), '.4f', width=6)} {_f(s_('tune', 'btc'), '.4f', width=8)} "
@@ -6622,8 +7150,9 @@ def pool_summary():
         recipe_ok[m_] = ok
         _, _, _, tb = dl(F(m_, 'C', 'refit'), F(m_, 'C'), [ref], 'val')
         _, _, _, th = dl(F(m_, 'C', 'refit'), F(m_, 'C'), P['holdout'], 'val')
-        print(f"   {'✅' if ok else '❌'} {m_} 'refit' ({P['cos_epochs'].get(m_, '?')} эпох) против 'stop': панель Δ VAL {t_} (сидов "
-              f"{n_}) | BTC Δ VAL {tb} | H Δ VAL {th} — " + ("рецепт подтверждён" if ok else "рецепт НЕ подтверждён: разбор"))
+        ep_r = sorted({r['cfg'].get('epochs') for r in runs_of(F(m_, 'C', 'refit'))} - {None})    # v6.1: эпохи из самих прогонов
+        print(f"   {'✅' if ok else '❌'} {m_} 'refit' ({'/'.join(map(str, ep_r)) or '?'} эпох) против 'stop': панель Δ VAL {t_} "
+              f"(сидов {n_}) | BTC Δ VAL {tb} | H Δ VAL {th} — " + ("рецепт подтверждён" if ok else "рецепт НЕ подтверждён: разбор"))
 
     # ---- (4) финалисты по ассетам
     print(f"\n{'=' * 78}\n🧾 (4) AUC ПО АССЕТАМ — финалисты на наборе C (среднее по сидам; • — ассет в обучении)\n{'=' * 78}")
@@ -6741,6 +7270,85 @@ def pool_summary():
                               "принимается: новая F3 для Pine", "не принимается: F3 остаётся как есть",
                               ref_m='F3', only={st1['pine']} - {None})
 
+    # ---- (5ж) v6.1: F3 без времени на пуле — против старой F3 со временем ('stop', набор C, те же сиды), справочно
+    nt_m, nt_r, nt_flag = P['prod_models'].get('pine'), P.get('nt_ref'), None
+    if nt_m and nt_r and nt_m != nt_r and runs_of(F(nt_m, 'C')):
+        print(f"\n{'=' * 78}\n🧾 (5ж) F3 БЕЗ ВРЕМЕНИ НА ПУЛЕ (v6.1): {nt_m} против {nt_r} (со временем) на наборе C, 'stop'"
+              f"\n{'=' * 78}")
+        print(f"   ПРАВИЛО (до прогона): справочно, без ворот — время убрано решением Фёдора, хуже допустимо; ❗ (разбор до "
+              f"экспорта), если Δ панели VAL <= −{P['nt_flag']:g} SE. Ворота боевого обучения — рецепт (раздел (3))")
+        table([(f"{nt_r} C", F(nt_r, 'C')), ("NT3 C", F(nt_m, 'C')), ("NT3 rf", F(nt_m, 'C', 'refit'))])
+        dt_, st_, n_, tt_ = dl(F(nt_m, 'C'), F(nt_r, 'C'), P['panel'], 'tune')
+        dv_, sv_, _, tv_ = dl(F(nt_m, 'C'), F(nt_r, 'C'), P['panel'], 'val')
+        _, _, _, bt_ = dl(F(nt_m, 'C'), F(nt_r, 'C'), [ref], 'tune')
+        _, _, _, bv_ = dl(F(nt_m, 'C'), F(nt_r, 'C'), [ref], 'val')
+        _, _, _, ht_ = dl(F(nt_m, 'C'), F(nt_r, 'C'), P['holdout'], 'tune')
+        _, _, _, hv_ = dl(F(nt_m, 'C'), F(nt_r, 'C'), P['holdout'], 'val')
+        _, _, _, at_ = dl(F(nt_m, 'C'), F(nt_r, 'C'), pool_assets(), 'val')
+        if n_:
+            nt_flag = bool(dv_ <= -P['nt_flag'] * sv_)
+            print(f"   {'❗' if nt_flag else '·'} {nt_m} − {nt_r}: панель Δ TUNE {tt_} (сидов {n_}), Δ VAL {tv_} | BTC Δ TUNE {bt_}, "
+                  f"Δ VAL {bv_} | H Δ TUNE {ht_}, Δ VAL {hv_} | все {len(pool_assets())} Δ VAL {at_} — "
+                  + ("❗ хуже старой F3 больше чем на 2 SE: разбор до экспорта" if nt_flag else "справочно"))
+        else:
+            print(f"   · нет общих сидов {nt_m} и {nt_r} на C — разница не считается")
+        try:
+            n_ep, src_ = pool_epochs(nt_m)
+        except (FileNotFoundError, ValueError) as e:
+            n_ep, src_ = None, str(e)
+        print(f"   эпох фиксированного расписания {nt_m}: {n_ep if n_ep is not None else '—'} ({src_})")
+        got = [(r['tag'], r['cfg'].get('epochs')) for r in runs_of(F(nt_m, 'C', 'refit'))]
+        for p_ in sorted(glob.glob(_pool_dir('prod') + f"prod_{P['models'][nt_m]}_L{P['L']}_*.json")):
+            try:
+                with open(p_, encoding='utf-8') as fh:
+                    rp = json.load(fh)
+                got.append((rp['tag'] + f" (конец {rp.get('t_cut')}, накладка {rp.get('data_overlay')})", rp['cfg'].get('epochs')))
+            except Exception as e:
+                print(f"   ⚠️ {os.path.basename(p_)} не читается: {e}")
+        for tg, ep_ in got:
+            print(f"   {'✅' if n_ep is not None and ep_ == n_ep else '❌'} {tg}: эпох {ep_}")
+        if not got:
+            print("   · прогонов 'refit' / 'prod' ещё нет")
+
+    # ---- (5з) v6.2: 'refit' Pine-модели на наборе ALL — источник поассетной калибровки Платта (справочно, без ворот)
+    if nt_m and runs_of(F(nt_m, 'ALL', 'refit')):
+        print(f"\n{'=' * 78}\n🧾 (5з) ПОАССЕТНАЯ КАЛИБРОВКА (v6.2): 'refit' {nt_m} на ALL (31 ассет, как у боевой) против "
+              f"'refit' на C\n{'=' * 78}")
+        print("   'refit' на ALL — боевой рецепт на год раньше: тот же набор ассетов и те же эпохи, VAL вне выборки у всех 31. "
+              "Поассетный Платт — по его VAL; у 'refit' на C ассеты H невиданные (для них — калибровка незнакомого символа)")
+        table([("NT3 rf C", F(nt_m, 'C', 'refit')), ("NT3 rf ALL", F(nt_m, 'ALL', 'refit'))])
+        rest = [a for a in P['sets']['C'] if a not in P['panel']]
+        for nm, lst in (('BTC', [ref]), ('панель', P['panel']), ('B + C без панели', rest),
+                        ('H (у ALL — в обучении)', P['holdout'])):
+            _, _, n_, tv = dl(F(nt_m, 'ALL', 'refit'), F(nt_m, 'C', 'refit'), lst, 'val')
+            print(f"   ALL − C, Δ VAL — {nm}: {tv} (сидов {n_})")
+        rs_all = runs_of(F(nt_m, 'ALL', 'refit'))
+        xs = [_pool_arr(r['tag']) for r in rs_all]
+        have_a = [a for a in pool_assets() if all(f"{a}__val__sp" in x for x in xs)]
+
+        def lg(a, k):                                # логиты обоих сидов вместе — логиты одиночной модели, без усреднения
+            return np.concatenate([x[f"{a}__val__{k}"].astype(np.float64) for x in xs])
+        if have_a:
+            p_all = platt_fit(np.concatenate([lg(a, 'sp') for a in have_a]), np.concatenate([lg(a, 'sn') for a in have_a]))
+            t_ = P['calib_thr']
+            print(f"   общий Платт ({len(have_a)} ассетов, VAL, сидов {len(xs)} вместе): a {p_all[0]:.3f}, b {p_all[1]:+.3f}. "
+                  f"Ниже: Платт ассета (a_i, b_i); «к общему» — во сколько раз калибровка ассета оценивает lift окна, которое "
+                  f"общий Платт ставит на порог {t_:g} / {1 / t_:.2f}; «полугодия» — то же для калибровок второй и первой "
+                  f"половины VAL ассета (устойчивость во времени)")
+            print(f"   {'ассет':<11} {'роль':<7} {'AUC VAL':>7} {'a_i':>6} {'b_i':>7} {'к общему':>17} {'полугодия':>17}")
+            for a in have_a:
+                sp_, sn_ = lg(a, 'sp'), lg(a, 'sn')
+                wk_ = np.concatenate([x[f"{a}__val__wk"] for x in xs]).astype(np.int64)
+                p_a = platt_fit(sp_, sn_)
+                h1 = wk_ <= np.median(wk_)
+                p1, p2 = platt_fit(sp_[h1], sn_[h1]), platt_fit(sp_[~h1], sn_[~h1])
+                auc_v = float(np.mean([r['assets'].get(a, {}).get('val', {}).get('auc', np.nan) for r in rs_all]))
+                print(f"   {a:<11} {(_pool_role(a) if a != ref else 'BTC'):<7} {auc_v:>7.4f} {p_a[0]:>6.3f} {p_a[1]:>+7.3f} "
+                      f"×{_calib_ratio(p_a, p_all, t_):.3f} / ×{_calib_ratio(p_a, p_all, 1 / t_):.3f} "
+                      f"×{_calib_ratio(p2, p1, t_):.3f} / ×{_calib_ratio(p2, p1, 1 / t_):.3f}")
+            print("   справочно: правила поассетной калибровки (подгонка по полугодию, проверка на другом, кривая, потолки) — в "
+                  "репо (Claude Code), здесь — только обзор")
+
     # ---- (6) параметры боевого обучения
     epochs = {}
     for m_ in models_r:
@@ -6762,7 +7370,8 @@ def pool_summary():
               f"калибровка {'✅' if calib_ok.get(m_) else ('❌' if m_ in calib_ok else '—')}, эпох по правилу "
               f"{epochs.get(m_, '—')} (в POOL['cos_epochs'] — {P['cos_epochs'].get(m_, '—')})")
     print(f"   рецепт подтверждён: {', '.join(f'{k_} {chr(9989) if v_ else chr(10060)}' for k_, v_ in recipe_ok.items())}")
-    diff = {k_: (v_, P['cos_epochs'].get(k_)) for k_, v_ in epochs.items() if v_ != P['cos_epochs'].get(k_)}
+    diff = {k_: (v_, P['cos_epochs'].get(k_)) for k_, v_ in epochs.items()          # v6.1: модели без записи в cos_epochs
+            if k_ in P['cos_epochs'] and v_ != P['cos_epochs'][k_]}                   # берут эпохи по правилу — не расхождение
     if diff:
         print(f"   ⚠️ эпохи по правилу и POOL['cos_epochs'] расходятся (правило, настройка): {diff}")
     if not data_all:
@@ -6773,6 +7382,7 @@ def pool_summary():
     out = {'ver': POOL_VER, 'when': stamp, 'winner': win, 'final_assets': final, 'full': full, 'prod': prod,
            'recipe_ok': recipe_ok, 'calib_ok': calib_ok, 'pyr_ok': pyr_ok, 'tok_ok': tok_ok, 'rg_ok': rg_ok,
            'rx_ok': rx_ok, 'rx_pine_ok': rxp_ok, 'recalc': list(P['recalc']), 'prod_models': dict(P.get('prod_models', {})),
+           'nt_flag': nt_flag,
            'rules': {'rule': P['rule'], 'rule_model': P['rule_model'], 'rule_fix': P['rule_fix'],
                      'rule_refit': P['rule_refit'], 'rule_recipe': P['rule_recipe'], 'rule_pyr': P['rule_pyr'],
                      'rule_tok': P['rule_tok'], 'rule_rg': P['rule_rg'], 'rule_rx': P['rule_rx']},
@@ -7129,6 +7739,46 @@ for _nm, _over in RX_BAG.items():
 # v5.7, контроль «суррогат против суррогата» на всех новых путях кода сразу (диапазон логарифмом, положение close, боковые
 # входы RG_den): AUC обязан быть 0.5
 RUNS['C0_null_rx'] = {**RUNS['RX_clv'], 'lvl_log': True, 'control': 'null'}
+# v6.0: модели без времени — архитектуры старых F1 (RG_den) и F3 (F3_g, Pine), боковые входы — только знаменатель окна и
+# признаки истории в барах (глубина 200 баров). Старые F1 / F3 — для сравнения, не пересчитываются (окна и суррогаты те же)
+NT1_REF, NT3_REF = 'RG_den', 'F3_g'
+NT1_SWEEP = {   # порядок — очередь задания (по важности)
+    'NT1_0':   {'side': 'nt_den'},          # без времени и без замены: только знаменатель окна (цена отказа от времени)
+    'NT1_PRV': {'side': 'nt_PRV'},          # всё: путь + положение в диапазоне + режим волы
+    'NT1_P':   {'side': 'nt_P'},            # + путь 200 баров до окна 8 кусками, мельче у окна (71 … 2 бара)
+    'NT1_PR':  {'side': 'nt_PR'},
+    'NT1_PV':  {'side': 'nt_PV'},
+    'NT1_R':   {'side': 'nt_R'},            # + положение close в диапазоне 200 баров, ширина диапазона, отклонение от средней
+    'NT1_V':   {'side': 'nt_V'},            # + режим волы: ср. диапазон 16 и 64 баров к 200, хвосты диапазона, доля тела бара
+    'NT1_PU':  {'side': 'nt_PU'},           # путь равными кусками по 25 баров (против мелких у окна в NT1_P)
+    'NT1_PRV_bmed':  {'side': 'nt_PRV_bmed'},     # нормировка истории — медиана |close − open| (вместо медианы диапазона)
+    'NT1_PRV_rmean': {'side': 'nt_PRV_rmean'},    # — среднее диапазона
+    'NT1_PRV_bmean': {'side': 'nt_PRV_bmean'},    # — среднее |close − open|
+    'NT1_PRV_ch96':  {'side': 'nt_PRV', 'cnn_ch': 96, 'head_hidden': (192,)},   # ёмкость
+}
+NT3_SWEEP = {   # Pine: потоковая CNN F3_g; бюджет — NT_PINE_MAX умножений на бар
+    'NT3_0':   {'side': None},              # без боковых входов вовсе
+    'NT3_PRV': {'side': 'nt_PRV'},
+    'NT3_P':   {'side': 'nt_P'},
+    'NT3_D':   {'side': 'nt_den'},          # только знаменатель окна
+    'NT3_PRV_ch48': {'side': 'nt_PRV', 'cnn_ch': 48, 'head_hidden': (96,)},   # шире: ~2.2× цены F3_g в Pine
+}
+for _nm, _over in NT1_SWEEP.items():
+    RUNS[_nm] = {**RUNS[NT1_REF], **_over}
+for _nm, _over in NT3_SWEEP.items():
+    RUNS[_nm] = {**RUNS[NT3_REF], **_over}
+RUNS['C0_null_nt'] = {**RUNS['NT1_PRV'], 'control': 'null'}     # суррогат против суррогата на новых путях: AUC = 0.5
+for _nm in list(NT1_SWEEP) + list(NT3_SWEEP) + ['C0_null_nt']:   # у моделей без времени — ни одного старого столбца
+    _c = set(SIDE_COLS[RUNS[_nm]['side']]) if RUNS[_nm].get('side') else set()
+    assert not _c & set(NT_OLD_COLS), f"{_nm}: столбцы со временем {sorted(_c & set(NT_OLD_COLS))}"
+    assert not RUNS[_nm].get('cnn_chan') and not RUNS[_nm].get('cnn_pyr'), _nm
+# порядок простоты F1 (правило одной SE): меньше боковых входов; нормировка медианой диапазона (она уже у r) раньше прочих;
+# прежняя ёмкость раньше большей. У F3 простота — цена в Pine
+NT1_SIMPLE = ['NT1_0', 'NT1_R', 'NT1_V', 'NT1_P', 'NT1_PU', 'NT1_PR', 'NT1_PV', 'NT1_PRV',
+              'NT1_PRV_bmed', 'NT1_PRV_rmean', 'NT1_PRV_bmean', 'NT1_PRV_ch96']
+NT_PINE_MAX = 60000      # F3: не больше 60k умножений на бар (F3_g ~26k = 14.7 c на 20k баров при лимите TradingView 40 c)
+NT_ORDER = ['NT1_0', 'NT3_0', 'NT1_PRV', 'NT3_PRV', 'NT1_P', 'NT3_P', 'NT1_PR', 'NT1_PV', 'NT3_D', 'NT1_R', 'NT1_V',
+            'NT1_PU', 'NT3_PRV_ch48', 'NT1_PRV_bmed', 'NT1_PRV_rmean', 'NT1_PRV_bmean', 'NT1_PRV_ch96']
 
 # ПРОТОКОЛ (правила — в STATUS до прогона):
 #   0. TrendyCoins_SMC_Data (пол сверен с FINAL / R1), здесь MODE 'check' — сверка torch с numpy.
@@ -7199,6 +7849,17 @@ RUNS['C0_null_rx'] = {**RUNS['RX_clv'], 'lvl_log': True, 'control': 'null'}
 #      (TrendyCoins_SMC_Range: DATA_DIR = SMC/data_fresh/, ASSETS = BTCUSDT, ETHUSDT). Затем MODE 'chain' в одной консоли:
 #      G1 ('refit' F3_g a / b) → pool_sum (рецепт и перенос калибровки F3_g) → T (боевое F3_g a / b / c; RUN_DIR/prod/).
 #      По желанию — сайт: CHAIN = ['pool:U'] (боевое RG_den, рецепт уже подтверждён).
+#  18. Модели без времени (v6.0, один BTC, SMC/data/ — без накладки): СНАЧАЛА TrendyCoins_SMC_Bars (DATA_DIR = SMC/data/,
+#      ASSETS = BTCUSDT; smc_series / smc_prices / smc_range не трогаются), здесь MODE 'check' (файл баров, глубина 200 баров,
+#      честность, правило ничьей; старые RG_den / F3_g через новый код — AUC как в json), затем MODE 'train', JOB 'NTa' /
+#      'NTb' / 'NTc' — три консоли параллельно (сиды a / b / c, 17 вариантов NT1 / NT3 по важности, контроль C0_null_nt — в NTa).
+#      Утром — MODE 'nt_sum' (в свежей консоли): выбор F1 и F3 по правилам и сравнение со старыми RG_den / F3_g.
+#  19. F3 без времени в бой (v6.1): СНАЧАЛА TrendyCoins_SMC_Bars — все 31 ассет в SMC/data/ (старые CSV BTC / ETH) и BTC / ETH в
+#      SMC/data_fresh/ (свежие CSV). Затем MODE 'pool', JOB 'NS1' / 'NS2' — две консоли параллельно ('stop' на C, сиды a / b), и
+#      в свежей консоли MODE 'chain' (CHAIN: NS -> pool_sum -> NG -> pool_sum -> NP; уже посчитанные 'stop' пропускаются) — или
+#      вся цепочка в одной консоли. Потом TrendyCoins_SMC_Pack — архив artifacts/ для репо и экспорта в Pine (Claude Code).
+#  20. Поассетная калибровка (v6.2): MODE 'chain' (CHAIN: NR -> pool_sum) — 'refit' F3 без времени на ALL, сиды a / b, затем
+#      TrendyCoins_SMC_Pack заново (архив с 'refit' на ALL).
 CONTROLS =['C0_null', 'C0_shuf', 'C0_iid', 'B_frozen']      # один сид: от сида не зависят
 SEEDED = ['B_mlp', 'B_simple', 'A0_concept', 'A1_base', 'A2_noclu', 'A3_frozen', 'A4_hiclu', 'A5_cos',
           'A6_ponly', 'A7_noreg', 'A8_lin', 'A11_amp', 'A12_Tfix']
@@ -7378,6 +8039,11 @@ JOBS = {
             + [(n, {'L': 64}, 'a') for n in list(RX_BAG) + list(RX_CAP)]),
     'RXb': [(n, {'L': 64}, 'b') for n in list(RX_SWEEP) + list(RX_PINE) + list(RX_CAP)],
     'RXc': [(n, {'L': 64}, 'c') for n in list(RX_SWEEP) + list(RX_PINE) + list(RX_CAP)],
+    # v6.0, модели без времени (один BTC): по сиду на консоль, очередь по важности; контроль — в NTa после главных вариантов
+    'NTa': ([(n, {'L': 64}, 'a') for n in NT_ORDER[:6]] + [('C0_null_nt', {'L': 64}, 'a')]
+            + [(n, {'L': 64}, 'a') for n in NT_ORDER[6:]]),
+    'NTb': [(n, {'L': 64}, 'b') for n in NT_ORDER],
+    'NTc': [(n, {'L': 64}, 'c') for n in NT_ORDER],
 }
 
 # ---- v4.7: проверка ядра ассетов (MODE 'core'). Правила — в STATUS до прогона; задним числом не двигаются.
@@ -7452,9 +8118,13 @@ POOL = {
     # ---- v5.7 (правила — до прогонов RXa / RXb / RXc): добавки поверх RG_den и диапазон в F3 на пуле
     'rule_rx': 2.0,                    # победитель этапа 1 принимается, если против своего эталона ('stop', набор C, те же
                                        # сиды) Δ панели TUNE >= +2 SE и Δ панели VAL > 0; эталон: RX_* — RG_den, F3_g — F3
-    'recalc': ['RG_den', 'F3_g'],      # v5.7-5.8: модели пересчёта (новые F1 и F3): рецепт ('refit' против 'stop'), калибровка,
-                                       # эпохи
-    'prod_models': {'site': 'RG_den', 'pine': 'F3_g'},   # v5.8: боевые модели — сайт / MQL и Pine (по правилам v5.6-5.7)
+    'recalc': ['RG_den', 'F3_g', 'NT3_PRV_ch48'],   # v5.7-5.8: модели пересчёта (новые F1 и F3): рецепт ('refit' против 'stop'),
+                                       # калибровка, эпохи; v6.1: + F3 без времени
+    'prod_models': {'site': 'RG_den', 'pine': 'NT3_PRV_ch48'},   # v5.8: боевые модели — сайт / MQL и Pine; v6.1: Pine — F3 без
+                                       # времени (вердикт 'nt_sum' 2026-10-07); сайт пока RG_den (F1 без времени NT1_PRV — позже)
+    # ---- v6.1 (правило — до прогонов NS / NG / NP): F3 без времени на пуле против F3_g ('stop', набор C, те же сиды)
+    'nt_ref': 'F3_g',                  # эталон сравнения — старая F3 со временем (её 'stop' на C — задание RXc v5.7)
+    'nt_flag': 2.0,                    # справочно, без ворот: ❗ (разбор до экспорта), если Δ панели VAL (NT3 − F3_g) <= −2 SE
 }
 POOL['cos_epochs']['RG_den'] = 27      # v5.7: лучшие эпохи прогонов 'stop' на C — 32 (X1) и 22 (X2)
 POOL['cos_epochs']['F3_g'] = 15        # v5.8: лучшие эпохи прогонов 'stop' на C — 20 (RXc, сид a) и 10 (сид b)
@@ -7462,6 +8132,7 @@ POOL['models'].update({n_: n_ for n_ in PYR_SWEEP})                 # v5.4: ва
 POOL['models'].update({n_: n_ for n_ in TOK_SWEEP})                 # v5.5: варианты признаков токена
 POOL['models'].update({n_: n_ for n_ in RG_SWEEP})                  # v5.6: диапазон бара
 POOL['models'].update({n_: n_ for n_ in list(RX_SWEEP) + list(RX_PINE)})   # v5.7: добавки поверх RG_den, F3 + диапазон
+POOL['models'].update({n_: n_ for n_ in list(NT1_SWEEP) + list(NT3_SWEEP)})  # v6.1: модели без времени
 POOL['sets']['A'] = list(POOL['panel'])                                              # ядро по правилам v4.7 (9)
 POOL['sets']['B'] = POOL['sets']['A'] + ['XRPUSDT', 'LTCUSDT', 'DASHUSDT', 'ZECUSDT', 'SPELLUSDT', 'ICPUSDT',
                                          'NEARUSDT']                                 # + USDT-резерв (16)
@@ -7512,6 +8183,23 @@ POOL_JOBS = {   # (набор, сид[, модель F1 / F2 / F3 — по ум�
     # v5.8: рецепт новой F3 — 'refit' F3_g (FIT + TUNE, 15 эпох), сиды a / b: проверка рецепта перед боевым обучением и
     # источник калибровки индикатора (их VALIDATION — вне выборки)
     'G1': [('C', s_, 'F3_g', 'refit') for s_ in ('a', 'b')],
+    # v6.1, F3 без времени (NT3_PRV_ch48) — на пул и в бой: 'stop' на C (сиды рецепта a / b: эпохи по правилу v4.9, сравнение с
+    # F3_g на C, поколение 1 калибровки) -> 'refit' (FIT + TUNE: рецепт и источник калибровки индикатора) -> 'prod' (все данные
+    # 31 ассета, накладка свежих BTC / ETH). NS1 / NS2, NP1 / NP2 / NP3 — по сиду для параллельных консолей
+    'NS': [('C', s_, 'NT3_PRV_ch48', 'stop') for s_ in ('a', 'b')],
+    'NS1': [('C', 'a', 'NT3_PRV_ch48', 'stop')],
+    'NS2': [('C', 'b', 'NT3_PRV_ch48', 'stop')],
+    'NG': [('C', s_, 'NT3_PRV_ch48', 'refit') for s_ in ('a', 'b')],
+    'NP': [('ALL', s_, 'NT3_PRV_ch48', 'prod') for s_ in ('a', 'b', 'c')],
+    'NP1': [('ALL', 'a', 'NT3_PRV_ch48', 'prod')],
+    'NP2': [('ALL', 'b', 'NT3_PRV_ch48', 'prod')],
+    'NP3': [('ALL', 'c', 'NT3_PRV_ch48', 'prod')],
+    # v6.2, источник поассетной калибровки Платта: 'refit' на том же наборе, что боевое (ALL = C + H, 31 ассет), сиды a / b —
+    # боевой рецепт на год раньше (FIT + TUNE до 2025-06-30, те же эпохи), его VALIDATION вне выборки у всех 31 ассета. У 'refit'
+    # на C ассеты H невиданные, а в бою — виданные; 'refit' на C остаётся для ворот рецепта и калибровки незнакомого символа (H)
+    'NR': [('ALL', s_, 'NT3_PRV_ch48', 'refit') for s_ in ('a', 'b')],
+    'NR1': [('ALL', 'a', 'NT3_PRV_ch48', 'refit')],
+    'NR2': [('ALL', 'b', 'NT3_PRV_ch48', 'refit')],
 }
 if PYR_V3:      # v5.5: добор третьего сида пирамиды на пуле (решение после просмотра V1 / V2 — помечено явно)
     POOL_JOBS['V3a'] = [('C', 'c', 'F1', 'stop')]
@@ -7523,8 +8211,15 @@ MODE = 'chain'          # 'check' | 'train' | 'one' | 'sum' | 'figs' (дорис
                         # | 'rg_sum' (v5.6: вердикт диапазона бара)
                         # | 'night' (v5.7: очередь JOBS[JOB], затем POOL_JOBS[JOB] — одним заходом) | 'rx_sum' (v5.7: вердикт)
                         # | 'chain' (v5.8: шаги CHAIN по порядку в одной консоли)
-JOB = 'G1'              # для 'train' / 'night' / 'pool' — имя задания (v5.8: 'G1', 'T', 'T1' / 'T2' / 'T3', 'U')
-CHAIN = ['pool:G1', 'pool_sum', 'pool:T']   # v5.8, MODE 'chain': 'refit' F3_g -> сводка (рецепт) -> боевое F3_g a / b / c
+                        # | 'nt_sum' (v6.0: вердикт моделей без времени и сравнение со старыми F1 / F3)
+JOB = 'NR'              # для 'train' / 'night' / 'pool' — имя задания (v6.0: 'NTa' / 'NTb' / 'NTc' — по консоли на сид;
+                        # v6.1: 'NS1' / 'NS2' — 'stop' F3 без времени на пуле; v6.2: 'NR' — 'refit' на ALL, или 'NR1' / 'NR2')
+# v5.8, MODE 'chain': шаги по порядку в одной консоли. v6.1: F3 без времени — 'stop' a / b (уже посчитанные в других консолях
+# пропускаются, если эта консоль их видит) -> сводка -> 'refit' a / b (эпохи — по правилу из 'stop') -> сводка (рецепт,
+# калибровка) -> боевое a / b / c (только при подтверждённом рецепте)
+# (посчитано 2026-10-07: CHAIN = ['pool:NS', 'pool_sum', 'pool:NG', 'pool_sum', 'pool:NP'])
+# v6.2: источник поассетной калибровки — 'refit' Pine-модели на ALL, сиды a / b, затем сводка (раздел (5з))
+CHAIN = ['pool:NR', 'pool_sum']
 ONE = ('A1_base', {'L': 32}, 'a')   # для 'one'
 FORCE = False           # False — уже посчитанные прогоны (есть json этой версии) пропускаются
 MODE = os.environ.get('SMC_MODE', MODE)     # переопределение для стенда вне Colab
@@ -7543,8 +8238,10 @@ def chain_mode(steps):
         if kind == 'pool':
             if job not in POOL_JOBS:
                 raise KeyError(f"🍆 АЙ, ОШИБКА! шаг '{step}': нет задания '{job}' в POOL_JOBS")
-            for p_ in dict.fromkeys(_pool_price(m_) for _, _, m_, mo_ in _pool_items(job) if mo_ == 'prod'):
-                prod_overlay(p_)
+            its = _pool_items(job)
+            for p_ in dict.fromkeys(_pool_price(m_) for _, _, m_, mo_ in its if mo_ == 'prod'):
+                prod_overlay(p_, bars=any(_pool_nt_cols(m_) for _, _, m_, mo_ in its
+                                          if mo_ == 'prod' and _pool_price(m_) == p_))     # v6.1: + smc_bars
         elif kind == 'train' and job not in JOBS:
             raise KeyError(f"🍆 АЙ, ОШИБКА! шаг '{step}': нет задания '{job}' в JOBS")
         elif kind not in ('pool', 'pool_sum', 'train'):
@@ -7583,7 +8280,7 @@ def figs_mode():
 
 
 if MODE not in ('check', 'train', 'one', 'sum', 'figs', 'core', 'pool', 'pool_sum', 'pyr_sum', 'tok_sum', 'rg_sum',
-                'night', 'rx_sum', 'chain', 'none'):
+                'night', 'rx_sum', 'chain', 'nt_sum', 'none'):
     print(f"🍆 АЙ, ОШИБКА! неизвестный MODE '{MODE}'")
 elif MODE != 'none':
     stamp = time.strftime('%Y%m%d_%H%M%S')
@@ -7621,10 +8318,12 @@ elif MODE != 'none':
             rx_summary()
         elif MODE == 'chain':                       # v5.8: шаги CHAIN по порядку в одной консоли
             chain_mode(CHAIN)
+        elif MODE == 'nt_sum':                      # v6.0: модели без времени
+            nt_summary()
         else:
             summary()
     if IN_COLAB and MODE in ('train', 'one', 'figs', 'core', 'pool', 'pool_sum', 'sum', 'pyr_sum', 'tok_sum', 'rg_sum',
-                             'night', 'rx_sum', 'chain'):
+                             'night', 'rx_sum', 'chain', 'nt_sum'):
         try:                                         # v5.1: всё записанное этой консолью — на Drive до закрытия runtime
             drive.flush_and_unmount()
             print("☁️ Drive: записи выгружены (flush_and_unmount); для новой работы в этой консоли — запусти скрипт заново")
