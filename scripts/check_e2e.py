@@ -6,7 +6,11 @@ part starts at offset min(st) (first VAL window starts at the first VAL bar — 
 Research semantics reproduced: VALIDATION starts 200 bars after 2025-07-01 00:00 (warm-up dropped), the EMA does not
 see those 200 bars, moves before the window are clipped at the VAL part start.
 
-    python scripts/check_e2e.py [--seed a]
+NT3 (rules R3 amendment, session 3): the history inputs run over consecutive CSV bars (the part + 200 CSV bars before it,
+research nt_segment / SeriesData._nt_arrays), not clipped at the part start, and there is no EMA: the reference computes
+on the continuous bars of the tail without exclusions.
+
+    python scripts/check_e2e.py [--seed a] [--model NT3_PRV_ch48 --set ALL]
 """
 import argparse
 import json
@@ -18,7 +22,7 @@ import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from mri import L  # noqa: E402
+from mri import L, nt3  # noqa: E402
 from mri.batch import infer  # noqa: E402
 from mri.features import bar_features, read_bars  # noqa: E402
 from mri.params import load_npz  # noqa: E402
@@ -29,6 +33,8 @@ VAL_START = '2025-07-01 00:00:00'
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--seed', default='a')
+    ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID])
+    ap.add_argument('--set', default='C', choices=['C', 'ALL'], help="training set of the 'refit' model")
     ap.add_argument('--floor', type=float, default=None)
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
@@ -37,26 +43,33 @@ def main():
         with open(os.path.join(ROOT, 'artifacts/pack/floors.json')) as fh:
             floor = json.load(fh)['smc_series_BTCUSDT_5M_N200.npz']['floor_L64']
     bars = read_bars(os.path.join(ROOT, 'artifacts/bars/btc_old_tail.csv.gz'))
-    p, arr = load_npz(os.path.join(ROOT, f'artifacts/calib/pool_C_F3_g_L64_{a.seed}_refit_part*.npz'))
+    is_nt = a.model == nt3.MODEL_ID
+    p, arr = load_npz(os.path.join(ROOT, f'artifacts/calib/pool_{a.set}_{a.model}_L64_{a.seed}_refit_part*.npz'))
     st, sp = arr['BTCUSDT__val__st'], arr['BTCUSDT__val__sp'].astype(np.float64)
     t = bars['time'].to_numpy()
     i0 = int(np.searchsorted(t, pd.Timestamp(VAL_START).value // 10 ** 6))
     seg = i0 + 200                                # first bar of the research VALIDATION part
-    excl = np.zeros(len(bars), dtype=bool)
-    excl[i0:seg] = True
-    f = bar_features(bars, ema_exclude=excl)
+    if is_nt:
+        f = bar_features(bars)
+    else:
+        excl = np.zeros(len(bars), dtype=bool)
+        excl[i0:seg] = True
+        f = bar_features(bars, ema_exclude=excl)
     off = int(st.min())
     Tbar = st - off + seg + (L - 1)
     okw = np.convolve(f['ok'].astype(int), np.ones(L, dtype=int), 'valid') == L
     starts_ok = np.where(okw[seg - 0:])[0]                         # valid window starts from the VAL part start
     same_set = len(starts_ok) == len(st) and np.array_equal(starts_ok, st - off)
-    ref = infer(f, p, floor, seg_start=seg, T=Tbar)
+    if is_nt:
+        ref = nt3.infer(f, nt3.history_features(bars), p, floor, T=Tbar)
+    else:
+        ref = infer(f, p, floor, seg_start=seg, T=Tbar)
     d = np.abs(ref['logit'] - sp)
     z = ref['x_end'] / ref['D']
     tie = np.abs(z) < 1e-3
     med = np.median(np.abs(np.lib.stride_tricks.sliding_window_view(np.nan_to_num(f['r']), L)[Tbar - (L - 1)]), axis=1)
     floor_bind = med < floor
-    res = {'seed': a.seed, 'windows': int(len(st)), 'same_window_set': bool(same_set),
+    res = {'model': a.model, 'set': a.set, 'seed': a.seed, 'windows': int(len(st)), 'same_window_set': bool(same_set),
            'last_end': str(pd.Timestamp(int(t[Tbar[-1]]), unit='ms')), 'floor': floor,
            'ties': int(tie.sum()), 'floor_binding': int(floor_bind.sum()),
            'max_dlogit_non_tie': float(d[~tie].max()), 'p99': float(np.percentile(d, 99)),

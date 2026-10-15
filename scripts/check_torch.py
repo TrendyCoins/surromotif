@@ -1,12 +1,13 @@
-"""Rule R2 (docs/rules.md): reference (numpy, mri.batch) against research torch code on the same bars.
+"""Rule R2 (docs/rules.md): reference (numpy, mri.batch / mri.nt3) against research torch code on the same bars.
 
-Research side: data files written from the bars by mri.research_bridge, then research SeriesData ('multi_g'),
-to_shapes, side_feats and CNNBase (weights from the npz). One continuous segment: TRAINING from the first bar of the
-file, a short VALIDATION tail (its windows are not compared).
+Research side: data files written from the bars by mri.research_bridge (for NT3 also smc_bars), then research SeriesData
+('multi_g'), to_shapes, side_feats and CNNBase (weights from the npz). One continuous segment: TRAINING from the first bar
+of the file, a short VALIDATION tail (its windows are not compared).
 
-    python scripts/check_torch.py [--bars artifacts/bars/btc_fresh_tail.csv.gz] [--npz ...] [--floor ...]
+    python scripts/check_torch.py [--model F3_g | NT3_PRV_ch48] [--bars artifacts/bars/btc_fresh_tail.csv.gz] [--npz ...]
 """
 import argparse
+import glob
 import json
 import os
 import sys
@@ -20,6 +21,7 @@ sys.path.insert(0, ROOT)
 from mri import L, TIE_EPS  # noqa: E402
 from mri.batch import infer  # noqa: E402
 from mri.features import bar_features, read_bars  # noqa: E402
+from mri import nt3  # noqa: E402
 from mri.params import load_npz  # noqa: E402
 from mri.research_bridge import write_research_files  # noqa: E402
 
@@ -32,21 +34,31 @@ def research_module():
     return T
 
 
-def research_logits(T, data_dir, npz_path, asset='BTCUSDT', bs=32768):
+def research_model(T, model, npz_path):
     import torch
-    T.DATA_DIR, T.DATA_OVERLAY = data_dir, None
-    data = T.SeriesData([asset], '5M', 200, '2100-01-01', 'multi_g')
-    w = data.windows(L)
-    tr = w['st'][(w['sid'] == 0) & (data.part[w['st']] == 0)]
-    cfg = T.make_cfg('F3_g', {'L': L}, 'a')
-    model = T.CNNBase(cfg['L'], cfg['cnn_ch'], cfg['cnn_k'], cfg['cnn_dil'], cfg['head_hidden'], cfg['dropout'], 1.0,
+    cfg = T.make_cfg(model, {'L': L}, 'a')
+    net = T.CNNBase(cfg['L'], cfg['cnn_ch'], cfg['cnn_k'], cfg['cnn_dil'], cfg['head_hidden'], cfg['dropout'], 1.0,
                       cfg['cnn_bn'], cfg['cnn_res'], cfg['cnn_cdrop'], cfg['cnn_pool'], cfg['cnn_in'], cfg['cnn_sdrop'],
                       cfg['cnn_valid'], cfg['cnn_bias'], cfg['cnn_ma'], T.SIDE_COLS[cfg['side']], 4, None, 'rw', None,
                       T.N_LEVEL[cfg['price']], False)
-    with np.load(npz_path) as d:
-        sd = {k[3:]: torch.from_numpy(d[k]) for k in d.files if k.startswith('sd_')}
-    model.load_state_dict(sd)
-    model.eval()
+    sd = {}
+    for p in sorted(glob.glob(npz_path)):
+        with np.load(p) as d:
+            sd.update({k[3:]: torch.from_numpy(d[k]) for k in d.files if k.startswith('sd_')})
+    net.load_state_dict(sd)
+    net.eval()
+    return net
+
+
+def research_logits(T, data_dir, npz_path, model='F3_g', asset='BTCUSDT', bs=32768, data=None, starts=None):
+    """Research logits of the TRAINING windows of the asset (or of the windows starting at positions `starts`)."""
+    import torch
+    T.DATA_DIR, T.DATA_OVERLAY = data_dir, None
+    if data is None:
+        data = T.SeriesData([asset], '5M', 200, '2100-01-01', 'multi_g')
+    w = data.windows(L)
+    tr = w['st'][(w['sid'] == 0) & (data.part[w['st']] == 0)] if starts is None else np.asarray(starts)
+    net = research_model(T, model, npz_path)
     out = {'st': tr, 'logit': [], 'flip_shape': [], 'flip_side': []}
     fl_all = w['floor_t']
     with torch.no_grad():
@@ -56,23 +68,28 @@ def research_logits(T, data_dir, npz_path, asset='BTCUSDT', bs=32768):
             fl = fl_all[torch.zeros(len(st), dtype=torch.long)]
             X = T.to_shapes(W, fl)
             S = T.side_feats(data, st, L, W, fl)
-            out['logit'].append(model(X, S)[0].double().numpy())
+            out['logit'].append(net(X, S)[0].double().numpy())
+            # orientation of research (rule R1 since research v6.0: flip only below -ORIENT_EPS * divisor)
+            div = torch.maximum(T.median_abs(W[:, 0]), fl)
             Xc = torch.cumsum(W[:, :3], dim=2)
             Xc = Xc - Xc.mean(dim=2, keepdim=True)
-            out['flip_shape'].append((Xc[:, 0, -1] < 0).numpy())
+            out['flip_shape'].append((Xc[:, 0, -1] < -T.ORIENT_EPS * div).numpy())
             cs = torch.cumsum(W[:, 0], dim=1)
-            out['flip_side'].append((cs[:, -1] - cs.mean(dim=1) < 0).numpy())
+            out['flip_side'].append((cs[:, -1] - cs.mean(dim=1) < -T.ORIENT_EPS * div).numpy())
     return {k: (np.concatenate(v) if isinstance(v, list) else v) for k, v in out.items()}
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID])
     ap.add_argument('--bars', default=os.path.join(ROOT, 'artifacts/bars/btc_fresh_tail.csv.gz'))
-    ap.add_argument('--npz', nargs='+', default=[os.path.join(ROOT, f'artifacts/weights/prod_F3_g_L64_{s}_slim.npz')
-                                                 for s in 'abc'])
+    ap.add_argument('--npz', nargs='+', default=None, help='default: prod a / b / c of the model')
     ap.add_argument('--floor', type=float, default=None, help='floor_L64; default: BTCUSDT from artifacts/pack/floors.json')
     ap.add_argument('--out', default=None, help='json with the summary')
     a = ap.parse_args()
+    if a.npz is None:
+        a.npz = [os.path.join(ROOT, f'artifacts/weights/prod_{a.model}_L64_{s}_slim.npz') for s in 'abc']
+    is_nt = a.model == nt3.MODEL_ID
     floor = a.floor
     if floor is None:
         with open(os.path.join(ROOT, 'artifacts/pack/floors.json')) as fh:
@@ -82,17 +99,23 @@ def main():
     tmp = tempfile.mkdtemp() + '/'
     t_start = str(np.datetime64(int(bars['time'].iloc[0]), 'ms'))
     t_valid = str(np.datetime64(int(bars['time'].iloc[n - 300]), 'ms'))
-    rows = write_research_files(bars, tmp, 'BTCUSDT', t_start, t_valid, floor)
+    rows = write_research_files(bars, tmp, 'BTCUSDT', t_start, t_valid, floor, with_bars=is_nt)
     T = research_module()
     f = bar_features(bars)
+    hist = nt3.history_features(bars) if is_nt else None
     seg = rows['tr'][0]                           # research segment start (CSV row of the first TRAINING bar)
-    summary = {'bars': os.path.basename(a.bars), 'n_bars': n, 'floor': floor, 'eps': TIE_EPS, 'models': {}}
+    summary = {'model': a.model, 'bars': os.path.basename(a.bars), 'n_bars': n, 'floor': floor, 'eps': TIE_EPS,
+               'models': {}}
     for path in a.npz:
         t0 = time.time()
-        res = research_logits(T, tmp, path)
+        res = research_logits(T, tmp, path, a.model)
         Tbar = res['st'] + seg + (L - 1)           # CSV row of the window's last bar
         p, _ = load_npz(path)
-        ref = infer(f, p, floor, seg_start=seg, T=Tbar)
+        if is_nt:
+            ref = nt3.infer(f, hist, p, floor, T=Tbar)
+            summary['first_window_end'] = int(Tbar.min())
+        else:
+            ref = infer(f, p, floor, seg_start=seg, T=Tbar)
         d = np.abs(ref['logit'] - res['logit'])
         z = ref['x_end'] / ref['D']
         tie = ((np.abs(z) < 1e-3) | (res['flip_shape'] != (ref['sgn'] < 0)) | (res['flip_side'] != res['flip_shape']))

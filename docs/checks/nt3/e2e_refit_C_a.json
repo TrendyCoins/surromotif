@@ -1,0 +1,17 @@
+{
+ "model": "NT3_PRV_ch48",
+ "set": "C",
+ "seed": "a",
+ "windows": 104599,
+ "same_window_set": true,
+ "last_end": "2026-06-30 02:25:00",
+ "floor": 0.17530229687690735,
+ "ties": 6,
+ "floor_binding": 299,
+ "max_dlogit_non_tie": 0.01195513749228816,
+ "p99": 0.005010266058721329,
+ "max_dlogit_tie": 0.0012328121216098609,
+ "max_dlogit_floor_binding": 0.004430104855202455,
+ "n_dlogit_gt_1e-4": 99489,
+ "pass_R3": false
+}
