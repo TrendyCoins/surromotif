@@ -1,0 +1,996 @@
+{
+ "model": "NT3_PRV_ch48",
+ "platt": {
+  "BTCUSDT": [
+   0.8426300883293152,
+   -0.38505035638809204
+  ],
+  "ETHUSDT": [
+   1.1139812469482422,
+   -0.7899372577667236
+  ],
+  "DOGEUSDT": [
+   0.9797671437263489,
+   -0.5659359693527222
+  ],
+  "SOLUSDT": [
+   0.8909746408462524,
+   -0.4443643093109131
+  ],
+  "ADAUSDT": [
+   0.87144935131073,
+   -0.4076251983642578
+  ],
+  "BNBUSDT": [
+   0.7804573178291321,
+   -0.27349528670310974
+  ],
+  "BCHUSDT": [
+   0.7463998794555664,
+   -0.23191514611244202
+  ],
+  "DOTUSDT": [
+   0.834274172782898,
+   -0.34018248319625854
+  ],
+  "UNIUSDT": [
+   0.8404353260993958,
+   -0.3604070544242859
+  ],
+  "XRPUSDT": [
+   0.8526526689529419,
+   -0.37721118330955505
+  ],
+  "LTCUSDT": [
+   0.7245725393295288,
+   -0.23988619446754456
+  ],
+  "DASHUSDT": [
+   0.9396822452545166,
+   -0.49620935320854187
+  ],
+  "ZECUSDT": [
+   0.9461657404899597,
+   -0.535832405090332
+  ],
+  "SPELLUSDT": [
+   0.7777805924415588,
+   -0.2126852124929428
+  ],
+  "ICPUSDT": [
+   0.7584550380706787,
+   -0.2889304757118225
+  ],
+  "NEARUSDT": [
+   0.730005145072937,
+   -0.2479057013988495
+  ],
+  "ZENUSDT": [
+   0.9120381474494934,
+   -0.4436146914958954
+  ],
+  "AVAXUSDT": [
+   0.8810052871704102,
+   -0.3969903588294983
+  ],
+  "FETUSDT": [
+   0.8788285851478577,
+   -0.3954277038574219
+  ],
+  "RAYUSDT": [
+   0.8500726819038391,
+   -0.2905670702457428
+  ],
+  "CAKEUSDT": [
+   0.794098973274231,
+   -0.2935011386871338
+  ],
+  "INJUSDT": [
+   0.7203945517539978,
+   -0.2223573923110962
+  ],
+  "RUNEUSDT": [
+   0.8577651381492615,
+   -0.3130866587162018
+  ],
+  "PHAUSDT": [
+   0.8255383372306824,
+   -0.28626617789268494
+  ],
+  "QNTUSDT": [
+   0.662527859210968,
+   -0.14830711483955383
+  ],
+  "HBARUSDT": [
+   0.6509257555007935,
+   -0.16655418276786804
+  ],
+  "AAVEUSDT": [
+   0.6829267144203186,
+   -0.2044578641653061
+  ],
+  "VTHOUSDT": [
+   0.7138074636459351,
+   -0.18268951773643494
+  ],
+  "FILUSDT": [
+   0.9378737211227417,
+   -0.46043795347213745
+  ],
+  "LINKUSDT": [
+   0.9228219985961914,
+   -0.4722996950149536
+  ],
+  "XLMUSDT": [
+   0.6268060803413391,
+   -0.1482810080051422
+  ]
+ },
+ "btc_fresh_prod_a": {
+  "bars": 25736,
+  "days": 89.4,
+  "median_abs_dlogM": 0.09288571048660732,
+  "color_flips_per_day": 13.820329499533727,
+  "marked_color_flips_per_day": 5.270749145166304,
+  "mean_run_marked_bars": 19.738853503184714,
+  "median_run_marked_bars": 4.0,
+  "share_marked": 0.8429048803232826,
+  "share_orange": 0.6496347528753497,
+  "share_blue": 0.19327012744793284,
+  "jumpy": false
+ },
+ "val_refit": {
+  "AAVEUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.07849459084047972,
+   "color_flips_per_day": 13.954091339305347,
+   "marked_color_flips_per_day": 4.967083815332843,
+   "mean_run_marked_bars": 17.39832070448495,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8122066176540885,
+   "share_orange": 0.5976443369439478,
+   "share_blue": 0.21456228071014063,
+   "jumpy": false
+  },
+  "ADAUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09936559402634693,
+   "color_flips_per_day": 13.91279075325768,
+   "marked_color_flips_per_day": 5.404870027438121,
+   "mean_run_marked_bars": 18.97106998510955,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8526180938632301,
+   "share_orange": 0.6516123481104026,
+   "share_blue": 0.20100574575282745,
+   "jumpy": false
+  },
+  "AVAXUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09911902603788292,
+   "color_flips_per_day": 14.422164647845582,
+   "marked_color_flips_per_day": 5.523265040774768,
+   "mean_run_marked_bars": 18.18045882834904,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8485453971835295,
+   "share_orange": 0.6512681765600054,
+   "share_blue": 0.19727722062352412,
+   "jumpy": false
+  },
+  "BCHUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08740558388061004,
+   "color_flips_per_day": 14.802130039484124,
+   "marked_color_flips_per_day": 5.589345978451036,
+   "mean_run_marked_bars": 17.593006708680626,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8273501658715666,
+   "share_orange": 0.6171760724289908,
+   "share_blue": 0.21017409344257593,
+   "jumpy": false
+  },
+  "BNBUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09094993684664043,
+   "color_flips_per_day": 14.20740160039771,
+   "marked_color_flips_per_day": 5.291981758907829,
+   "mean_run_marked_bars": 18.542959679121807,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8397594623275557,
+   "share_orange": 0.6274534173366858,
+   "share_blue": 0.21230604499086989,
+   "jumpy": false
+  },
+  "BTCUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09697300873874859,
+   "color_flips_per_day": 12.68203328903718,
+   "marked_color_flips_per_day": 5.209380586812493,
+   "mean_run_marked_bars": 20.35247747747748,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8639183931012725,
+   "share_orange": 0.6620522184724519,
+   "share_blue": 0.20186617462882053,
+   "jumpy": false
+  },
+  "CAKEUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09114796509848588,
+   "color_flips_per_day": 14.722282239791967,
+   "marked_color_flips_per_day": 5.4709509651143895,
+   "mean_run_marked_bars": 17.39166001596169,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8333444870409851,
+   "share_orange": 0.6237248922073825,
+   "share_blue": 0.20961959483360262,
+   "jumpy": false
+  },
+  "DASHUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10796150200496157,
+   "color_flips_per_day": 14.232181952026309,
+   "marked_color_flips_per_day": 5.63615330930506,
+   "mean_run_marked_bars": 19.12388629613916,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8618629241197334,
+   "share_orange": 0.6653505291637587,
+   "share_blue": 0.19651239495597472,
+   "jumpy": false
+  },
+  "DOGEUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.11002917257329159,
+   "color_flips_per_day": 12.481037103605196,
+   "marked_color_flips_per_day": 5.283721641698295,
+   "mean_run_marked_bars": 21.598117647058825,
+   "median_run_marked_bars": 5.0,
+   "share_marked": 0.8775609709461849,
+   "share_orange": 0.6901308807923594,
+   "share_blue": 0.18743009015382556,
+   "jumpy": false
+  },
+  "DOTUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.095723287709923,
+   "color_flips_per_day": 14.656201302115699,
+   "marked_color_flips_per_day": 5.503991433952524,
+   "mean_run_marked_bars": 17.526179056754597,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8384496983718773,
+   "share_orange": 0.6324917064216675,
+   "share_blue": 0.20595799195020986,
+   "jumpy": false
+  },
+  "ETHUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.125461012350911,
+   "color_flips_per_day": 12.731593992294382,
+   "marked_color_flips_per_day": 5.732521343416285,
+   "mean_run_marked_bars": 22.435817307692307,
+   "median_run_marked_bars": 5.0,
+   "share_marked": 0.8922934253673553,
+   "share_orange": 0.724404631019417,
+   "share_blue": 0.16788879434793832,
+   "jumpy": false
+  },
+  "FETUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09916115284586213,
+   "color_flips_per_day": 15.058193672979664,
+   "marked_color_flips_per_day": 5.743534833028996,
+   "mean_run_marked_bars": 17.648957497995188,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8416237248922074,
+   "share_orange": 0.6408569871604891,
+   "share_blue": 0.20076673773171827,
+   "jumpy": false
+  },
+  "FILUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10740676448943276,
+   "color_flips_per_day": 13.733821547051118,
+   "marked_color_flips_per_day": 5.402116655034943,
+   "mean_run_marked_bars": 19.316184351554128,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8614805112859587,
+   "share_orange": 0.66782665226245,
+   "share_blue": 0.19365385902350882,
+   "jumpy": false
+  },
+  "HBARUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.07549788960632675,
+   "color_flips_per_day": 14.592873736842607,
+   "marked_color_flips_per_day": 4.873469153624796,
+   "mean_run_marked_bars": 16.692613975711726,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8016042218376849,
+   "share_orange": 0.5802349926863546,
+   "share_blue": 0.2213692291513303,
+   "jumpy": false
+  },
+  "ICPUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08718662273125233,
+   "color_flips_per_day": 14.389124179007448,
+   "marked_color_flips_per_day": 5.176340117974359,
+   "mean_run_marked_bars": 18.02471956792688,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8295585999866155,
+   "share_orange": 0.6157802655857131,
+   "share_blue": 0.2137783344009025,
+   "jumpy": false
+  },
+  "INJUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08311971670712737,
+   "color_flips_per_day": 14.196388110784998,
+   "marked_color_flips_per_day": 5.209380586812493,
+   "mean_run_marked_bars": 17.044100119189512,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8202755284467347,
+   "share_orange": 0.607481907092802,
+   "share_blue": 0.21279362135393265,
+   "jumpy": false
+  },
+  "LINKUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10276192241909143,
+   "color_flips_per_day": 13.852216560387767,
+   "marked_color_flips_per_day": 5.498484689146168,
+   "mean_run_marked_bars": 18.58293543699398,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8557825600627157,
+   "share_orange": 0.6609910228587271,
+   "share_blue": 0.19479153720398856,
+   "jumpy": false
+  },
+  "LTCUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08381624741051752,
+   "color_flips_per_day": 13.791642367517854,
+   "marked_color_flips_per_day": 4.997370911767799,
+   "mean_run_marked_bars": 17.979962429555417,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8235451581755083,
+   "share_orange": 0.6066788401418751,
+   "share_blue": 0.2168663180336332,
+   "jumpy": false
+  },
+  "NEARUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08404590014039393,
+   "color_flips_per_day": 14.57635350242354,
+   "marked_color_flips_per_day": 5.192860352393426,
+   "mean_run_marked_bars": 16.977209671026557,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8190040057744338,
+   "share_orange": 0.6073193816384478,
+   "share_blue": 0.21168462413598602,
+   "jumpy": false
+  },
+  "PHAUSDT_a": {
+   "bars": 86193,
+   "days": 299.3,
+   "median_abs_dlogM": 0.09299580771931715,
+   "color_flips_per_day": 16.90717343635794,
+   "marked_color_flips_per_day": 5.693641014931607,
+   "mean_run_marked_bars": 14.71196111580727,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8076873992087524,
+   "share_orange": 0.5876463285881685,
+   "share_blue": 0.22004107062058403,
+   "jumpy": false
+  },
+  "QNTUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.07542054177321589,
+   "color_flips_per_day": 14.945305404449373,
+   "marked_color_flips_per_day": 4.892742760447041,
+   "mean_run_marked_bars": 16.2372848200313,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.7935544316867275,
+   "share_orange": 0.5766211914071836,
+   "share_blue": 0.21693324027954378,
+   "jumpy": false
+  },
+  "RAYUSDT_a": {
+   "bars": 103088,
+   "days": 357.9,
+   "median_abs_dlogM": 0.09483004393778316,
+   "color_flips_per_day": 15.954989911531895,
+   "marked_color_flips_per_day": 5.60701536551296,
+   "mean_run_marked_bars": 15.82940956651719,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8218124320968493,
+   "share_orange": 0.6105075275492783,
+   "share_blue": 0.211304904547571,
+   "jumpy": false
+  },
+  "RUNEUSDT_a": {
+   "bars": 87098,
+   "days": 302.4,
+   "median_abs_dlogM": 0.09550238283492263,
+   "color_flips_per_day": 16.374382879055776,
+   "marked_color_flips_per_day": 5.462536453190659,
+   "mean_run_marked_bars": 15.19350704826997,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8167351718753588,
+   "share_orange": 0.6086936554226274,
+   "share_blue": 0.20804151645273142,
+   "jumpy": false
+  },
+  "SOLUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09980099226699934,
+   "color_flips_per_day": 13.54108547882867,
+   "marked_color_flips_per_day": 5.269954779682406,
+   "mean_run_marked_bars": 19.459665144596652,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8556009139666727,
+   "share_orange": 0.6561917417948546,
+   "share_blue": 0.19940917217181808,
+   "jumpy": false
+  },
+  "SPELLUSDT_a": {
+   "bars": 98881,
+   "days": 343.3,
+   "median_abs_dlogM": 0.08964623398734495,
+   "color_flips_per_day": 17.2075929652815,
+   "marked_color_flips_per_day": 5.481497962196984,
+   "mean_run_marked_bars": 14.22575976845152,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.7952994002892365,
+   "share_orange": 0.5726580435068416,
+   "share_blue": 0.222641356782395,
+   "jumpy": false
+  },
+  "UNIUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09689492925069487,
+   "color_flips_per_day": 13.799902484727387,
+   "marked_color_flips_per_day": 5.6444134265145935,
+   "mean_run_marked_bars": 18.229111065489633,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.848899129054771,
+   "share_orange": 0.6395376628839664,
+   "share_blue": 0.2093614661708047,
+   "jumpy": false
+  },
+  "VTHOUSDT_a": {
+   "bars": 84956,
+   "days": 295.0,
+   "median_abs_dlogM": 0.08132171902260321,
+   "color_flips_per_day": 16.607561561278782,
+   "marked_color_flips_per_day": 5.122275060031075,
+   "mean_run_marked_bars": 14.28657616892911,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.7804510570177504,
+   "share_orange": 0.5607137812514713,
+   "share_blue": 0.21973727576627902,
+   "jumpy": false
+  },
+  "XLMUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.07373056716171433,
+   "color_flips_per_day": 15.314257306475206,
+   "marked_color_flips_per_day": 4.90650962246293,
+   "mean_run_marked_bars": 15.892153073057596,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.7861069417489651,
+   "share_orange": 0.5648141951643897,
+   "share_blue": 0.22129274658457537,
+   "jumpy": false
+  },
+  "XRPUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09679391565587281,
+   "color_flips_per_day": 13.667740609374851,
+   "marked_color_flips_per_day": 5.30299524852054,
+   "mean_run_marked_bars": 19.16447226419167,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8488513274505493,
+   "share_orange": 0.6503599460797904,
+   "share_blue": 0.1984913813707588,
+   "jumpy": false
+  },
+  "ZECUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10644895829634393,
+   "color_flips_per_day": 13.260241493704529,
+   "marked_color_flips_per_day": 5.170833373168003,
+   "mean_run_marked_bars": 19.64005207203298,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8654098031529938,
+   "share_orange": 0.6669853440281456,
+   "share_blue": 0.19842445912484824,
+   "jumpy": false
+  },
+  "ZENUSDT_a": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10433387461941734,
+   "color_flips_per_day": 14.686488398550654,
+   "marked_color_flips_per_day": 5.550798764806546,
+   "mean_run_marked_bars": 18.36943986820428,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.852799739959273,
+   "share_orange": 0.6591363206149199,
+   "share_blue": 0.1936634193443532,
+   "jumpy": false
+  },
+  "AAVEUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.07910863488014819,
+   "color_flips_per_day": 15.110507748640044,
+   "marked_color_flips_per_day": 5.143299649136225,
+   "mean_run_marked_bars": 16.390386869871044,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8019770743506152,
+   "share_orange": 0.5730743123739233,
+   "share_blue": 0.22890276197669193,
+   "jumpy": false
+  },
+  "ADAUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09959390048032102,
+   "color_flips_per_day": 14.799376667080947,
+   "marked_color_flips_per_day": 5.63615330930506,
+   "mean_run_marked_bars": 17.544276027124052,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8409927437164791,
+   "share_orange": 0.622176120230595,
+   "share_blue": 0.21881662348588418,
+   "jumpy": false
+  },
+  "AVAXUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10026848105520259,
+   "color_flips_per_day": 15.363818009732407,
+   "marked_color_flips_per_day": 5.947284390864158,
+   "mean_run_marked_bars": 16.815532118887823,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8383732158051225,
+   "share_orange": 0.6216120613007773,
+   "share_blue": 0.21676115450434516,
+   "jumpy": false
+  },
+  "BCHUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08789843191121349,
+   "color_flips_per_day": 15.093987514220977,
+   "marked_color_flips_per_day": 5.391103165422232,
+   "mean_run_marked_bars": 16.851837296128906,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8198835552921157,
+   "share_orange": 0.6021281274199562,
+   "share_blue": 0.2177554278721594,
+   "jumpy": false
+  },
+  "BNBUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09114446717806324,
+   "color_flips_per_day": 14.444191627071005,
+   "marked_color_flips_per_day": 5.578332488838325,
+   "mean_run_marked_bars": 17.70302660979078,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8332010822283196,
+   "share_orange": 0.6121951452690753,
+   "share_blue": 0.22100593695924436,
+   "jumpy": false
+  },
+  "BTCUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09729806278416753,
+   "color_flips_per_day": 13.480511285958757,
+   "marked_color_flips_per_day": 5.30299524852054,
+   "mean_run_marked_bars": 19.64176161262051,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8570349620933279,
+   "share_orange": 0.6491457853325557,
+   "share_blue": 0.2078891767607721,
+   "jumpy": false
+  },
+  "CAKEUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.0928768369296229,
+   "color_flips_per_day": 14.727788984598323,
+   "marked_color_flips_per_day": 5.388349793019054,
+   "mean_run_marked_bars": 17.011559561128525,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8300939779539002,
+   "share_orange": 0.611564164093347,
+   "share_blue": 0.21852981386055317,
+   "jumpy": false
+  },
+  "DASHUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10803747879191405,
+   "color_flips_per_day": 15.336284285700629,
+   "marked_color_flips_per_day": 5.8178758879147985,
+   "mean_run_marked_bars": 17.687699044585987,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8495587911930325,
+   "share_orange": 0.6416887350739491,
+   "share_blue": 0.20787005611908335,
+   "jumpy": false
+  },
+  "DOGEUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.11163405569337037,
+   "color_flips_per_day": 13.477757913555578,
+   "marked_color_flips_per_day": 5.669193778143194,
+   "mean_run_marked_bars": 20.205458176170403,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8706201780131742,
+   "share_orange": 0.6648438321590072,
+   "share_blue": 0.20577634585416688,
+   "jumpy": false
+  },
+  "DOTUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09579613720194402,
+   "color_flips_per_day": 15.173835313913134,
+   "marked_color_flips_per_day": 5.743534833028996,
+   "mean_run_marked_bars": 16.59107381270265,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8316236292889989,
+   "share_orange": 0.6122811881566745,
+   "share_blue": 0.2193424411323244,
+   "jumpy": false
+  },
+  "ETHUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.12608668500661224,
+   "color_flips_per_day": 13.265748238510884,
+   "marked_color_flips_per_day": 5.952791135670513,
+   "mean_run_marked_bars": 21.537694270470887,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8876662300786814,
+   "share_orange": 0.7094236082562931,
+   "share_blue": 0.17824262182238837,
+   "jumpy": false
+  },
+  "FETUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.0989557636192484,
+   "color_flips_per_day": 16.107228558590425,
+   "marked_color_flips_per_day": 5.886710197994245,
+   "mean_run_marked_bars": 16.304249717939076,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8289371791317317,
+   "share_orange": 0.6132659012036444,
+   "share_blue": 0.21567127792808727,
+   "jumpy": false
+  },
+  "FILUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10696181546551387,
+   "color_flips_per_day": 14.394630923813803,
+   "marked_color_flips_per_day": 5.649920171320949,
+   "mean_run_marked_bars": 17.536052009456263,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8509928393196876,
+   "share_orange": 0.6515932274687138,
+   "share_blue": 0.1993996118509737,
+   "jumpy": false
+  },
+  "HBARUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.075247165948511,
+   "color_flips_per_day": 15.413378712989608,
+   "marked_color_flips_per_day": 4.934043346494708,
+   "mean_run_marked_bars": 16.019759783029833,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.7905811719041291,
+   "share_orange": 0.5561907857627701,
+   "share_blue": 0.2343903861413589,
+   "jumpy": false
+  },
+  "ICPUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08710463903315002,
+   "color_flips_per_day": 14.763582825839634,
+   "marked_color_flips_per_day": 5.3360357173586745,
+   "mean_run_marked_bars": 16.9509978265165,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8201703649174467,
+   "share_orange": 0.5938010879645121,
+   "share_blue": 0.22636927695293454,
+   "jumpy": false
+  },
+  "INJUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08276396824079768,
+   "color_flips_per_day": 15.694222698113748,
+   "marked_color_flips_per_day": 5.242421055650627,
+   "mean_run_marked_bars": 16.18535556833429,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8072639317775504,
+   "share_orange": 0.5887245575961529,
+   "share_blue": 0.21853937418139752,
+   "jumpy": false
+  },
+  "LINKUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10314493673024572,
+   "color_flips_per_day": 15.586841174389813,
+   "marked_color_flips_per_day": 5.861929846365644,
+   "mean_run_marked_bars": 16.81441922563418,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8428187649977533,
+   "share_orange": 0.628887465463341,
+   "share_blue": 0.21393129953441237,
+   "jumpy": false
+  },
+  "LTCUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08364334469762369,
+   "color_flips_per_day": 14.711268750179256,
+   "marked_color_flips_per_day": 5.063451849444068,
+   "mean_run_marked_bars": 17.19770716009654,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.817474354439335,
+   "share_orange": 0.5870897427317661,
+   "share_blue": 0.2303846117075689,
+   "jumpy": false
+  },
+  "NEARUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.08448239861034779,
+   "color_flips_per_day": 15.619881643227947,
+   "marked_color_flips_per_day": 5.289228386504651,
+   "mean_run_marked_bars": 15.834740198836991,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8070344840772856,
+   "share_orange": 0.5820132123634069,
+   "share_blue": 0.22502127171387873,
+   "jumpy": false
+  },
+  "PHAUSDT_b": {
+   "bars": 86193,
+   "days": 299.3,
+   "median_abs_dlogM": 0.09530315925768296,
+   "color_flips_per_day": 16.974000208833665,
+   "marked_color_flips_per_day": 5.740419755664613,
+   "mean_run_marked_bars": 14.710919419314118,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8112143677560822,
+   "share_orange": 0.6121958859768195,
+   "share_blue": 0.19901848177926282,
+   "jumpy": false
+  },
+  "QNTUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.07531917161653467,
+   "color_flips_per_day": 15.468446161053164,
+   "marked_color_flips_per_day": 5.033164753009111,
+   "mean_run_marked_bars": 15.661798179059181,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.7893861317985832,
+   "share_orange": 0.5712291704509603,
+   "share_blue": 0.21815696134762283,
+   "jumpy": false
+  },
+  "RAYUSDT_b": {
+   "bars": 103088,
+   "days": 357.9,
+   "median_abs_dlogM": 0.09525874825687808,
+   "color_flips_per_day": 16.446686326245537,
+   "marked_color_flips_per_day": 5.847276113611671,
+   "mean_run_marked_bars": 15.777116279069768,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8226175694552227,
+   "share_orange": 0.6192185317398727,
+   "share_blue": 0.20339903771534998,
+   "jumpy": false
+  },
+  "RUNEUSDT_b": {
+   "bars": 87098,
+   "days": 302.4,
+   "median_abs_dlogM": 0.09645375007551138,
+   "color_flips_per_day": 16.76456405428368,
+   "marked_color_flips_per_day": 6.004822154354865,
+   "mean_run_marked_bars": 14.822486441385065,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8158511102436337,
+   "share_orange": 0.6200371994764519,
+   "share_blue": 0.1958139107671818,
+   "jumpy": false
+  },
+  "SOLUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.1006723326860346,
+   "color_flips_per_day": 14.636927695293453,
+   "marked_color_flips_per_day": 5.561812254419258,
+   "mean_run_marked_bars": 18.103765861645517,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8456581802885305,
+   "share_orange": 0.6291647147678276,
+   "share_blue": 0.21649346552070287,
+   "jumpy": false
+  },
+  "SPELLUSDT_b": {
+   "bars": 98881,
+   "days": 343.3,
+   "median_abs_dlogM": 0.09036378563891256,
+   "color_flips_per_day": 16.438668702784156,
+   "marked_color_flips_per_day": 5.650428292594128,
+   "mean_run_marked_bars": 14.977447848148843,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.8059687907687018,
+   "share_orange": 0.6198258512757759,
+   "share_blue": 0.18614293949292585,
+   "jumpy": false
+  },
+  "UNIUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09690735252526395,
+   "color_flips_per_day": 14.901251445998527,
+   "marked_color_flips_per_day": 5.754548322641708,
+   "mean_run_marked_bars": 17.34,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8371686153787321,
+   "share_orange": 0.6187630856891557,
+   "share_blue": 0.21840552968957638,
+   "jumpy": false
+  },
+  "VTHOUSDT_b": {
+   "bars": 84956,
+   "days": 295.0,
+   "median_abs_dlogM": 0.0824327449506228,
+   "color_flips_per_day": 16.90588069118132,
+   "marked_color_flips_per_day": 5.535853853759594,
+   "mean_run_marked_bars": 13.983154348283849,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.7816516785159376,
+   "share_orange": 0.5812891379066811,
+   "share_blue": 0.20036254060925657,
+   "jumpy": false
+  },
+  "XLMUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.07339051140137443,
+   "color_flips_per_day": 16.145775772234916,
+   "marked_color_flips_per_day": 4.90650962246293,
+   "mean_run_marked_bars": 15.077837637005388,
+   "median_run_marked_bars": 3.0,
+   "share_marked": 0.7759538810122467,
+   "share_orange": 0.5439153337986022,
+   "share_blue": 0.2320385472136445,
+   "jumpy": false
+  },
+  "XRPUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.09662234038317052,
+   "color_flips_per_day": 14.835170508322259,
+   "marked_color_flips_per_day": 5.6251398196923486,
+   "mean_run_marked_bars": 17.720967741935485,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.840313960936529,
+   "share_orange": 0.6243558733831107,
+   "share_blue": 0.2159580875534183,
+   "jumpy": false
+  },
+  "ZECUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10679046350445098,
+   "color_flips_per_day": 14.174361131559575,
+   "marked_color_flips_per_day": 5.589345978451036,
+   "mean_run_marked_bars": 17.646035198734427,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.8531247908679815,
+   "share_orange": 0.6474440482222583,
+   "share_blue": 0.2056807426457232,
+   "jumpy": false
+  },
+  "ZENUSDT_b": {
+   "bars": 104599,
+   "days": 363.2,
+   "median_abs_dlogM": 0.10443154222628737,
+   "color_flips_per_day": 14.912264935611239,
+   "marked_color_flips_per_day": 5.671947150546372,
+   "mean_run_marked_bars": 16.91995404059747,
+   "median_run_marked_bars": 4.0,
+   "share_marked": 0.844711708524938,
+   "share_orange": 0.6420807082285681,
+   "share_blue": 0.20263100029636993,
+   "jumpy": false
+  }
+ },
+ "btc_fresh_at_ceiling": {
+  "ceiling": {
+   "more": 8.0,
+   "less": 5.0
+  },
+  "more": 0.07479794839912962,
+  "less": 0.014493316754740441
+ },
+ "val_refit_summary": {
+  "median_abs_dlogM": {
+   "median": 0.09561283527242281,
+   "min": 0.07339051140137443,
+   "max": 0.12608668500661224
+  },
+  "color_flips_per_day": {
+   "median": 14.745685905218979,
+   "min": 12.481037103605196,
+   "max": 17.2075929652815
+  },
+  "marked_color_flips_per_day": {
+   "median": 5.489991325671577,
+   "min": 4.873469153624796,
+   "max": 6.004822154354865
+  },
+  "mean_run_marked_bars": {
+   "median": 17.365830007980847,
+   "min": 13.983154348283849,
+   "max": 22.435817307692307
+  },
+  "share_marked": {
+   "median": 0.8324123557586592,
+   "min": 0.7759538810122467,
+   "max": 0.8922934253673553
+  },
+  "share_orange": {
+   "median": 0.6195221915078244,
+   "min": 0.5439153337986022,
+   "max": 0.724404631019417
+  },
+  "share_blue": {
+   "median": 0.2114947643417785,
+   "min": 0.16788879434793832,
+   "max": 0.2343903861413589
+  }
+ },
+ "val_refit_jumpy": 0
+}
