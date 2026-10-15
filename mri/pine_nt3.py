@@ -435,7 +435,9 @@ DECODE_FLOAT = r"""        float sg = b >= 2147483648.0 ? -1.0 : 1.0
 
 
 def weights_ascii(vals, str_max=STR_MAX):
-    """Pine code: ASCII alphabet map, 5-character decoder, one `var` initializer per string (single-script size test)."""
+    """Pine code: ASCII alphabet map, 5-character decoder; each string inside its own function wNN() that decodes it into
+       WT at run time, so that the global scope holds only the calls ('The main body of the script is too long' when the
+       strings stood in the `var` initializers of the global scope)."""
     enc = encode_ascii(vals)
     per = (str_max // 5) * 5
     strs = [enc[i:i + per] for i in range(0, len(enc), per)]
@@ -452,8 +454,10 @@ def weights_ascii(vals, str_max=STR_MAX):
             '    true\n\n'
             'var map<string, int> ALPHA = buildAlpha()\n'
             'var array<float> WT = array.new<float>(0)\n')
-    body = '\n'.join(f'var bool WOK{j:02d} = decodeInto(WT, ALPHA, "{x}")' for j, x in enumerate(strs))
-    return head + body, f'{len(vals)} float32, {len(enc)} ASCII characters (5 per weight) in {len(strs)} strings'
+    funcs = '\n'.join(f'w{j:02d}() =>\n    decodeInto(WT, ALPHA, "{x}")' for j, x in enumerate(strs))
+    calls = '\n'.join(f'var bool WOK{j:02d} = w{j:02d}()' for j in range(len(strs)))
+    return (head + '\n' + funcs + '\n\n' + calls,
+            f'{len(vals)} float32, {len(enc)} ASCII characters (5 per weight) in {len(strs)} strings, one function each')
 
 
 def split_parts(n, k):
