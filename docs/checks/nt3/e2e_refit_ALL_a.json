@@ -13,5 +13,35 @@
  "max_dlogit_tie": 0.0013684275441563365,
  "max_dlogit_floor_binding": 0.004018488361906991,
  "n_dlogit_gt_1e-4": 97894,
- "pass_R3": false
+ "pass_R3": false,
+ "colab_device": "NVIDIA A100-SXM4-40GB",
+ "tf32_off": {
+  "max_dlogit_non_tie": 9.34461037349621e-06,
+  "p99": 2.57098888572394e-06,
+  "max_dlogit_tie": 7.735482795423465e-07,
+  "max_dlogit_floor_binding": 2.4024229126062835e-06,
+  "n_dlogit_gt_1e-4": 0
+ },
+ "side17_max_abs_diff": {
+  "log_D": 1.63e-07,
+  "log_mean_abs_r": 1.76e-07,
+  "path_71": 1.57e-07,
+  "path_64": 2.24e-07,
+  "path_32": 2.54e-07,
+  "path_16": 4.74e-07,
+  "path_8": 3.73e-07,
+  "path_4": 4.75e-07,
+  "path_2a": 4.15e-07,
+  "path_2b": 9.07e-07,
+  "range_pos": 3e-08,
+  "range_width": 1.19e-07,
+  "close_dev": 2.31e-07,
+  "vol_16": 5.9e-08,
+  "vol_64": 5.9e-08,
+  "range_mean_med": 2.8e-08,
+  "body_med": 6e-08
+ },
+ "side17_windows": 10460,
+ "tf32_on_vs_stored_max": 0.013632774353027344,
+ "pass_R3_tf32_off": true
 }
