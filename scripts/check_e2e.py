@@ -87,11 +87,18 @@ def main():
         with np.load(a.logits) as z:
             off, on = z[f'{run}__tf32_off'].astype(np.float64), z[f'{run}__tf32_on'].astype(np.float64)
             res['colab_device'] = str(z['device'])
-        d2 = np.abs(ref['logit'] - off)
-        res['tf32_off'] = {'max_dlogit_non_tie': float(d2[~tie].max()), 'p99': float(np.percentile(d2, 99)),
-                           'max_dlogit_tie': float(d2[tie].max()) if tie.any() else 0.0,
-                           'max_dlogit_floor_binding': float(d2[floor_bind].max()) if floor_bind.any() else 0.0,
-                           'n_dlogit_gt_1e-4': int((d2 > 1e-4).sum())}
+            d2 = np.abs(ref['logit'] - off)
+            res['tf32_off'] = {'max_dlogit_non_tie': float(d2[~tie].max()), 'p99': float(np.percentile(d2, 99)),
+                               'max_dlogit_tie': float(d2[tie].max()) if tie.any() else 0.0,
+                               'max_dlogit_floor_binding': float(d2[floor_bind].max()) if floor_bind.any() else 0.0,
+                               'n_dlogit_gt_1e-4': int((d2 > 1e-4).sum())}
+            if 'feats_side17' in z.files:          # research side inputs of every 10th window (float32) vs the reference
+                rel = z['feats_st'] - z['feats_st'][0]                      # every 10th window from the first
+                k = np.searchsorted(st - st[0], rel)
+                assert np.array_equal(st[k] - st[0], rel)
+                dside = np.abs(ref['side_raw'][k] - z['feats_side17'].astype(np.float64))
+                res['side17_max_abs_diff'] = dict(zip(nt3.SIDE_NAMES, np.round(dside.max(axis=0), 9).tolist()))
+                res['side17_windows'] = int(len(k))
         res['tf32_on_vs_stored_max'] = float(np.abs(on - sp).max())
         res['pass_R3_tf32_off'] = bool(res['same_window_set'] and res['tf32_off']['max_dlogit_non_tie'] <= 1e-4)
     print(json.dumps(res, indent=1))

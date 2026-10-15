@@ -59,10 +59,13 @@ R10 дополнение 2 и поправки формулировок R1, R2, 
     умолчанию на Ampere; эпоха NT3 на пуле шла вдвое быстрее эпохи F3_g (36 против 71 с) при большей сети — похоже, другой
     GPU. У F3_g R3 прошёл (8.9e-6) — его прогоны, видимо, были на GPU без TF32.
   - Вывод (гипотеза, не доказательство): сохранённые logit посчитаны с TF32; на калибровку это почти не влияет (шум
-    logit ~1e-3 — lift ±0.1%). Порог R3 задним числом не меняю: нужен прогон `scripts/colab_nt3_val_logits.py`
-    (TF32 выкл. / вкл. на тех же данных SMC/data/) → `artifacts/calib/nt3_btc_val_logits.npz` → `python scripts/check_e2e.py
-    --model NT3_PRV_ch48 --set ALL --seed a --logits artifacts/calib/nt3_btc_val_logits.npz` (и b, C a): R3 по logit
-    без TF32 и проверка, что с TF32 воспроизводятся сохранённые.
+    logit ~1e-3 — lift ±0.1%). Порог R3 задним числом не меняю. Проверка — `scripts/colab_nt3_val_logits.py`, запуск
+    **в Colab** (инструкция в шапке скрипта: GPU A100 / L4, загрузить в /content `research/sumo_class_train.py` и сам
+    скрипт, `os.environ['MRI_PROJECT'] = ...`, `%run`): пересчёт logit тех же окон на данных SMC/data/ с TF32 выкл. и вкл.
+    плюс 17 боковых входов каждого 10-го окна → `artifacts/calib/nt3_btc_val_logits.npz` (~3 MB). Сверку делаю я:
+    `python scripts/check_e2e.py --model NT3_PRV_ch48 --set ALL --seed a --logits artifacts/calib/nt3_btc_val_logits.npz`
+    (и ALL b, C a). Скрипт прогнан здесь на имитации папки Drive (данные из `btc_old_tail`, позиции окон сдвинуты на
+    короткий ряд): отрабатывает до конца, logit без TF32 = эталону до 1.1e-5, боковые входы — до 9e-7.
 
 ## Сессия 3. Прототип Pine на лимиты — отдан на замеры
 
