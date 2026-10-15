@@ -112,8 +112,12 @@ def test_ascii_single_script_weights_are_exact():
     p = nt3.random_params(seed=12)
     script, libs = make_script(p, TABLE, UNKNOWN, PASSPORT, weights='ascii')
     assert not libs and 'import ' not in script
-    strs = re.findall(r'decodeInto\(WT, ALPHA, "([^"]*)"\)', script)
-    assert np.array_equal(np.array(decode_ascii(''.join(strs))), flat_values(p).astype(np.float64))
+    funcs = re.findall(r'^w(\d\d)\(\) =>\n    decodeInto\(WT, ALPHA, "([^"]*)"\)$', script, flags=re.M)
+    assert [int(j) for j, _ in funcs] == list(range(len(funcs)))
+    assert re.findall(r'^var bool WOK(\d\d) = w(\d\d)\(\)$', script, flags=re.M) == [(j, j) for j, _ in funcs]
+    assert np.array_equal(np.array(decode_ascii(''.join(x for _, x in funcs))), flat_values(p).astype(np.float64))
+    long_str = [ln for ln in script.splitlines() if re.search(r'"[^"]{1000,}"', ln)]
+    assert long_str and all(ln.startswith('    decodeInto(WT, ALPHA, "') for ln in long_str)   # inside functions only
     assert re.search(r'str\.split\("([^"]*)", ""\)', script).group(1) == ASCII_ALPHA
 
 
