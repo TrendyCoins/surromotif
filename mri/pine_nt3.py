@@ -480,8 +480,29 @@ def main():
         print(path, len(s), 'chars', len(s.splitlines()), 'lines')
 
 
-def make_indicator(ex):
-    raise NotImplementedError('production indicator: after the calibration (session 3, step 6)')
+CALC_BARS_DEFAULT = 0          # 'Compute only the last N bars': set from the Pine Profiler measurement of the prototype
+
+
+def make_indicator(ex, calc_bars=CALC_BARS_DEFAULT):
+    """pine/mri.pine from the NT3 export dict (export/mri_model_nt3.json)."""
+    from .params import from_dict
+    p = from_dict(ex['model'])
+    if ex['tie_rule']['eps'] != 1e-4 or ex['model']['id'] != 'NT3_PRV_ch48' or len(p.side_mu) != len(SIDE_NAMES):
+        raise ValueError('the template has EPS = 0.0001 and the 17 side inputs of NT3_PRV_ch48')
+    ceil, cal, fl = ex['display']['ceiling'], ex['calibration'], ex['floors']
+    table = {a: {'floor': fl['floor_L64'][a], 'platt_a': cal['per_symbol'][a]['platt_a'],
+                 'platt_b': cal['per_symbol'][a]['platt_b'], 'ceil_more': ceil['by_symbol'][a]['more'],
+                 'ceil_less': ceil['by_symbol'][a]['less']} for a in fl['floor_L64']}
+    unk = {'floor': fl['unknown_symbol'], 'platt_a': cal['unknown_symbol']['platt_a'],
+           'platt_b': cal['unknown_symbol']['platt_b'], 'ceil_more': ceil['unknown_symbol']['more'],
+           'ceil_less': ceil['unknown_symbol']['less']}
+    txt = lambda v: f"{v:g}"
+    pool = ceil['pool']
+    note = ('// Calibration: Platt of each table symbol, checked out of sample by half-years per symbol; each symbol and side has\n'
+            f'// its ceiling (at most {txt(pool["more"])} more frequent / {txt(pool["less"])} less frequent; for symbols outside '
+            f'the table {txt(unk["ceil_more"])} / {txt(unk["ceil_less"])}\n'
+            '// with the global Platt); above it the line stays at the ceiling, marked "N+".\n')
+    return make_script(p, table, unk, ex['passport'], calib_note=note, calc_bars=calc_bars)
 
 
 if __name__ == '__main__':

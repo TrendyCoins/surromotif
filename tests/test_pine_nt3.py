@@ -80,3 +80,31 @@ def test_wording_colors_literals(proto):
     assert [ln.strip() for ln in body.splitlines() if re.search(r'\btime\b', ln)] == [
         'bool  gap    = bar_index > 0 and (time - time[1]) > GAPMS']          # time: grid gaps only
     assert len(re.findall(r'^plot\(', code, flags=re.M)) == 30           # M + 29 debug plots (R10 addition 2)
+
+
+def test_production_indicator_is_generated_from_export():
+    from mri.export_nt3 import EXPORT, load_export
+    from mri.params import from_dict
+    from mri.pine_nt3 import make_indicator
+    ex = load_export(os.path.join(ROOT, EXPORT))
+    script = make_indicator(ex)
+    with open(os.path.join(ROOT, 'pine/mri.pine'), encoding='utf-8') as fh:
+        assert fh.read() == script
+    strs = re.findall(r'decodeInto\(WT, ALPHA, "([^"]*)"\)', script)
+    assert np.array_equal(np.array(decode_dense(''.join(strs))), flat_values(from_dict(ex['model'])).astype(np.float64))
+
+    def table(fn):
+        body = re.search(rf'{fn}\(\) =>\n(.*?)\n    m\n', script, flags=re.S).group(1)
+        return {k: float(v) for k, v in re.findall(r'map\.put\(m, "([A-Z]+)", (-?[0-9.]+)\)', body)}
+    cal, ceil = ex['calibration'], ex['display']['ceiling']
+    assert table('buildFloors') == ex['floors']['floor_L64']
+    assert table('buildPlattA') == {a: v['platt_a'] for a, v in cal['per_symbol'].items()}
+    assert table('buildPlattB') == {a: v['platt_b'] for a, v in cal['per_symbol'].items()}
+    assert table('buildCeilMore') == {a: v['more'] for a, v in ceil['by_symbol'].items()}
+    assert table('buildCeilLess') == {a: v['less'] for a, v in ceil['by_symbol'].items()}
+    unk = lambda name: float(re.search(rf'var float {name}\s*= known \? map\.get\(\w+, syminfo\.ticker\) : (-?[0-9.]+)',
+                                       script).group(1))
+    assert unk('FLOOR') == ex['floors']['unknown_symbol']
+    assert unk('PLATT_A') == cal['unknown_symbol']['platt_a'] and unk('PLATT_B') == cal['unknown_symbol']['platt_b']
+    assert unk('CEIL_O') == ceil['unknown_symbol']['more'] and unk('CEIL_B') == ceil['unknown_symbol']['less']
+    assert 'indicator("Market Randomness Index", shorttitle = "MRI", overlay = false' in script
