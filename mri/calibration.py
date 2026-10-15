@@ -53,15 +53,22 @@ def lift_ci(fp, fn, wp, wn, B=500, seed=0):
             float(np.percentile(lifts, 2.5)), float(np.percentile(lifts, 97.5)))
 
 
-def load_val(root, seed):
-    """VAL logits of the 'refit' model of a seed: {asset: (sp, sn, wk)} (calib npz split into parts)."""
+def load_part(root, run, part='val'):
+    """Logits of a pool run (calib npz split into parts '<run>_part*.npz'): {asset: (sp, sn, wk)} of part 'val' | 'tune'."""
     arrs = {}
-    for p in sorted(glob.glob(os.path.join(root, f'pool_C_F3_g_L64_{seed}_refit_part*.npz'))):
+    for p in sorted(glob.glob(os.path.join(root, f'{run}_part*.npz'))):
         with np.load(p) as d:
-            arrs.update({k: d[k] for k in d.files if '__val__' in k})
+            arrs.update({k: d[k] for k in d.files if f'__{part}__' in k})
+    if not arrs:
+        raise FileNotFoundError(os.path.join(root, f'{run}_part*.npz'))
     assets = sorted({k.split('__')[0] for k in arrs})
-    return {a: (arrs[f'{a}__val__sp'].astype(np.float64), arrs[f'{a}__val__sn'].astype(np.float64),
-                arrs[f'{a}__val__wk'].astype(np.int64)) for a in assets}
+    return {a: (arrs[f'{a}__{part}__sp'].astype(np.float64), arrs[f'{a}__{part}__sn'].astype(np.float64),
+                arrs[f'{a}__{part}__wk'].astype(np.int64)) for a in assets}
+
+
+def load_val(root, seed):
+    """VAL logits of the F3_g 'refit' model of a seed: {asset: (sp, sn, wk)} (calib npz split into parts)."""
+    return load_part(root, f'pool_C_F3_g_L64_{seed}_refit')
 
 
 def pooled(val, assets=None, mask_fn=None):
