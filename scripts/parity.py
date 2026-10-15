@@ -1,10 +1,14 @@
 """Rule R10 (docs/rules.md): parity of the Pine indicator (debug mode) with the Python reference.
 
-Input: TradingView 'Export chart data' CSV of BINANCE:BTCUSDT 5M with the indicator in debug mode (columns: time, open,
-high, low, close and the plots 'dbg ...'). The reference (mri.stream, EMA adjust=True, parameters of
-export/mri_model.json) recomputes from the same OHLC from the first exported bar.
+Input: TradingView 'Export chart data' CSV with the indicator in debug mode (columns: time, open, high, low, close and
+the plots 'dbg ...'). The reference recomputes from the same OHLC from the first exported bar, with the parameters of the
+export JSON:
+    NT3_PRV_ch48 (export/mri_model_nt3.json, default; R10 addition 2): mri.nt3 stream, floor and Platt of the symbol;
+        17 side inputs; no EMA — the unconfirmed last bar is recognized by 'dbg confirmed' (count of confirmed bars)
+        equal to the previous row (amendment of session 3);
+    F3_g (export/mri_model.json, legacy): mri.stream, EMA adjust=True.
 
-    python scripts/parity.py chart.csv [--symbol BTCUSDT] [--out docs/checks/parity.json]
+    python scripts/parity.py chart.csv [--symbol BTCUSDT] [--export export/mri_model_nt3.json] [--out ...]
 """
 import argparse
 import json
@@ -17,11 +21,17 @@ import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+from mri import nt3  # noqa: E402
 from mri.params import SIDE_NAMES, from_dict  # noqa: E402
 from mri.stream import run  # noqa: E402
 
 INPUTS = ['norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'ema7', 'ema1', 'D', 'x_end'] + [f'side_{n}' for n in SIDE_NAMES]
+INPUTS_NT3 = ['norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'D', 'x_end'] + [f'side_{n}' for n in nt3.SIDE_NAMES]
 TOL_IN, TOL_LOGIT, TOL_M, TIE_BAND = 1e-9, 1e-6, 1e-6, 1e-6
+
+
+def is_nt3(ex):
+    return ex['model'].get('id') == nt3.MODEL_ID
 
 
 def load_tv(path):
@@ -36,7 +46,7 @@ def load_tv(path):
         ms = pd.to_datetime(t, utc=True).astype('datetime64[ms, UTC]').astype(np.int64)
     out = pd.DataFrame({'time': ms.to_numpy()})
     dec = {}
-    for c in raw.columns:
+    for c in sorted(raw.columns, key=lambda c: c.startswith('dbg ')):   # 'dbg M' wins over the visible plot 'M'
         if c == 'time':
             continue
         key = c[4:].strip() if c.startswith('dbg ') else c
@@ -47,7 +57,28 @@ def load_tv(path):
     return out, dec
 
 
+def reference_nt3(df, ex, symbol):
+    p = from_dict(ex['model'])
+    fl, cal = ex['floors'], ex['calibration']
+    known = symbol in fl['floor_L64']
+    floor = fl['floor_L64'][symbol] if known else fl['unknown_symbol']
+    pl = cal['per_symbol'][symbol] if known else cal['unknown_symbol']
+    res = nt3.run(df[['time', 'open', 'high', 'low', 'close']], p, floor, eps=ex['tie_rule']['eps'],
+                  platt=(pl['platt_a'], pl['platt_b']))
+    rows = []
+    for x in res:
+        side = x.get('side_raw', [np.nan] * len(nt3.SIDE_NAMES))
+        row = {'norm': x['norm'], 'r': x['r'], 'step_hl2': x['step_hl2'], 'step_hlc3': x['step_hlc3'], 'g': x['g'],
+               'D': x.get('D', np.nan), 'x_end': x.get('x_end', np.nan), 'sgn': x.get('sgn', np.nan),
+               'logit': x['logit'], 'M': x.get('M', np.nan)}
+        row.update({f'side_{n}': v for n, v in zip(nt3.SIDE_NAMES, side)})
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def reference(df, ex, symbol):
+    if is_nt3(ex):
+        return reference_nt3(df, ex, symbol)
     p = from_dict(ex['model'])
     floor = ex['floors']['floor_L64'].get(symbol, ex['floors']['unknown_symbol'])
     res = run(df[['time', 'open', 'high', 'low', 'close']], p, floor, eps=ex['tie_rule']['eps'], ema_adjust=True,
@@ -86,16 +117,18 @@ def ema_series(df, ex):
 
 def live_last_bar(tv, ref):
     """The last exported row is the forming (unconfirmed) bar if Pine did not advance its state there: no logit while the
-       reference has one, EMA values equal to the previous row. Pine computes only on confirmed bars (no repaint)."""
-    if len(tv) < 2 or not {'logit', 'ema7', 'ema1'} <= set(tv.columns):
+       reference has one, and the state equal to the previous row — EMA values (F3_g) or the count of confirmed bars
+       'confirmed' (NT3, no EMA). Pine computes only on confirmed bars (no repaint)."""
+    state = ['confirmed'] if 'confirmed' in tv.columns else ['ema7', 'ema1']
+    if len(tv) < 2 or not {'logit', *state} <= set(tv.columns):
         return False
     a = tv.iloc[-1]
     b = tv.iloc[-2]
-    return bool(np.isnan(a['logit']) and np.isfinite(ref['logit'].iloc[-1])
-                and a['ema7'] == b['ema7'] and a['ema1'] == b['ema1'])
+    return bool(np.isnan(a['logit']) and np.isfinite(ref['logit'].iloc[-1]) and all(a[k] == b[k] for k in state))
 
 
-def compare(tv, dec, ref):
+def compare(tv, dec, ref, inputs=None):
+    inputs = INPUTS if inputs is None else inputs
     res, ok = {'bars': int(len(tv))}, True
     res['live_last_bar_excluded'] = live_last_bar(tv, ref)
     if res['live_last_bar_excluded']:
@@ -104,7 +137,7 @@ def compare(tv, dec, ref):
     res['bar_index_contiguous_from_0'] = bool(bi is not None and np.array_equal(bi.to_numpy(), np.arange(len(tv))))
     ok &= res['bar_index_contiguous_from_0']
     rnd = lambda c: 0.5 * 10.0 ** -dec.get(c, 10)
-    for c in INPUTS + ['logit', 'M']:
+    for c in inputs + ['logit', 'M']:
         if c not in tv:
             res[c] = 'missing'
             ok = False
@@ -130,7 +163,9 @@ def compare(tv, dec, ref):
         near = np.abs(z + 1e-4) <= TIE_BAND
         a, b = tv['sgn'].to_numpy(float), ref['sgn'].to_numpy(float)
         both = np.isfinite(a) & np.isfinite(b)
-        res['sgn'] = {'mismatch': int((both & (a != b) & ~near).sum()), 'near_eps_windows': int((both & near).sum())}
+        res['sgn'] = {'mismatch': int((both & (a != b) & ~near).sum()), 'near_eps_windows': int((both & near).sum()),
+                      'ties_abs_z_lt_1e-9': int((both & (np.abs(z.to_numpy(float)) < 1e-9)).sum()),
+                      'flipped': int((both & (b < 0)).sum()), 'compared': int(both.sum())}
         ok &= res['sgn']['mismatch'] == 0
     fs = lambda x: int(np.argmax(np.isfinite(x))) if np.isfinite(x).any() else None
     res['first_line_bar'] = {'pine': fs(tv['logit'].to_numpy(float)) if 'logit' in tv else None,
@@ -144,13 +179,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('csv')
     ap.add_argument('--symbol', default='BTCUSDT')
+    ap.add_argument('--export', default=os.path.join(ROOT, 'export/mri_model_nt3.json'))
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
-    with open(os.path.join(ROOT, 'export/mri_model.json'), encoding='utf-8') as fh:
+    with open(a.export, encoding='utf-8') as fh:
         ex = json.load(fh)
     tv, dec = load_tv(a.csv)
     ref = reference(tv, ex, a.symbol)
-    res = compare(tv, dec, ref)
+    res = compare(tv, dec, ref, INPUTS_NT3 if is_nt3(ex) else INPUTS)
+    res['model'] = ex['model'].get('id', 'F3_g')
+    res['symbol'] = a.symbol
     res['decimals'] = dec
     print(json.dumps({k: v for k, v in res.items() if k != 'decimals'}, indent=1))
     if a.out:
