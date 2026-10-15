@@ -1,9 +1,14 @@
-"""Pine Script v6 generator of the NT3_PRV_ch48 indicator (and of its limits prototype).
+"""Pine Script v6 generator of the NT3_PRV_ch48 indicator.
 
-    python -m mri.pine_nt3                 # pine/mri.pine from export/mri_model_nt3.json (production)
-    python -m mri.pine_nt3 --proto         # pine/proto_nt3.pine: prod a weights, calibration stub (Pine limits)
-    python -m mri.pine_nt3 --proto --lib   # + library variant: weights in pine/proto_nt3_weights_lib.pine
+    python -m mri.pine_nt3                 # pine/mri.pine + its weight libraries pine/lib/MRIWeightsNT3{a,b,c}.pine
+    python -m mri.pine_nt3 --ascii-test    # + pine/test/mri_ascii_single.pine: all weights inside, 5 ASCII characters each
+                                           #   (a size test: does a single script fit the compilation request?)
 
+TradingView refused the single script with the weights inside (141 919 characters, 368 KB UTF-8): "The size of the script
+compilation request is too large", while the F3_g script (75 673 characters, 181 KB) compiles. So the weights go into
+3 libraries, each well below the F3_g script by any measure (characters, UTF-8, UTF-16, escaped bytes); every exported
+function decodes one string at run time (no constant to fold into the indicator) with the alphabet map passed by the
+indicator. The libraries are published by the author (privately for tests) and imported by user name / name / version.
 Weights: the dense float32 strings of mri/pine_gen.py (3 CJK characters per float32, bit for bit), now 36 961 numbers.
 Flat order: conv layer 1..4, tap 0..2, W[:, :, tap] row-major (out, in); head0 W row-major (96, 161); head0 b (96);
 head3 W (96); head3 b (1).
@@ -18,13 +23,12 @@ History inputs of the window ending at bar t (start s = t - 63), no loops over b
     at t: the scales of bar s are those series [63]; hmax / lmin / mean close over s-200 .. s-2 are [65]; close of s-2 is
     close[65]; the 8 path chunks are close / open at fixed offsets 65 .. 263.
 """
-import json
 import os
 
 import numpy as np
 
 from .nt3 import NT_GEO, SIDE_NAMES, SIDE_SIGNED
-from .pine_gen import encode_dense, fmt, weights_block
+from .pine_gen import ALPHA0, ALPHA_N, encode_dense, fmt, weights_block
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 L = 64
@@ -86,7 +90,7 @@ var array<float> HSIGNED = array.from({signed})   // history inputs that take th
 
 '''
 
-CORE = r'''// ---------------------------------------------------------------- weights: {n_w} float32, {n_chars} characters in {n_str} strings
+CORE = r'''// ---------------------------------------------------------------- weights: {weights_title}
 {weights}
 
 toMat(array<float> w, int off, int nr, int nc) =>
@@ -276,7 +280,7 @@ HEAD = r'''//@version=6
 //
 // What the line shows: M — how many times a 64-bar window of this shape is more frequent (orange) or less frequent
 // (blue) in real markets than in a random walk with the same volatility (bar-mirror surrogate in blocks of 4 bars).
-// M = 1 — indistinguishable from random. The SuMo classifier (a streaming CNN, {n_w} weights inside this script) scores
+// M = 1 — indistinguishable from random. The SuMo classifier (a streaming CNN, {n_w} weights{weights_where}) scores
 // the window and the 200 bars before it, in bars only (no clock, no calendar); Platt calibration of the symbol turns the
 // score into M. M is a frequency ratio of the window's shape, not a forecast.
 {calib_note}// No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
@@ -376,44 +380,182 @@ TABLE_FIELDS = [('buildFloors', 'floor'), ('buildPlattA', 'platt_a'), ('buildPla
                 ('buildCeilMore', 'ceil_more'), ('buildCeilLess', 'ceil_less')]
 
 
+LIB_NAMES = ('MRIWeightsNT3a', 'MRIWeightsNT3b', 'MRIWeightsNT3c')
+LIB_ALIASES = ('WA', 'WB', 'WC')
+TV_USER = 'TrendyCoins'         # TradingView user name the libraries are published under (import path)
+STR_MAX = 3999                  # characters per weight string
+ASCII_ALPHA = ''.join(chr(c) for c in range(33, 127) if chr(c) not in '"\\/')     # 91 printable characters
+ASCII_N = len(ASCII_ALPHA)      # 91 ** 5 > 2 ** 32: 5 characters per float32
+
+
+def dense_strings(vals, str_max=STR_MAX):
+    enc = encode_dense(vals)
+    per = (str_max // 3) * 3
+    return [enc[i:i + per] for i in range(0, len(enc), per)]
+
+
+def encode_ascii(vals):
+    """float32 -> 5 characters of ASCII_ALPHA each (base 91 of the 32 bits, most significant digit first)."""
+    bits = np.asarray(vals, dtype=np.float32).view(np.uint32).astype(np.int64)
+    out = []
+    for b in bits:
+        d = []
+        for _ in range(5):
+            d.append(int(b % ASCII_N))
+            b //= ASCII_N
+        out.append(''.join(ASCII_ALPHA[x] for x in reversed(d)))
+    return ''.join(out)
+
+
+def decode_ascii(s):
+    """Python mirror of the Pine ASCII decoder: exact float32 values."""
+    idx = {c: i for i, c in enumerate(ASCII_ALPHA)}
+    out = []
+    for k in range(len(s) // 5):
+        b = 0.0
+        for c in s[5 * k:5 * k + 5]:
+            b = b * ASCII_N + idx[c]
+        sg = -1.0 if b >= 2147483648.0 else 1.0
+        u = b - 2147483648.0 if b >= 2147483648.0 else b
+        e = float(np.floor(u / 8388608.0))
+        m = u - e * 8388608.0
+        out.append(sg * (m * 2.0 ** -149 if e == 0 else (1.0 + m / 8388608.0) * 2.0 ** (e - 127)))
+    return out
+
+
+ALPHA_BLOCK = 'buildAlpha() =>\n    map<string, int> m = map.new<string, int>()\n' \
+              '    array<string> cs = str.split("{alpha}", "")\n    for [i, c] in cs\n        map.put(m, c, i)\n    m\n'
+
+DECODE_FLOAT = r"""        float sg = b >= 2147483648.0 ? -1.0 : 1.0
+        float u = b >= 2147483648.0 ? b - 2147483648.0 : b
+        float e = math.floor(u / 8388608.0)
+        float m = u - e * 8388608.0
+        float v = e == 0 ? m * math.pow(2.0, -149) : (1.0 + m / 8388608.0) * math.pow(2.0, e - 127)
+"""
+
+
+def weights_ascii(vals, str_max=STR_MAX):
+    """Pine code: ASCII alphabet map, 5-character decoder, one `var` initializer per string (single-script size test)."""
+    enc = encode_ascii(vals)
+    per = (str_max // 5) * 5
+    strs = [enc[i:i + per] for i in range(0, len(enc), per)]
+    head = (ALPHA_BLOCK.format(alpha=ASCII_ALPHA) + '\n'
+            'decodeInto(array<float> dst, map<string, int> A, string s) =>\n'
+            '    array<string> cs = str.split(s, "")\n'
+            '    int n = math.floor(array.size(cs) / 5.0)\n'
+            '    for k = 0 to n - 1\n'
+            '        float b = 0.0\n'
+            '        for j = 0 to 4\n'
+            f'            b := b * {ASCII_N}.0 + map.get(A, array.get(cs, 5 * k + j))\n'
+            + DECODE_FLOAT +
+            '        array.push(dst, sg * v)\n'
+            '    true\n\n'
+            'var map<string, int> ALPHA = buildAlpha()\n'
+            'var array<float> WT = array.new<float>(0)\n')
+    body = '\n'.join(f'var bool WOK{j:02d} = decodeInto(WT, ALPHA, "{x}")' for j, x in enumerate(strs))
+    return head + body, f'{len(vals)} float32, {len(enc)} ASCII characters (5 per weight) in {len(strs)} strings'
+
+
+def split_parts(n, k):
+    """n strings into k consecutive parts as equal as possible: [(start, end)]."""
+    q, r = divmod(n, k)
+    out, a = [], 0
+    for i in range(k):
+        b = a + q + (1 if i < r else 0)
+        out.append((a, b))
+        a = b
+    return out
+
+
+def weights_libs(vals, user=TV_USER):
+    """Pine code of the indicator (imports + alphabet + appends) and the texts of the weight libraries {name: text}."""
+    strs = dense_strings(vals)
+    per_w = (STR_MAX // 3)
+    parts = split_parts(len(strs), len(LIB_NAMES))
+    alpha = ''.join(chr(ALPHA0 + i) for i in range(ALPHA_N))
+    libs, calls = {}, []
+    for i, ((a, b), name, alias) in enumerate(zip(parts, LIB_NAMES, LIB_ALIASES)):
+        consts = '\n'.join(f'const string S{j:02d} = "{strs[j]}"' for j in range(a, b))
+        funcs = '\n\n'.join(
+            f'// @function Weights {j * per_w} .. {min((j + 1) * per_w, len(vals)) - 1} of the model (string {j}).\n'
+            '// @param A Alphabet map of the indicator: character -> 0 .. 2047.\n'
+            '// @returns Decoded float32 weights in the flat order of the model.\n'
+            f'export w{j:02d}(map<string, int> A) =>\n    decodeArr(S{j:02d}, A)' for j in range(a, b))
+        libs[name] = (
+            '//@version=6\n// SPDX-License-Identifier: Apache-2.0\n// © TrendyCoins\n'
+            f'// @description Weights of the Market Randomness Index (SuMo classifier NT3_PRV_ch48), part {i + 1} of '
+            f'{len(LIB_NAMES)}: float32, 3 characters each (alphabet of the indicator). Generated by mri/pine_nt3.py; do '
+            'not edit by hand.\n'
+            f'library("{name}", overlay = false)\n\n{consts}\n\n'
+            'decodeArr(string s, map<string, int> A) =>\n'
+            '    array<float> dst = array.new<float>(0)\n'
+            '    array<string> cs = str.split(s, "")\n'
+            '    int n = math.floor(array.size(cs) / 3.0)\n'
+            '    for k = 0 to n - 1\n'
+            '        float b = map.get(A, array.get(cs, 3 * k)) * 4194304.0 + map.get(A, array.get(cs, 3 * k + 1)) * 2048.0 + '
+            'map.get(A, array.get(cs, 3 * k + 2))\n'
+            + DECODE_FLOAT +
+            '        array.push(dst, sg * v)\n'
+            '    dst\n\n' + funcs + '\n')
+        calls += [f'var bool WOK{j:02d} = appendW(WT, {alias}.w{j:02d}(ALPHA))' for j in range(a, b)]
+    imports = '\n'.join(f'import {user}/{name}/1 as {alias}' for name, alias in zip(LIB_NAMES, LIB_ALIASES))
+    block = (ALPHA_BLOCK.format(alpha=alpha) + '\n'
+             'appendW(array<float> dst, array<float> src) =>\n    array.concat(dst, src)\n    true\n\n'
+             'var map<string, int> ALPHA = buildAlpha()\n'
+             'var array<float> WT = array.new<float>(0)\n' + '\n'.join(calls))
+    title = (f'{len(vals)} float32 in {len(LIB_NAMES)} libraries ({", ".join(LIB_NAMES)}), 3 characters each, '
+             'decoded once')
+    return block, title, imports, libs
+
+
 def make_script(p, table, unknown, passport, title='Market Randomness Index', short='MRI', calib_note='',
                 source_note=' from export/mri_model_nt3.json', calc_bars=0,
-                unknown_msg='MRI: calibrated on Binance spot; accuracy on this chart is not verified', weights_src=None):
-    """The indicator text. p: Params (NT3 shapes); table: {symbol: floor, platt_a, platt_b, ceil_more, ceil_less};
-       unknown: the same fields for a symbol outside the table; passport: weights_source, data_end, code_version.
-       weights_src: None — dense strings inside the script; else (alias, n_strings) of an imported library."""
+                unknown_msg='MRI: calibrated on Binance spot; accuracy on this chart is not verified', weights='libs',
+                tv_user=TV_USER):
+    """The indicator text and its libraries: (script, {library name: text}). p: Params (NT3 shapes); table: {symbol:
+       floor, platt_a, platt_b, ceil_more, ceil_less}; unknown: the same fields for a symbol outside the table; passport:
+       weights_source, data_end, code_version. weights: 'libs' (3 imported libraries), 'dense' (CJK strings inside the
+       script — too large for TradingView), 'ascii' (ASCII strings inside, 5 characters per weight — size test)."""
     vals = flat_values(p)
     ch, hidden, n_side = p.conv[0].shape[0], p.head0_w.shape[0], len(p.side_mu)
     n_feat = 3 * ch + n_side
     assert p.head0_w.shape[1] == n_feat and len(vals) == p.n_params
     mats, off = matrix_offsets(ch, hidden, n_feat)
     mdecl = '\n'.join(f"var matrix<float> {nm:<4} = toMat(WT, {o}, {r}, {c})" for nm, r, c, o in mats)
-    if weights_src is None:
-        weights, n_str, n_chars = weights_block(vals)
+    libs, imports = {}, ''
+    if weights == 'libs':
+        wblock, wtitle, imports, libs = weights_libs(vals, tv_user)
+        where = f' in {len(libs)} libraries imported by this script'
+    elif weights == 'dense':
+        wblock, n_str, n_chars = weights_block(vals)
+        wtitle, where = f'{len(vals)} float32, {n_chars} characters in {n_str} strings', ' inside this script'
+    elif weights == 'ascii':
+        wblock, wtitle = weights_ascii(vals)
+        where = ' inside this script'
     else:
-        alias, n_str = weights_src
-        head, _, _ = weights_block(vals[:1])
-        head = head.split('var bool WOK00')[0]
-        weights = head + '\n'.join(f'var bool WOK{j:02d} = decodeInto(WT, ALPHA, {alias}.w{j:02d}())' for j in range(n_str))
-        n_chars = 3 * len(vals)
+        raise ValueError(weights)
     chunks = '\n'.join(f'float P{k + 1}h = clipZ((close[{e}] - open[{s}]) / math.sqrt({n}.0) / rmedW)   // {n} bars'
                        for k, (n, e, s) in enumerate(chunk_offsets()))
     dbg_side = '\n'.join(f'plot(array.get(DBG, {3 + j}), "dbg side_{nm}", display = display_dbg, precision = 10)'
                          for j, nm in enumerate(SIDE_NAMES))
     head = HEAD.format(title_line=title if short == 'MRI' else f'{title} ({short})', source_note=source_note,
-                       n_w=len(vals), calib_note=calib_note, source=passport['weights_source'],
+                       n_w=len(vals), weights_where=where, calib_note=calib_note, source=passport['weights_source'],
                        data_end=passport['data_end'], code_version=passport['code_version'], title=title, short=short,
                        calc_bars=calc_bars, tables=symbol_tables(table, TABLE_FIELDS),
                        floor_unknown=fmt(unknown['floor']), platt_a_unknown=fmt(unknown['platt_a']),
                        platt_b_unknown=fmt(unknown['platt_b']), ceil_o_unknown=fmt(unknown['ceil_more']),
                        ceil_b_unknown=fmt(unknown['ceil_less']))
+    if imports:                                    # import statements right after the declaration statement
+        decl = head.index('\n', head.index('indicator(')) + 1
+        head = (head[:decl] + '// weight libraries (pine/lib/), published under the author\'s TradingView user name\n'
+                + imports + '\n' + head[decl:])
     consts = CONSTS.format(ch=ch, hidden=hidden, n_side=n_side, sq199=fmt_d(np.sqrt(199.0)), s_sd=fmt(p.s_sd),
                            lvl_sd=fmt(p.lvl_sd), side_mu=float_list(p.side_mu), side_sd=float_list(p.side_sd),
                            signed=', '.join('1.0' if s else '0.0' for s in SIDE_SIGNED[2:]))
-    core = CORE.format(n_w=len(vals), n_str=n_str, n_chars=n_chars, weights=weights, matrices=mdecl, off_h3=off,
-                       off_h3_end=off + hidden, off_hb3=off + hidden, chunks=chunks)
+    core = CORE.format(weights_title=wtitle, weights=wblock, matrices=mdecl, off_h3=off, off_h3_end=off + hidden,
+                       off_hb3=off + hidden, chunks=chunks)
     foot = FOOT.format(dbg_side=dbg_side, unknown_msg=unknown_msg)
-    return head + consts + core + foot
+    return head + consts + core + foot, libs
 
 
 def fmt_d(x):
@@ -422,69 +564,11 @@ def fmt_d(x):
     return s if '.' in s else s + '.0'
 
 
-def make_library(p, name='MRIWeightsNT3', str_max=3999):
-    """Library variant: the dense weight strings as exported functions w00() .. (the script imports them)."""
-    enc = encode_dense(flat_values(p))
-    per = (str_max // 3) * 3
-    strs = [enc[i:i + per] for i in range(0, len(enc), per)]
-    body = '\n\n'.join(f'// @function Dense weight string {j} of {len(strs)}.\n// @returns Characters of the float32 '
-                       f'encoding (3 per weight).\nexport w{j:02d}() =>\n    "{s}"' for j, s in enumerate(strs))
-    text = ('//@version=6\n// SPDX-License-Identifier: Apache-2.0\n// © TrendyCoins\n'
-            '// @description Weights of the Market Randomness Index (SuMo classifier NT3_PRV_ch48): float32, 3 characters '
-            'each.\n' + f'library("{name}", overlay = false)\n\n' + body + '\n')
-    return text, len(strs)
+CALC_BARS_DEFAULT = 0          # 'Compute only the last N bars': set from the Pine Profiler measurement
 
 
-def proto_inputs():
-    """Prod a weights and a calibration stub for the limits prototype (floors of R6; Platt a = 1, b = 0; no ceiling)."""
-    from .export import FRESH, POOL_ALL
-    from .params import load_npz
-    p, _ = load_npz(os.path.join(ROOT, 'artifacts/weights/prod_NT3_PRV_ch48_L64_a_slim.npz'))
-    with open(os.path.join(ROOT, 'artifacts/pack/floors_by_folder.json'), encoding='utf-8') as fh:
-        fl = json.load(fh)
-    floors = {a: float(fl['SMC/data_fresh/' if a in FRESH else 'SMC/data/'][a]['floor_L64']) for a in POOL_ALL}
-    stub = {'platt_a': 1.0, 'platt_b': 0.0, 'ceil_more': 1000.0, 'ceil_less': 1000.0}
-    table = {a: {'floor': v, **stub} for a, v in floors.items()}
-    unknown = {'floor': float(np.median(list(floors.values()))), **stub}
-    passport = {'weights_source': 'prod_NT3_PRV_ch48_L64_a (PROTOTYPE: calibration stub a = 1, b = 0, no ceilings)',
-                'data_end': '2026-09-26 09:15:00 UTC', 'code_version': 'prototype'}
-    return p, table, unknown, passport
-
-
-def main():
-    import argparse
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--proto', action='store_true')
-    ap.add_argument('--lib', action='store_true', help='with --proto: also the library variant')
-    a = ap.parse_args()
-    if a.proto:
-        p, table, unknown, passport = proto_inputs()
-        kw = dict(title='MRI prototype NT3 (limits)', short='MRI proto', source_note=' (prototype for Pine limits)',
-                  calib_note='// PROTOTYPE for TradingView limits: calibration stub (a = 1, b = 0), the line has no meaning.\n')
-        outs = {'pine/proto_nt3.pine': make_script(p, table, unknown, passport, **kw)}
-        if a.lib:
-            lib, n = make_library(p)
-            outs['pine/proto_nt3_weights_lib.pine'] = lib
-            txt = make_script(p, table, unknown, passport, weights_src=('W', n), **kw)
-            decl = txt.index('\n', txt.index('indicator("MRI prototype NT3 (limits)"')) + 1
-            outs['pine/proto_nt3_with_lib.pine'] = (txt[:decl] + '// the library pine/proto_nt3_weights_lib.pine, '
-                                                    'published under your TradingView user name\n'
-                                                    'import TrendyCoins/MRIWeightsNT3/1 as W\n' + txt[decl:])
-    else:
-        from .export_nt3 import load_export
-        ex = load_export(os.path.join(ROOT, 'export/mri_model_nt3.json'))
-        outs = {'pine/mri.pine': make_indicator(ex)}
-    for path, s in outs.items():
-        with open(os.path.join(ROOT, path), 'w', encoding='utf-8') as fh:
-            fh.write(s)
-        print(path, len(s), 'chars', len(s.splitlines()), 'lines')
-
-
-CALC_BARS_DEFAULT = 0          # 'Compute only the last N bars': set from the Pine Profiler measurement of the prototype
-
-
-def make_indicator(ex, calc_bars=CALC_BARS_DEFAULT):
-    """pine/mri.pine from the NT3 export dict (export/mri_model_nt3.json)."""
+def make_indicator(ex, calc_bars=CALC_BARS_DEFAULT, weights='libs', tv_user=TV_USER, **kw):
+    """pine/mri.pine (and its libraries) from the NT3 export dict (export/mri_model_nt3.json): (script, {name: text})."""
     from .params import from_dict
     p = from_dict(ex['model'])
     if ex['tie_rule']['eps'] != 1e-4 or ex['model']['id'] != 'NT3_PRV_ch48' or len(p.side_mu) != len(SIDE_NAMES):
@@ -502,7 +586,30 @@ def make_indicator(ex, calc_bars=CALC_BARS_DEFAULT):
             f'// its ceiling (at most {txt(pool["more"])} more frequent / {txt(pool["less"])} less frequent; for symbols outside '
             f'the table {txt(unk["ceil_more"])} / {txt(unk["ceil_less"])}\n'
             '// with the global Platt); above it the line stays at the ceiling, marked "N+".\n')
-    return make_script(p, table, unk, ex['passport'], calib_note=note, calc_bars=calc_bars)
+    return make_script(p, table, unk, ex['passport'], calib_note=note, calc_bars=calc_bars, weights=weights,
+                       tv_user=tv_user, **kw)
+
+
+def main():
+    import argparse
+    from .export_nt3 import load_export
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--ascii-test', action='store_true', help='also pine/test/mri_ascii_single.pine')
+    ap.add_argument('--tv-user', default=TV_USER, help='TradingView user name of the weight libraries')
+    a = ap.parse_args()
+    ex = load_export(os.path.join(ROOT, 'export/mri_model_nt3.json'))
+    script, libs = make_indicator(ex, tv_user=a.tv_user)
+    outs = {'pine/mri.pine': script, **{f'pine/lib/{name}.pine': t for name, t in libs.items()}}
+    if a.ascii_test:
+        outs['pine/test/mri_ascii_single.pine'] = make_indicator(
+            ex, weights='ascii', title='Market Randomness Index size test', short='MRI test',
+            source_note=' (single script, ASCII weights: size test only)')[0]
+    for path, s in outs.items():
+        full = os.path.join(ROOT, path)
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        with open(full, 'w', encoding='utf-8') as fh:
+            fh.write(s)
+        print(f'{path}: {len(s)} chars, {len(s.encode())} bytes UTF-8, {len(s.splitlines())} lines')
 
 
 if __name__ == '__main__':
