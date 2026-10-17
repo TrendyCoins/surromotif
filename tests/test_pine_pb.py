@@ -140,10 +140,10 @@ def test_wording_colors_literals(proto, which):
     banned = r'\b(buy|sell|long|short|bull\w*|bear\w*|arrow\w*|triangle\w*|label_?up|label_?down)\b'
     assert not re.findall(banned, code, flags=re.I)
     assert not re.findall(r'color\.(red|green|lime|maroon|olive)', code)
-    assert not re.findall(r'(?<![A-Za-z_])\d+\.?\d*[eE][-+]?\d+', code)
     assert not re.findall(r'\bSMC\b', code)
     assert 'barstate.isconfirmed' in code and 'request.' not in code
     body = re.sub(r'"[^"]*"', '""', re.sub(r'//.*', '', code))           # no clock or EMA of prices in the computation
+    assert not re.findall(r'(?<![A-Za-z_])\d+\.?\d*[eE][-+]?\d+', body)  # no exponent literals (comments: hashes)
     assert not re.findall(r'ta\.(ema|rma|wma)|\b(hour|minute|dayofweek|dayofmonth|weekofyear|month|year)\b', body)
     assert [ln.strip() for ln in body.splitlines() if re.search(r'\btime\b', ln)] == [
         'bool  gap    = bar_index > 0 and (time - time[1]) > GAPMS']          # time: grid gaps only
