@@ -145,10 +145,10 @@ def test_production_indicator_is_generated_from_export():
     from mri.pine_nt3 import make_indicator
     ex = load_export(os.path.join(ROOT, EXPORT))
     script, libs = make_indicator(ex)
-    with open(os.path.join(ROOT, 'pine/mri.pine'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, 'pine/legacy/mri_nt3.pine'), encoding='utf-8') as fh:
         assert fh.read() == script
     for name, text in libs.items():
-        with open(os.path.join(ROOT, f'pine/lib/{name}.pine'), encoding='utf-8') as fh:
+        with open(os.path.join(ROOT, f'pine/legacy/lib/{name}.pine'), encoding='utf-8') as fh:
             assert fh.read() == text
     strs = lib_weights(script, libs)
     assert np.array_equal(np.array(decode_dense(''.join(strs))), flat_values(from_dict(ex['model'])).astype(np.float64))
