@@ -7,30 +7,40 @@ Original file is located at
     https://colab.research.google.com/drive/13yizO0wuT-IewFZXQ_V6B_Wowbua4C25
 """
 
-# -*- coding: utf-8 -*-
 """SuMo_Class_Pack
 
-TrendyCoins_SMC_Pack — архив артефактов боевой модели для репозитория surromotif (экспорт в Pine — Claude Code), v6.2
+TrendyCoins_SMC_Pack — архив артефактов боевой модели для репозитория surromotif (экспорт в Pine — Claude Code), v6.3
+
+v6.3 (Pine-модель в бюджет одного скрипта, линия M без калибровки по ассету): модель по умолчанию — PB_s64h24_d1 (итог этапа
+2, сводка пула 2026-10-17, раздел (5и)); метка этапа NAME = 'pb' (логи — в artifacts/logs/pb/, опись — artifacts/pack/
+pb_manifest.json, архив mri_pb_artifacts_<дата>.zip: файлы этапов F3_g и NT3 в репо не перезаписываются). Новое: json MODE
+'nocal' (линейка боевых моделей, потолки линии M по пулу, по ассетам и у незнакомого символа) — обязателен; ворота сводки
+пула — итог этапа 2 = MODEL, рецепт ✅, флаг (5и) не поднят (перенос общего Платта — справочно: линия M без Платта); у
+моделей 'stop' — только json (эпохи по правилу v4.9), их npz не нужны (переноса калибровки нет); логи этапа — по шаблонам
+LOGS (общие — только те, где есть модели PB_).
 
 ЧТО КЛАДЁТ (пути — как в репо: архив распаковать в корень репозитория):
   artifacts/weights/prod_<M>_L64_{a,b,c}.json и prod_<M>_L64_{a,b,c}_slim.npz — боевые модели: json прогона как есть, в npz —
       только веса и буферы (ключи sd_*); оценки окон боевой модели (в выборке) выброшены.
-  artifacts/calib/pool_C_<M>_L64_{a,b}_refit.json и ..._refit_partK.npz — модели 'refit' (FIT + TUNE, до 2025-06-30): источник
-      калибровки индикатора (их VAL вне выборки).
-  artifacts/calib/pool_C_<M>_L64_{a,b}.json и ..._partK.npz — модели 'stop' (поколение 1: проверка переноса калибровки
-      'stop' -> 'refit', в том числе поассетной).
-  artifacts/calib/pool_ALL_<M>_L64_{a,b}_refit.json и ..._refit_partK.npz — v6.2: 'refit' на наборе ALL (31 ассет, как у
-      боевой): источник поассетной калибровки Платта (VAL вне выборки у всех 31; у 'refit' на C ассеты H невиданные).
+  artifacts/calib/pool_ALL_<M>_L64_{a,b}_refit.json и ..._refit_partK.npz — 'refit' на наборе ALL (31 ассет, как у боевой; FIT +
+      TUNE до 2025-06-30): источник проверки линии M (VAL вне выборки у всех 31) — кривая R9 по пулу и потолки R11 по ассетам.
+  artifacts/calib/pool_C_<M>_L64_{a,b}_refit.json и ..._refit_partK.npz — 'refit' на наборе C: ворота рецепта, незнакомый
+      символ (ассеты H там невиданные), сквозная сверка R3.
+  artifacts/calib/pool_C_<M>_L64_{a,b}.json — модели 'stop' (только json: лучшие эпохи — правило v4.9).
       npz без потерь, разрезан по ключам на части не больше PART_MB (сайт GitHub принимает файл до 25 МБ); части собираются
       обратно простым объединением словарей. Ключи — как в исходном npz прогона пула: sd_* — веса и буферы; <ASSET>__{tune,val}
       __{sp,sn,wk} — logit реальных окон, logit суррогатов, номер недели; у BTC ещё __st — старт окна (позиция в ряду).
-  artifacts/logs/nt/ — логи этапа (все с даты LOG_SINCE: check, nt_sum, pool N*, chain, pool_sum) и последняя сводка пула.
-  artifacts/pack/nt_manifest.json — опись файлов (размер, sha256, откуда) и параметры прогонов (эпохи, лучшая эпоха, конец
-      данных, накладка, AUC); artifacts/pack/npz_inventory_nt.txt — опись массивов исходных npz (имя, форма, тип, размер).
-АРХИВ: <project>/SMC/export/mri_nt_artifacts_<дата>.zip и рядом та же папка распакованной (можно грузить и из неё).
+  artifacts/calib/nocal_<M>_<дата>.json — v6.3: итог MODE 'nocal' (правила NOCAL, узлы линейки, линейки боевых a / b / c,
+      кривые и потолки вариантов, незнакомый символ, «в выборке», случайный график, float16, блок 'pine' с формулами).
+  artifacts/logs/<NAME>/ — логи этапа (шаблоны LOGS, с даты LOG_SINCE) и последняя сводка пула.
+  artifacts/pack/<NAME>_manifest.json — опись файлов (размер, sha256, откуда) и параметры прогонов (эпохи, лучшая эпоха, конец
+      данных, накладка, AUC, архитектура, весов в Pine); artifacts/pack/npz_inventory_<NAME>.txt — опись массивов исходных npz.
+АРХИВ: <project>/SMC/export/mri_<NAME>_artifacts_<дата>.zip и рядом та же папка распакованной (можно грузить и из неё).
 ПРОВЕРКИ до архива: все прогоны на месте и одной версии; у боевых — один конец данных, одна накладка и одно число эпох, то же
-  у 'refit'; эпохи — по правилу v4.9 из 'stop' (среднее лучших эпох с единицы, округлённое); последняя сводка пула: рецепт ✅,
-  перенос калибровки ✅, флаг (5ж); части npz собираются обратно в исходный словарь бит в бит; slim — те же веса, что в полном npz.
+  у 'refit'; эпохи — по правилу v4.9 из 'stop' (среднее лучших эпох с единицы, округлённое); у всех моделей одно число весов,
+  оно же — 'pine_w' в json; последняя сводка пула: итог этапа 2 = MODEL, рецепт ✅, флаг (5и) не поднят; json 'nocal': та же
+  модель, версия NOCAL_VER, победитель — NOCAL_EXPECT, линейки боевых a / b / c — от тех же прогонов (тег, конец данных); части
+  npz собираются обратно в исходный словарь бит в бит; slim — те же веса, что в полном npz.
 """
 
 import os
@@ -52,17 +62,21 @@ except ImportError:
 project_path = os.environ.get('SMC_PROJECT_PATH', '/content/drive/MyDrive/TrendyCoins/')
 RUN_DIR = project_path + 'SMC/runs/'
 # ---- НАСТРОЙКА -----------------------------------------------------------------------------------------------------------
-MODEL = os.environ.get('SMC_PACK_MODEL', 'NT3_PRV_ch48')   # боевая F3 без времени (Pine), вердикт 'nt_sum' 2026-10-07
+MODEL = os.environ.get('SMC_PACK_MODEL', 'PB_s64h24_d1')   # v6.3: итог этапа 2 Pine-модели (сводка пула 2026-10-17, (5и))
+NAME = os.environ.get('SMC_PACK_NAME', 'pb')                # метка этапа: папка логов, имена описи и архива
 L = 64
 SEEDS_PROD = ('a', 'b', 'c')
 SEEDS_POOL = ('a', 'b')
 PART_MB = 20.0                     # потолок части npz (сайт GitHub — 25 МБ на файл)
-INCLUDE_STOP = True                # модели 'stop' (поколение 1) — для проверки переноса калибровки, в том числе поассетной;
-                                   # False — архив легче, но перенос в репо не перепроверить
-INCLUDE_ALL_REFIT = True           # v6.2: 'refit' на ALL — источник поассетной калибровки (задание NR); обязателен
+INCLUDE_STOP_NPZ = False           # v6.3: npz моделей 'stop' не нужны (линия M без Платта — переноса калибровки нет); их json
+                                   # (лучшие эпохи) кладутся всегда
+INCLUDE_ALL_REFIT = True           # 'refit' на ALL — источник проверки линии M (VAL вне выборки у всех 31 ассета); обязателен
+NOCAL_VER = 2                      # v6.3: версия правил MODE 'nocal' (NOCAL_VER в TrendyCoins_SMC_Train)
+NOCAL_EXPECT = 'glob_e'            # линейка по правилу 'nocal' на итоговой модели (лог цепочки 2026-10-17); другая — стоп
 OUT_DIR = os.environ.get('SMC_PACK_OUT', project_path + 'SMC/export/')
-LOG_PATTERNS = ('smc_check__*.log', 'smc_nt_sum__*.log', 'smc_pool_N*.log', 'smc_chain__*.log', 'smc_pool_sum__*.log')
-LOG_SINCE = '20261006'             # логи этапа «модели без времени» — с этой даты (старые сводки пула v5.7 не берутся)
+LOG_SINCE = '20261015'             # логи этапа Pine-модели в один скрипт — с этой даты
+LOGS = (('smc_train_PB*.log', None), ('smc_pb_sum__*.log', None), ('smc_pool_PB*.log', None),   # (шаблон, обязательный текст):
+        ('smc_chain__*.log', 'PB_'), ('smc_pool_sum__*.log', 'PB_'), ('smc_nocal__*.log', 'PB_'))  # общие — только с моделями PB_
 # ---------------------------------------------------------------------------------------------------------------------------
 
 
@@ -74,11 +88,15 @@ def sha256(path):
     return h.hexdigest()
 
 
-def load_run(path):
+def load_json(path):
     if not os.path.isfile(path):
         raise FileNotFoundError(f"🍆 АЙ, ОШИБКА! нет {path}")
     with open(path, encoding='utf-8') as fh:
-        r = json.load(fh)
+        return json.load(fh)
+
+
+def load_run(path):
+    r = load_json(path)
     npz = path[:-5] + '.npz'
     if not os.path.isfile(npz):
         raise FileNotFoundError(f"🍆 АЙ, ОШИБКА! нет {npz}")
@@ -96,6 +114,11 @@ def inventory(name, arrs):
         v = arrs[k]
         lines.append(f"   {k:<40} {str(tuple(v.shape)):<16} {str(v.dtype):<8} {v.nbytes:>12}")
     return lines
+
+
+def n_params(sd):
+    """Обучаемых параметров по ключам sd_* (веса и сдвиги слоёв; буферы — без них)."""
+    return int(sum(v.size for k, v in sd.items() if k.endswith(('.weight', '.bias'))))
 
 
 def save_parts(arrs, base, limit_mb):
@@ -142,24 +165,30 @@ def check_parts(arrs, paths):
         raise RuntimeError("🍆 АЙ, ОШИБКА! части npz не собираются в исходный словарь бит в бит")
 
 
-def stage_logs(pattern):
-    """Логи по шаблону с датой в имени (…_ГГГГММДД_ччммсс.log) не раньше LOG_SINCE, по порядку."""
+def stage_logs(pattern, must=None):
+    """Логи по шаблону с датой в имени (…_ГГГГММДД_ччммсс.log) не раньше LOG_SINCE, по порядку; must — текст, который в логе
+       обязан быть (у общих шаблонов — модели этапа)."""
     out = []
     for p in sorted(glob.glob(RUN_DIR + 'logs/' + pattern)):
         m = re.search(r'_(\d{8})_\d{6}\.log$', os.path.basename(p))
-        if m and m.group(1) >= LOG_SINCE:
-            out.append(p)
+        if not m or m.group(1) < LOG_SINCE:
+            continue
+        if must:
+            with open(p, encoding='utf-8', errors='replace') as fh:
+                if must not in fh.read():
+                    continue
+        out.append(p)
     return out
 
 
 def main():
     t0 = time.time()
     stamp = time.strftime('%Y%m%d_%H%M%S')
-    stage = OUT_DIR + f"mri_nt_artifacts_{stamp}/"
+    stage = OUT_DIR + f"mri_{NAME}_artifacts_{stamp}/"
     art = stage + 'artifacts/'
-    for sub in ('weights', 'calib', 'logs/nt', 'pack'):
+    for sub in ('weights', 'calib', f'logs/{NAME}', 'pack'):
         os.makedirs(art + sub, exist_ok=True)
-    print(f"\n{'#' * 78}\n# SMC: АРХИВ АРТЕФАКТОВ | модель {MODEL} | {RUN_DIR} -> {stage}\n{'#' * 78}")
+    print(f"\n{'#' * 78}\n# SMC: АРХИВ АРТЕФАКТОВ v6.3 | модель {MODEL} | {RUN_DIR} -> {stage}\n{'#' * 78}")
     files, runs, inv = [], {}, []
 
     def add(src, rel):
@@ -169,17 +198,19 @@ def main():
         files.append({'path': rel, 'bytes': os.path.getsize(dst), 'sha256': sha256(dst), 'from': src})
 
     def run_info(r):
-        s_ = r.get('summary', {})
+        s_, c_ = r.get('summary', {}), r['cfg']
         return {'tag': r['tag'], 'mode': r.get('mode'), 'seed': r.get('seed_key'), 'set': r.get('set'),
-                'epochs': r['cfg'].get('epochs'), 'best_ep': r.get('best_ep'), 'epochs_run': r.get('epochs_run'),
+                'epochs': c_.get('epochs'), 'best_ep': r.get('best_ep'), 'epochs_run': r.get('epochs_run'),
                 't_cut': r.get('t_cut'), 'data_overlay': r.get('data_overlay'), 'data_dir': r.get('data_dir'),
-                'when': r.get('when'), 'ver': r.get('ver'), 'side': r['cfg'].get('side'), 'cnn_ch': r['cfg'].get('cnn_ch'),
-                'head_hidden': r['cfg'].get('head_hidden'), 'price': r['cfg'].get('price'),
+                'when': r.get('when'), 'ver': r.get('ver'), 'side': c_.get('side'), 'cnn_ch': c_.get('cnn_ch'),
+                'cnn_k': c_.get('cnn_k'), 'cnn_dil': c_.get('cnn_dil'), 'cnn_sep': c_.get('cnn_sep'),
+                'head_hidden': c_.get('head_hidden'), 'price': c_.get('price'), 'dropout': c_.get('dropout'),
+                'cnn_cdrop': c_.get('cnn_cdrop'), 'pine_w': r.get('pine_w'), 'pine': r.get('pine'),
                 'panel_tune': s_.get('tune', {}).get('panel'), 'panel_val': s_.get('val', {}).get('panel'),
                 'btc_val': s_.get('val', {}).get('btc'), 'holdout_val': s_.get('val', {}).get('holdout')}
 
     # ---- боевые модели: json + slim (только веса и буферы)
-    prod = []
+    prod, n_par = [], {}
     for s_ in SEEDS_PROD:
         tag = f"prod_{MODEL}_L{L}_{s_}"
         r, npz = load_run(RUN_DIR + f"prod/{tag}.json")
@@ -196,31 +227,33 @@ def main():
                       'from': npz + ' (только sd_*)'})
         prod.append(r)
         runs[tag] = run_info(r)
-        n_par = sum(v.size for k, v in sd.items() if k.endswith(('.weight', '.bias')))
+        n_par[tag] = (n_params(sd), r.get('pine_w'))
         print(f"🧠 {tag}: эпох {r['cfg'].get('epochs')}, конец данных {r.get('t_cut')}, накладка {r.get('data_overlay')} | "
-              f"массивов sd_* {len(sd)}, обучаемых параметров {n_par}")
+              f"массивов sd_* {len(sd)}, обучаемых параметров {n_par[tag][0]} (в json 'pine_w' {r.get('pine_w')}), "
+              f"умножений на бар {r.get('pine')}")
 
-    # ---- модели пула 'refit' и 'stop': json + npz частями
+    # ---- модели пула 'refit' (json + npz частями) и 'stop' (json; npz — при INCLUDE_STOP_NPZ)
     pool = {}
     kinds = [('refit', 'C'), ('stop', 'C')] + ([('refit', 'ALL')] if INCLUDE_ALL_REFIT else [])
     for mode, set_ in kinds:
         for s_ in SEEDS_POOL:
-            if mode == 'stop' and not INCLUDE_STOP:              # эпохи по правилу всё равно сверяются по json 'stop'
-                tag = f"pool_C_{MODEL}_L{L}_{s_}"
-                pool[(mode, set_, s_)], _ = load_run(RUN_DIR + f"pool/{tag}.json")
-                continue
             tag = f"pool_{set_}_{MODEL}_L{L}_{s_}" + ('' if mode == 'stop' else '_refit')
             r, npz = load_run(RUN_DIR + f"pool/{tag}.json")
+            add(RUN_DIR + f"pool/{tag}.json", f"artifacts/calib/{tag}.json")
+            pool[(mode, set_, s_)] = r
+            runs[tag] = run_info(r)
+            if mode == 'stop' and not INCLUDE_STOP_NPZ:
+                print(f"📄 {tag}: только json | лучшая эпоха {r.get('best_ep', -1) + 1} | панель VAL "
+                      f"{r['summary']['val']['panel']:.4f}")
+                continue
             arrs = npz_dict(npz)
             inv += inventory(os.path.basename(npz), arrs)
-            add(RUN_DIR + f"pool/{tag}.json", f"artifacts/calib/{tag}.json")
+            n_par[tag] = (n_params({k: v for k, v in arrs.items() if k.startswith('sd_')}), r.get('pine_w'))
             paths = save_parts(arrs, art + f"calib/{tag}", PART_MB)
             check_parts(arrs, paths)
             for p in paths:
                 files.append({'path': 'artifacts/calib/' + os.path.basename(p), 'bytes': os.path.getsize(p),
                               'sha256': sha256(p), 'from': npz + ' (часть)'})
-            pool[(mode, set_, s_)] = r
-            runs[tag] = run_info(r)
             print(f"📦 {tag}: {len(paths)} частей ({', '.join(f'{os.path.getsize(p) / 1e6:.1f}' for p in paths)} МБ) | "
                   f"эпох {r['cfg'].get('epochs')} (лучшая {r.get('best_ep', -1) + 1}) | панель VAL "
                   f"{r['summary']['val']['panel']:.4f}")
@@ -231,11 +264,12 @@ def main():
     ep_prod = {r['cfg'].get('epochs') for r in prod}
     ep_refit = {r['cfg'].get('epochs') for k, r in pool.items() if k[0] == 'refit'}
     all_ok = True
-    if INCLUDE_ALL_REFIT:                                        # v6.2: набор 'refit' на ALL — тот же, что у боевых
+    if INCLUDE_ALL_REFIT:                                        # набор 'refit' на ALL — тот же, что у боевых
         all_ok = all(sorted(pool[('refit', 'ALL', s_)].get('train_assets') or []) == sorted(prod[0].get('train_assets') or [])
                      for s_ in SEEDS_POOL)
     one_end = len({r.get('t_cut') for r in prod}) == 1 and len({r.get('data_overlay') for r in prod}) == 1
     vers = {r.get('ver') for r in prod} | {r.get('ver') for r in pool.values()}
+    par_ok = len({v[0] for v in n_par.values()}) == 1 and all(v[1] in (None, v[0]) for v in n_par.values())
     for good, text in ((ep_prod == ep_refit == {ep_rule},
                         f"эпохи: правило v4.9 по 'stop' — {ep_rule}; 'refit' — {sorted(ep_refit)}; 'prod' — {sorted(ep_prod)}"),
                        (one_end, f"боевые: конец данных {sorted({str(r.get('t_cut')) for r in prod})}, накладка "
@@ -243,52 +277,90 @@ def main():
                        (len(vers) == 1, f"версия прогонов пула: {sorted(map(str, vers))}"),
                        (all_ok, f"набор ассетов 'refit' на ALL = набор боевых ({len(prod[0].get('train_assets') or [])})"
                         if INCLUDE_ALL_REFIT
-                        else "'refit' на ALL не берётся (INCLUDE_ALL_REFIT = False)")):
+                        else "'refit' на ALL не берётся (INCLUDE_ALL_REFIT = False)"),
+                       (par_ok, f"весов у моделей с npz: {sorted({v[0] for v in n_par.values()})} (в json 'pine_w': "
+                                f"{sorted({str(v[1]) for v in n_par.values()})})")):
         print(f"   {'✅' if good else '❌'} {text}")
         ok &= bool(good)
+
+    # ---- последняя сводка пула: итог этапа 2, рецепт, флаг (5и)
     summ = sorted(glob.glob(RUN_DIR + 'pool/pool_summary_*.json'), key=os.path.getmtime)
     gate = {}
     if summ:
-        with open(summ[-1], encoding='utf-8') as fh:
-            s = json.load(fh)
-        gate = {'summary': os.path.basename(summ[-1]), 'recipe_ok': (s.get('recipe_ok') or {}).get(MODEL),
-                'calib_ok': (s.get('calib_ok') or {}).get(MODEL), 'nt_flag': s.get('nt_flag'),
-                'pine': (s.get('prod_models') or {}).get('pine')}
-        print(f"   {'✅' if gate['recipe_ok'] else '❌'} рецепт ('refit' против 'stop') | "
-              f"{'✅' if gate['calib_ok'] else '❌'} перенос калибровки | "
-              f"{'❗ флаг (5ж): NT3 хуже F3_g больше чем на 2 SE' if gate['nt_flag'] else '· флаг (5ж) не поднят'} | "
-              f"сводка {gate['summary']}")
-        ok &= bool(gate['recipe_ok']) and bool(gate['calib_ok'])
-        add(summ[-1], f"artifacts/logs/nt/{os.path.basename(summ[-1])}")
+        s = load_json(summ[-1])
+        gate = {'summary': os.path.basename(summ[-1]), 'pb_final': s.get('pb_final'), 'pb_base': s.get('pb_base'),
+                'recipe_ok': (s.get('recipe_ok') or {}).get(MODEL), 'calib_ok': (s.get('calib_ok') or {}).get(MODEL),
+                'pb_flag': s.get('pb_flag'), 'nt_flag': s.get('nt_flag'), 'epochs': ((s.get('prod') or {}).get('epochs')
+                                                                                    or {}).get(MODEL)}
+        g_ok = gate['pb_final'] == MODEL and bool(gate['recipe_ok']) and not gate['pb_flag'] and gate['epochs'] == ep_rule
+        print(f"   {'✅' if gate['pb_final'] == MODEL else '❌'} итог этапа 2 — {gate['pb_final']} (основа {gate['pb_base']}) | "
+              f"{'✅' if gate['recipe_ok'] else '❌'} рецепт ('refit' против 'stop') | "
+              f"{'❗ флаг (5и): хуже NT3_PRV_ch48 больше чем на 2 SE' if gate['pb_flag'] else '· флаг (5и) не поднят'} | "
+              f"{'✅' if gate['epochs'] == ep_rule else '❌'} эпохи в сводке {gate['epochs']} | сводка {gate['summary']}")
+        print(f"   · справочно: перенос общего Платта {'✅' if gate['calib_ok'] else '—'} (линия M его не использует)")
+        ok &= bool(g_ok)
+        add(summ[-1], f"artifacts/logs/{NAME}/{os.path.basename(summ[-1])}")
     else:
         print("   ❌ нет сводки пула (MODE 'pool_sum') — ворота не проверены")
         ok = False
 
+    # ---- json 'nocal': линейки боевых и потолки линии M
+    nocal = {}
+    ncs = sorted(glob.glob(RUN_DIR + f"nocal/nocal_{MODEL}_*.json"))
+    if ncs:
+        d = load_json(ncs[-1])
+        pr = d.get('prod') or {}
+        tags_ok = (set(pr) == set(SEEDS_PROD)
+                   and all(pr[s_].get('tag') == r['tag'] and str(pr[s_].get('t_cut')) == str(r.get('t_cut'))
+                           and len((pr[s_].get(NOCAL_EXPECT) or {}).get('q') or []) == len(d.get('knots') or [])
+                           for s_, r in zip(SEEDS_PROD, prod)))
+        v_ = (d.get('variants') or {}).get(NOCAL_EXPECT) or {}
+        nocal = {'file': os.path.basename(ncs[-1]), 'when': d.get('when'), 'ver': d.get('ver'), 'winner': d.get('winner'),
+                 'src': d.get('src'), 'ceil_pool': v_.get('ceil'), 'share': v_.get('share'),
+                 'unseen_ceil': {a: (x.get('orange'), x.get('blue')) for a, x in ((d.get('unseen') or {}).get('assets')
+                                                                                   or {}).items()}}
+        n_ok = (d.get('model') == MODEL and d.get('ver') == NOCAL_VER and d.get('winner') == NOCAL_EXPECT
+                and (d.get('pine') or {}).get('ruler') == NOCAL_EXPECT and tags_ok)
+        print(f"   {'✅' if n_ok else '❌'} 'nocal' {nocal['file']}: модель {d.get('model')}, версия {d.get('ver')}, "
+              f"линейка по правилу {d.get('winner')} (ждём {NOCAL_EXPECT}), источник {d.get('src')} | линейки боевых "
+              f"{sorted(pr)} — {'те же прогоны' if tags_ok else 'НЕ те прогоны / нет таблицы'} | потолки пула "
+              f"{v_.get('ceil')}, ассеты >= 5: {100 * (v_.get('share') or 0):.0f}% | незнакомый символ {nocal['unseen_ceil']}")
+        if len(ncs) > 1:
+            print(f"   · json 'nocal' этой модели — {len(ncs)}, взят последний: {nocal['file']}")
+        ok &= bool(n_ok)
+        add(ncs[-1], f"artifacts/calib/{os.path.basename(ncs[-1])}")
+    else:
+        print(f"   ❌ нет json 'nocal' модели {MODEL} в {RUN_DIR}nocal/ (MODE 'nocal')")
+        ok = False
+
     # ---- логи
-    for pat in LOG_PATTERNS:
-        for p in stage_logs(pat):
-            add(p, f"artifacts/logs/nt/{os.path.basename(p)}")
+    for pat, must in LOGS:
+        for p in stage_logs(pat, must):
+            add(p, f"artifacts/logs/{NAME}/{os.path.basename(p)}")
     print(f"🗒️ логи: {', '.join(os.path.basename(f_['path']) for f_ in files if '/logs/' in f_['path'])}")
 
     # ---- описи
-    with open(art + 'pack/npz_inventory_nt.txt', 'w', encoding='utf-8') as fh:
+    inv_rel = f"artifacts/pack/npz_inventory_{NAME}.txt"
+    with open(stage + inv_rel, 'w', encoding='utf-8') as fh:
         fh.write("\n".join(inv) + "\n")
-    files.append({'path': 'artifacts/pack/npz_inventory_nt.txt', 'bytes': os.path.getsize(art + 'pack/npz_inventory_nt.txt'),
-                  'sha256': sha256(art + 'pack/npz_inventory_nt.txt'), 'from': 'опись исходных npz'})
-    man = {'model': MODEL, 'L': L, 'created': time.strftime('%Y-%m-%d %H:%M:%S'), 'checks_ok': bool(ok),
-           'epochs_rule': ep_rule, 'gate': gate, 'runs': runs, 'files': files,
-           'note': "части *_partK.npz — один исходный npz прогона пула, разрезанный по ключам: объединить словари"}
-    with open(art + 'pack/nt_manifest.json', 'w', encoding='utf-8') as fh:
+    files.append({'path': inv_rel, 'bytes': os.path.getsize(stage + inv_rel), 'sha256': sha256(stage + inv_rel),
+                  'from': 'опись исходных npz'})
+    man = {'model': MODEL, 'name': NAME, 'L': L, 'created': time.strftime('%Y-%m-%d %H:%M:%S'), 'checks_ok': bool(ok),
+           'epochs_rule': ep_rule, 'n_params': sorted({v[0] for v in n_par.values()}), 'gate': gate, 'nocal': nocal,
+           'runs': runs, 'files': files,
+           'note': "части *_partK.npz — один исходный npz прогона пула, разрезанный по ключам: объединить словари; у 'stop' — "
+                   "только json"}
+    with open(art + f'pack/{NAME}_manifest.json', 'w', encoding='utf-8') as fh:
         json.dump(man, fh, ensure_ascii=False, indent=1)
 
     # ---- архив
-    zpath = shutil.make_archive(OUT_DIR + f"mri_nt_artifacts_{stamp}", 'zip', root_dir=stage)
+    zpath = shutil.make_archive(OUT_DIR + f"mri_{NAME}_artifacts_{stamp}", 'zip', root_dir=stage)
     big = [f_ for f_ in files if f_['bytes'] > 25e6]
     print(f"\n{'✅' if ok else '❌'} проверки {'пройдены' if ok else 'НЕ пройдены — архив собран, но в репо не класть до разбора'}")
     print(f"🗜️ {zpath} ({os.path.getsize(zpath) / 1e6:.1f} МБ) | файлов {len(files) + 1} | самый большой "
           f"{max(f_['bytes'] for f_ in files) / 1e6:.1f} МБ" + (f" | ❗ больше 25 МБ: {[f_['path'] for f_ in big]}" if big else ""))
-    print(f"   распакованная копия: {stage}\n   в репо: распаковать в корень (появятся файлы в artifacts/weights, calib, logs/nt, "
-          f"pack) | {time.time() - t0:.0f} c")
+    print(f"   распакованная копия: {stage}\n   в репо: распаковать в корень (появятся файлы в artifacts/weights, calib, "
+          f"logs/{NAME}, pack) | {time.time() - t0:.0f} c")
     return ok
 
 
