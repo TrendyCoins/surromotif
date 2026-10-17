@@ -1,8 +1,10 @@
-"""Pine Script v6 generator of the NT3_PRV_ch48 indicator.
+"""Pine Script v6 generator of the NT3_PRV_ch48 indicator (legacy since session 4: the indicator is PB_s64h24_d1,
+mri/pine_pb.py).
 
-    python -m mri.pine_nt3                 # pine/mri.pine + its weight libraries pine/lib/MRIWeightsNT3{a,b,c}.pine
-    python -m mri.pine_nt3 --ascii-test    # + pine/test/mri_ascii_single.pine: all weights inside, 5 ASCII characters each
-                                           #   (a size test: does a single script fit the compilation request?)
+    python -m mri.pine_nt3                 # pine/legacy/mri_nt3.pine + its weight libraries
+                                           #   pine/legacy/lib/MRIWeightsNT3{a,b,c}.pine
+    python -m mri.pine_nt3 --ascii-test    # + pine/legacy/test/mri_ascii_single.pine: all weights inside, 5 ASCII characters
+                                           #   each (a size test: does a single script fit the compilation request?)
 
 TradingView refused the single script with the weights inside (141 919 characters, 368 KB UTF-8): "The size of the script
 compilation request is too large", while the F3_g script (75 673 characters, 181 KB) compiles. So the weights go into
@@ -32,6 +34,7 @@ from .pine_gen import ALPHA0, ALPHA_N, encode_dense, fmt, weights_block
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 L = 64
+LEGACY = 'pine/legacy/mri_nt3.pine'
 
 
 def flat_values(p):
@@ -551,7 +554,7 @@ def make_script(p, table, unknown, passport, title='Market Randomness Index', sh
                        ceil_b_unknown=fmt(unknown['ceil_less']))
     if imports:                                    # import statements right after the declaration statement
         decl = head.index('\n', head.index('indicator(')) + 1
-        head = (head[:decl] + '// weight libraries (pine/lib/), published under the author\'s TradingView user name\n'
+        head = (head[:decl] + '// weight libraries (pine/legacy/lib/), published under the author\'s TradingView user name\n'
                 + imports + '\n' + head[decl:])
     consts = CONSTS.format(ch=ch, hidden=hidden, n_side=n_side, sq199=fmt_d(np.sqrt(199.0)), s_sd=fmt(p.s_sd),
                            lvl_sd=fmt(p.lvl_sd), side_mu=float_list(p.side_mu), side_sd=float_list(p.side_sd),
@@ -572,7 +575,8 @@ CALC_BARS_DEFAULT = 0          # 'Compute only the last N bars': set from the Pi
 
 
 def make_indicator(ex, calc_bars=CALC_BARS_DEFAULT, weights='libs', tv_user=TV_USER, **kw):
-    """pine/mri.pine (and its libraries) from the NT3 export dict (export/mri_model_nt3.json): (script, {name: text})."""
+    """pine/legacy/mri_nt3.pine (and its libraries) from the NT3 export dict (export/mri_model_nt3.json): (script,
+       {name: text})."""
     from .params import from_dict
     p = from_dict(ex['model'])
     if ex['tie_rule']['eps'] != 1e-4 or ex['model']['id'] != 'NT3_PRV_ch48' or len(p.side_mu) != len(SIDE_NAMES):
@@ -598,14 +602,14 @@ def main():
     import argparse
     from .export_nt3 import load_export
     ap = argparse.ArgumentParser()
-    ap.add_argument('--ascii-test', action='store_true', help='also pine/test/mri_ascii_single.pine')
+    ap.add_argument('--ascii-test', action='store_true', help='also pine/legacy/test/mri_ascii_single.pine')
     ap.add_argument('--tv-user', default=TV_USER, help='TradingView user name of the weight libraries')
     a = ap.parse_args()
     ex = load_export(os.path.join(ROOT, 'export/mri_model_nt3.json'))
     script, libs = make_indicator(ex, tv_user=a.tv_user)
-    outs = {'pine/mri.pine': script, **{f'pine/lib/{name}.pine': t for name, t in libs.items()}}
+    outs = {LEGACY: script, **{f'pine/legacy/lib/{name}.pine': t for name, t in libs.items()}}
     if a.ascii_test:
-        outs['pine/test/mri_ascii_single.pine'] = make_indicator(
+        outs['pine/legacy/test/mri_ascii_single.pine'] = make_indicator(
             ex, weights='ascii', title='Market Randomness Index size test', short='MRI test',
             source_note=' (single script, ASCII weights: size test only)')[0]
     for path, s in outs.items():

@@ -14,6 +14,10 @@ export JSON (the model is taken from it):
 
     python scripts/parity.py chart.csv [--symbol BTCUSDT] [--export export/mri_model_pb.json] [--calc-bars N] [--out ...]
     python scripts/parity.py artifacts/parity/btc5m_pb_tv_debug.csv --symbol BTCUSDT --out docs/checks/pb/parity_btc.json
+
+--partial (PB; docs/rules.md, «Справочная сверка по короткой выгрузке», not R10): the export holds only the last bars of the
+chart. The model part (264 bars of memory) is compared from row 264 of the export; the live part continues from the Pine
+state of the first compared window (n, m_ema, s_ema -> n1, n2, d), so its accumulation before that window is not checked.
 """
 import argparse
 import json
@@ -81,6 +85,58 @@ def reference_pb(df, ex, symbol, calc_bars=0, span=None, warm=None):
                 row[c] = np.nan                                      # Pine fills these only on computed windows
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+PARTIAL_START = 264        # rows of the export before the first window with its whole memory inside the export
+
+
+def live_from_pine(ref, tv, ex, symbol, span=None):
+    """--partial: the live part of the reference continued from the Pine state after the first compared window w0
+       (rules: d = (1 - k^(n+1)) / (1 - k), n1 = m_ema d, n2 = (s_ema^2 + m_ema^2) d); returns (ref, w0)."""
+    ln, fl = ex['line'], ex['floors']
+    ceil = ln['ceilings']['by_symbol'][symbol] if symbol in fl['floor_L64'] else ln['ceilings']['unknown_symbol']
+    k = 1.0 - 2.0 / ((span or ln['live']['span_default']) + 1.0)
+    fin = np.isfinite(ref['logit'].to_numpy()) & np.isfinite(tv['logit'].to_numpy()) & np.isfinite(tv['n'].to_numpy())
+    fin[:PARTIAL_START] = False
+    if not fin.any():
+        raise SystemExit('--partial: no window with its 264-bar memory inside the export')
+    w0 = int(np.argmax(fin))
+    n, m, sd = int(tv['n'].iloc[w0]), float(tv['m_ema'].iloc[w0]), float(tv['s_ema'].iloc[w0])
+    d = (1.0 - k ** (n + 1)) / (1.0 - k)
+    n1, n2 = m * d, (sd * sd + m * m) * d
+    ref = ref.copy()
+    ref.loc[:w0, ['m_ema', 's_ema', 'logM', 'n', 'M']] = np.nan
+    ref.loc[w0, ['m_ema', 's_ema', 'n']] = [m, sd, n]
+    for i in range(w0 + 1, len(ref)):
+        if not np.isfinite(ref.at[i, 'logit']):
+            continue
+        z = ref.at[i, 'z']
+        n += 1
+        n1, n2, d = k * n1 + z, k * n2 + z * z, k * d + 1.0
+        me = n1 / d
+        se = float(np.sqrt(max(n2 / d - me * me, 0.0)))
+        lm = linem.log_m1(z, me, se, ln['live']['s_lo'])
+        ref.loc[i, ['m_ema', 's_ema', 'logM', 'n']] = [me, se, lm, n]
+        if n >= ln['warmup']['windows_default']:
+            ref.at[i, 'M'] = float(linem.display(lm, ceil['orange'], ceil['blue'])[0])
+    return ref, w0
+
+
+def compare_partial(tv, dec, ref, w0):
+    """--partial: rows from w0 (the first compared window, row >= 264); the live part from w0 + 1."""
+    tv_, ref_ = tv.iloc[w0:].reset_index(drop=True), ref.iloc[w0:].reset_index(drop=True)
+    for c in ('logM', 'M'):                                     # the state of w0 itself is taken from Pine
+        tv_.loc[0, c] = np.nan
+        ref_.loc[0, c] = np.nan
+    res = compare(tv_, dec, ref_, INPUTS_PB, LINE_PB, from0=False)
+    res['partial'] = {'first_row': int(w0), 'first_bar_index': int(tv['bar_index'].iloc[w0]),
+                      'export_first_bar_index': int(tv['bar_index'].iloc[0]), 'rows': int(len(tv)),
+                      'live_state_from_pine': {'n': int(tv['n'].iloc[w0]), 'm_ema': float(tv['m_ema'].iloc[w0]),
+                                               's_ema': float(tv['s_ema'].iloc[w0])},
+                      'not_checked': 'accumulation of the live part before the first compared window; first line bar (R16)'}
+    res['pass_partial'] = res.pop('pass_R10')
+    res['pass_R10'] = None
+    return res
 
 
 def load_tv(path):
@@ -178,17 +234,22 @@ def live_last_bar(tv, ref):
     return bool(np.isnan(a['logit']) and np.isfinite(ref['logit'].iloc[-1]) and all(a[k] == b[k] for k in state))
 
 
-def compare(tv, dec, ref, inputs=None, line=None):
+def compare(tv, dec, ref, inputs=None, line=None, from0=True):
     """line (PB): {column: tolerance} of the live part; then n is compared exactly, the visible M is reported and the
-       first line bar is the first value of the visible M (R16)."""
+       first line bar is the first value of the visible M (R16). from0 = False (--partial): bar_index only contiguous,
+       the first line bar is not checked."""
     inputs = INPUTS if inputs is None else inputs
     res, ok = {'bars': int(len(tv))}, True
     res['live_last_bar_excluded'] = live_last_bar(tv, ref)
     if res['live_last_bar_excluded']:
         tv, ref = tv.iloc[:-1], ref.iloc[:-1]
     bi = tv['bar_index'] if 'bar_index' in tv else None
-    res['bar_index_contiguous_from_0'] = bool(bi is not None and np.array_equal(bi.to_numpy(), np.arange(len(tv))))
-    ok &= res['bar_index_contiguous_from_0']
+    if from0:
+        res['bar_index_contiguous_from_0'] = bool(bi is not None and np.array_equal(bi.to_numpy(), np.arange(len(tv))))
+        ok &= res['bar_index_contiguous_from_0']
+    else:
+        res['bar_index_contiguous'] = bool(bi is not None and (np.diff(bi.to_numpy()) == 1).all())
+        ok &= res['bar_index_contiguous']
     rnd = lambda c: 0.5 * 10.0 ** -dec.get(c, 10)
     cols = inputs + ['logit'] + (list(line) + ['n'] if line else []) + ['M']
     for c in cols:
@@ -230,10 +291,12 @@ def compare(tv, dec, ref, inputs=None, line=None):
         ok &= res['sgn']['mismatch'] == 0
     fs = lambda x: int(np.argmax(np.isfinite(x))) if np.isfinite(x).any() else None
     key = 'M' if line else 'logit'
-    res['first_line_bar'] = {'pine': fs(tv[key].to_numpy(float)) if key in tv else None,
-                             'reference': fs(ref[key].to_numpy(float))}
-    ok &= res['first_line_bar']['pine'] is not None and res['first_line_bar']['pine'] == res['first_line_bar']['reference']
-    if line:
+    if from0:
+        res['first_line_bar'] = {'pine': fs(tv[key].to_numpy(float)) if key in tv else None,
+                                 'reference': fs(ref[key].to_numpy(float))}
+        ok &= (res['first_line_bar']['pine'] is not None
+               and res['first_line_bar']['pine'] == res['first_line_bar']['reference'])
+    if line and from0:
         res['first_window_bar'] = {'pine': fs(tv['logit'].to_numpy(float)) if 'logit' in tv else None,
                                    'reference': fs(ref['logit'].to_numpy(float))}
         ok &= res['first_window_bar']['pine'] == res['first_window_bar']['reference']
@@ -249,12 +312,17 @@ def main():
     ap.add_argument('--calc-bars', type=int, default=0, help="the indicator's 'Compute only the last N bars' at export")
     ap.add_argument('--span', type=int, default=None, help='PB: span of the live part set in the indicator (default 8064)')
     ap.add_argument('--warm', type=int, default=None, help='PB: line warm-up set in the indicator (default 288)')
+    ap.add_argument('--partial', action='store_true', help='PB: the export holds only the last bars (reference check, not R10)')
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
     with open(a.export, encoding='utf-8') as fh:
         ex = json.load(fh)
     tv, dec = load_tv(a.csv)
-    if is_pb(ex):
+    if is_pb(ex) and a.partial:
+        ref = reference_pb(tv, ex, a.symbol, 0, a.span, a.warm)
+        ref, w0 = live_from_pine(ref, tv, ex, a.symbol, a.span)
+        res = compare_partial(tv, dec, ref, w0)
+    elif is_pb(ex):
         ref = reference_pb(tv, ex, a.symbol, a.calc_bars, a.span, a.warm)
         res = compare(tv, dec, ref, INPUTS_PB, LINE_PB)
     else:

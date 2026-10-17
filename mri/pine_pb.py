@@ -510,11 +510,14 @@ def make_script(p, ruler, table, unknown, passport, title='Market Randomness Ind
     return head + consts + core + foot
 
 
-CALC_BARS_DEFAULT = 0          # 'Compute only the last N bars': set from the Pine Profiler measurement (step 6)
+# 'Compute only the last N bars' of the production script, from the Pine Profiler (BINANCE:BTCUSDT 5M, 21 832 bars):
+# N = 0 — 23 s (heavy part ~1.0 ms per bar), N = 10000 — 12 s; a 40 000-bar chart with N = 10000 — ~13 s (limit 40 s)
+CALC_BARS_DEFAULT = 10000
 
 
 def make_indicator(ex, production=False, calc_bars=None):
-    """The PB indicator from the export dict (export/mri_model_pb.json); prototype title until the parity check."""
+    """The PB indicator from the export dict (export/mri_model_pb.json): production — pine/mri.pine (default N of the
+       measurement); prototype (pine/proto_pb.pine, the parity check was made on it) — N = 0 and the prototype title."""
     from .params import from_dict
     p = from_dict(ex['model'])
     if (ex['tie_rule']['eps'] != 1e-4 or ex['model']['id'] != 'PB_s64h24_d1' or len(p.side_mu) != len(SIDE_NAMES)
@@ -528,8 +531,10 @@ def make_indicator(ex, production=False, calc_bars=None):
            'ceil_less': ceil['unknown_symbol']['blue']}
     passport = {**ex['passport'], 'ceil_pool': ceil['pool']}
     kw = {} if production else {'title': 'Market Randomness Index prototype', 'short': 'MRI proto'}
+    if calc_bars is None:
+        calc_bars = CALC_BARS_DEFAULT if production else 0
     return make_script(p, (ln['ruler']['q'], ln['ruler']['zk']), table, unk, passport,
-                       calc_bars=CALC_BARS_DEFAULT if calc_bars is None else calc_bars, span=ln['live']['span_default'],
+                       calc_bars=calc_bars, span=ln['live']['span_default'],
                        warm=ln['warmup']['windows_default'], s_lo=ln['live']['s_lo'], **kw)
 
 

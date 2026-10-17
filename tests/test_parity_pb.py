@@ -3,6 +3,7 @@ rounded to 10 decimals, time in UNIX seconds, the visible 'M' plot and the 'dbg'
 by 2e-6, log M off by 2e-5, a wrong window number, a missing bar make it fail; the unconfirmed last bar is excluded only if
 'dbg confirmed' did not advance; 'Compute only the last N bars' (the live part from the first computed window); the
 coarse-tick symbol (exact ties) passes too; first line bar 552 (R16)."""
+import json
 import os
 import sys
 
@@ -104,3 +105,29 @@ def test_coarse_tick_symbol(ex, tmp_path):
     b = synth.bars(1000, seed=2, tick=0.0001)
     res = run(fake(ex, b, 'XLMUSDT', tmp_path / 'x.csv'), ex, 'XLMUSDT')
     assert res['pass_R10'] and res['sgn']['ties_abs_z_lt_1e-9'] > 0
+
+
+def run_partial(path, ex, symbol='BTCUSDT'):
+    tv, dec = parity.load_tv(str(path))
+    ref, w0 = parity.live_from_pine(parity.reference_pb(tv, ex, symbol), tv, ex, symbol)
+    return parity.compare_partial(tv, dec, ref, w0)
+
+
+def test_partial_export(ex, tmp_path):
+    """--partial (reference check on a short export, not R10): passes on the last 900 bars of a synthetic chart; catches a
+       wrong logit and a live part of another span; the first compared window is row 264 of the export."""
+    b = synth.bars(1500, seed=25)
+    full = pd.read_csv(fake(ex, b, 'BTCUSDT', tmp_path / 'f.csv'))
+    full.iloc[600:].to_csv(tmp_path / 'p.csv', index=False, float_format='%.10f', na_rep='NaN')
+    res = run_partial(tmp_path / 'p.csv', ex)
+    assert res['pass_partial'] and res['pass_R10'] is None and res['partial']['first_row'] == 264
+    assert res['partial']['first_bar_index'] == 864 and res['logM']['compared'] > 500
+    bad = full.iloc[600:].copy()
+    bad.iloc[400, bad.columns.get_loc('dbg logit')] += 2e-6
+    bad.to_csv(tmp_path / 'q.csv', index=False, float_format='%.10f', na_rep='NaN')
+    assert not run_partial(tmp_path / 'q.csv', ex)['pass_partial']
+    ex2 = json.loads(json.dumps(ex))
+    ex2['line']['live']['span_default'] = 4000                      # Pine with another span: the recursion differs
+    other = pd.read_csv(fake(ex2, b, 'BTCUSDT', tmp_path / 'g.csv'))
+    other.iloc[600:].to_csv(tmp_path / 'r.csv', index=False, float_format='%.10f', na_rep='NaN')
+    assert not run_partial(tmp_path / 'r.csv', ex)['pass_partial']
