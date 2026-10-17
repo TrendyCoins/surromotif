@@ -13,5 +13,38 @@
  "max_dlogit_tie": 0.0014378662088754268,
  "max_dlogit_floor_binding": 0.005339018450721378,
  "n_dlogit_gt_1e-4": 98377,
- "pass_R3": false
+ "pass_R3": false,
+ "colab_device": "NVIDIA A100-SXM4-40GB",
+ "tf32_off": {
+  "max_dlogit_non_tie": 9.847343233948536e-06,
+  "p99": 3.0561141999085925e-06,
+  "max_dlogit_tie": 5.412953518746377e-07,
+  "max_dlogit_floor_binding": 4.388230239182889e-06,
+  "n_dlogit_gt_1e-4": 0
+ },
+ "side17_max_abs_diff": {
+  "log_D": 1.63e-07,
+  "log_mean_abs_r": 1.76e-07,
+  "path_71": 1.57e-07,
+  "path_64": 2.24e-07,
+  "path_32": 2.54e-07,
+  "path_16": 4.74e-07,
+  "path_8": 3.73e-07,
+  "path_4": 4.75e-07,
+  "path_2a": 4.15e-07,
+  "path_2b": 9.07e-07,
+  "range_pos": 3e-08,
+  "range_width": 1.19e-07,
+  "close_dev": 2.31e-07,
+  "vol_16": 5.9e-08,
+  "vol_64": 5.9e-08,
+  "range_mean_med": 2.8e-08,
+  "body_med": 6e-08
+ },
+ "side17_windows": 10460,
+ "tf32_on_vs_stored_max": 0.014487266540527344,
+ "pass_R3_tf32_off": true,
+ "tf32_on_bit_exact_share": 0.3227755523475368,
+ "tf32_off_bit_exact_share": 6.692224591057276e-05,
+ "note": "R3 for PB (amendment of session 4): the gate is pass_R3_tf32_off; pass_R3 (against the stored TF32 logits) is reference only"
 }
