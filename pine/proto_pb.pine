@@ -14,7 +14,7 @@
 // Checked range: each table symbol and side has its ceiling (at most 34 more frequent / 21 less frequent; for
 // symbols outside the table 8 / 8); above it the line stays at the ceiling, marked "N+".
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
-// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 56dae40+dirty.
+// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code d8296e7.
 indicator("Market Randomness Index prototype", shorttitle = "MRI proto", overlay = false, precision = 2, max_labels_count = 500)
 
 // ---------------------------------------------------------------- inputs
