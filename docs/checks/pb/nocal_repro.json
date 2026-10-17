@@ -1,0 +1,1019 @@
+{
+ "nocal_json": "nocal_PB_s64h24_d1_20261017_140953.json",
+ "tol_ratio": 1e-09,
+ "tol_cover": 1e-12,
+ "order": "npz order = time order (research valid_starts / positives; BTC __st strictly increasing)",
+ "ruler_max_d": 0.0,
+ "pool": {
+  "research": {
+   "pool": {
+    "n_equal": true,
+    "max_d_ratio": 2.220446049250313e-16,
+    "sparse_equal": true
+   },
+   "ceil": {
+    "orange": [
+     34.0,
+     34.0
+    ],
+    "blue": [
+     21.0,
+     21.0
+    ]
+   },
+   "share": [
+    0.967741935483871,
+    0.967741935483871
+   ],
+   "n": [
+    6341724,
+    6341724
+   ],
+   "cover_d": 0.0,
+   "cover_null_d": 0.0,
+   "assets": {
+    "BTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ETHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOGEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SOLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ADAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BNBUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BCHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "UNIUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XRPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DASHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZECUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SPELLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ICPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "NEARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZENUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AVAXUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FETUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RAYUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "CAKEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "INJUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RUNEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "PHAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "QNTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "HBARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AAVEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "VTHOUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FILUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LINKUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XLMUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    }
+   },
+   "assets_max_d_ratio": 3.3306690738754696e-16,
+   "ok": true
+  },
+  "repo": {
+   "pool": {
+    "n_equal": true,
+    "max_d_ratio": 2.220446049250313e-16,
+    "sparse_equal": true
+   },
+   "ceil": {
+    "orange": [
+     34.0,
+     34.0
+    ],
+    "blue": [
+     21.0,
+     21.0
+    ]
+   },
+   "share": [
+    0.967741935483871,
+    0.967741935483871
+   ],
+   "n": [
+    6341724,
+    6341724
+   ],
+   "cover_d": 0.0,
+   "cover_null_d": 0.0,
+   "assets": {
+    "BTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ETHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOGEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SOLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ADAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BNBUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BCHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "UNIUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XRPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DASHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZECUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SPELLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ICPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "NEARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZENUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AVAXUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FETUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RAYUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "CAKEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "INJUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RUNEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "PHAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "QNTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "HBARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AAVEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "VTHOUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FILUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LINKUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XLMUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    }
+   },
+   "assets_max_d_ratio": 3.3306690738754696e-16,
+   "ok": true
+  },
+  "secs": 8.8
+ },
+ "null_chart": {
+  "research": [
+   0.0015161492363906092,
+   0.007701218154558603
+  ],
+  "repo": [
+   0.0015161492363906092,
+   0.007701218154558603
+  ],
+  "json": [
+   0.0015161492363906092,
+   0.007701218154558603
+  ],
+  "max_d": 0.0,
+  "ok": true
+ },
+ "unseen": {
+  "research": {
+   "pool": {
+    "n_equal": true,
+    "max_d_ratio": 3.3306690738754696e-16,
+    "sparse_equal": true
+   },
+   "ceil": {
+    "orange": [
+     13.0,
+     13.0
+    ],
+    "blue": [
+     21.0,
+     21.0
+    ]
+   },
+   "share": [
+    1.0,
+    1.0
+   ],
+   "n": [
+    625866,
+    625866
+   ],
+   "cover_d": 0.0,
+   "cover_null_d": 0.0,
+   "assets": {
+    "FILUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LINKUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XLMUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    }
+   },
+   "assets_max_d_ratio": 2.220446049250313e-16,
+   "ok": true
+  },
+  "repo": {
+   "pool": {
+    "n_equal": true,
+    "max_d_ratio": 3.3306690738754696e-16,
+    "sparse_equal": true
+   },
+   "ceil": {
+    "orange": [
+     13.0,
+     13.0
+    ],
+    "blue": [
+     21.0,
+     21.0
+    ]
+   },
+   "share": [
+    1.0,
+    1.0
+   ],
+   "n": [
+    625866,
+    625866
+   ],
+   "cover_d": 0.0,
+   "cover_null_d": 0.0,
+   "assets": {
+    "FILUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LINKUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XLMUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    }
+   },
+   "assets_max_d_ratio": 2.220446049250313e-16,
+   "ok": true
+  },
+  "secs": 4.5
+ },
+ "insample": {
+  "research": {
+   "pool": {
+    "n_equal": true,
+    "max_d_ratio": 6.661338147750939e-16,
+    "sparse_equal": true
+   },
+   "ceil": {
+    "orange": [
+     34.0,
+     34.0
+    ],
+    "blue": [
+     13.0,
+     13.0
+    ]
+   },
+   "share": [
+    0.9838709677419355,
+    0.9838709677419355
+   ],
+   "n": [
+    6341724,
+    6341724
+   ],
+   "cover_d": 0.0,
+   "cover_null_d": 0.0,
+   "assets": {
+    "BTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ETHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOGEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SOLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ADAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BNBUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BCHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "UNIUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XRPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DASHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZECUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SPELLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ICPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "NEARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZENUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AVAXUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FETUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RAYUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 4.440892098500626e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "CAKEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "INJUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RUNEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "PHAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "QNTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "HBARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AAVEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "VTHOUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FILUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LINKUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XLMUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    }
+   },
+   "assets_max_d_ratio": 4.440892098500626e-16,
+   "ok": true
+  },
+  "repo": {
+   "pool": {
+    "n_equal": true,
+    "max_d_ratio": 6.661338147750939e-16,
+    "sparse_equal": true
+   },
+   "ceil": {
+    "orange": [
+     34.0,
+     34.0
+    ],
+    "blue": [
+     13.0,
+     13.0
+    ]
+   },
+   "share": [
+    0.9838709677419355,
+    0.9838709677419355
+   ],
+   "n": [
+    6341724,
+    6341724
+   ],
+   "cover_d": 0.0,
+   "cover_null_d": 0.0,
+   "assets": {
+    "BTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ETHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOGEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SOLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ADAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BNBUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "BCHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DOTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "UNIUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XRPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LTCUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 3.3306690738754696e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "DASHUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZECUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "SPELLUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ICPUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "NEARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "ZENUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AVAXUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 1.1102230246251565e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FETUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RAYUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 4.440892098500626e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "CAKEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "INJUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "RUNEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "PHAUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "QNTUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "HBARUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "AAVEUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "VTHOUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 0.0,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "FILUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "LINKUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    },
+    "XLMUSDT": {
+     "n_equal": true,
+     "max_d_ratio": 2.220446049250313e-16,
+     "sparse_equal": true,
+     "ceil_equal": true
+    }
+   },
+   "assets_max_d_ratio": 4.440892098500626e-16,
+   "ok": true
+  },
+  "secs": 15.6
+ },
+ "stream_btc_a": {
+  "windows": 104599,
+  "max_d_log_m": 2.788880237858393e-13,
+  "ok": true
+ },
+ "all_ok": true,
+ "ceilings": {
+  "pool": {
+   "orange": 34.0,
+   "blue": 21.0
+  },
+  "unseen_pool_H": {
+   "orange": 13.0,
+   "blue": 21.0
+  },
+  "unseen_symbol": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "share_pairs_ge_5": 0.967741935483871
+ }
+}
