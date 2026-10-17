@@ -18,6 +18,10 @@ Side inputs (research SIDE_COLS['nt_PRV'] = 28, 29, 37-44, 77, 78, 79, 86-89; re
 NaN -> 0 (research nan_to_num, after the clips). The bar s-1 does not enter the signed inputs (P, R1, R3), only the scales
 and V. Nothing deeper than s-200 is read; the history runs over consecutive bars (time and grid gaps are not looked at).
 
+PB_s64h24_d1 (session 4, mri.pb) is this network with 64 channels, separable layers 2..4 (research v6.3 cnn_sep: per
+channel kernel 3 with the same dilation, then 1 x 1 channel mixing, then ReLU) and the head 209 -> 24 -> 1; channels, head
+and the separable layers are taken from the weights (Params.pw), the inputs are the same.
+
 nt_segment is a copy of research/sumo_class_train.py nt_segment (that file imports torch and is not needed at run time);
 tests/test_nt3.py compares the copy with the original. Here it is float64 (research casts to float32 at the end).
 """
@@ -33,6 +37,7 @@ from .batch import conv_inputs, conv_stream, head
 from .params import DILATIONS
 
 MODEL_ID = 'NT3_PRV_ch48'
+PB_MODEL_ID = 'PB_s64h24_d1'   # the same network with 64 channels, separable layers 2..4, head 209 -> 24 -> 1 (mri.pb)
 NT_HIST = 200
 NT_SCALES = ('rmed', 'rmean', 'bmed', 'bmean')
 NT_GEO = (71, 64, 32, 16, 8, 4, 2, 2)
@@ -219,7 +224,10 @@ class StreamingNT3:
         rings[0].append(u)
         for j, (w, d) in enumerate(zip(self.p.conv, DILATIONS)):
             src = rings[j]
-            y = w[:, :, 0] @ src[-1 - 2 * d] + w[:, :, 1] @ src[-1 - d] + w[:, :, 2] @ src[-1]
+            if self.p.pw is not None and j > 0:        # separable (PB): per-channel taps, then 1 x 1 channel mixing
+                y = self.p.pw[j - 1] @ (w[:, 0, 0] * src[-1 - 2 * d] + w[:, 0, 1] * src[-1 - d] + w[:, 0, 2] * src[-1])
+            else:
+                y = w[:, :, 0] @ src[-1 - 2 * d] + w[:, :, 1] @ src[-1 - d] + w[:, :, 2] @ src[-1]
             rings[j + 1].append(np.maximum(y, 0.0))
 
     def update(self, t, o, h, l, c):
@@ -289,12 +297,17 @@ def run(bars, params, floor, **kw):
     return [m.update(int(t), float(o), float(h), float(l), float(c)) for t, o, h, l, c in zip(*cols)]
 
 
-def random_params(seed=0, scale=0.3, ch=48, hidden=96):
-    """Random NT3-shaped weights (Pine limits prototype, tests)."""
+def random_params(seed=0, scale=0.3, ch=48, hidden=96, sep=False):
+    """Random NT3-shaped weights (Pine limits prototype, tests); sep — separable layers 2..4 (PB shape)."""
     from .params import Params
     g = np.random.default_rng(seed)
-    conv = [g.normal(0, scale, (ch, 4, 3))] + [g.normal(0, scale / 2.5, (ch, ch, 3)) for _ in range(3)]
-    return Params(conv=conv, head0_w=g.normal(0, 0.15, (hidden, 3 * ch + N_SIDE)), head0_b=g.normal(0, 0.2, hidden),
+    pw = None
+    if sep:
+        conv = [g.normal(0, scale, (ch, 4, 3))] + [g.normal(0, 0.6, (ch, 1, 3)) for _ in range(3)]
+        pw = [g.normal(0, 1.0 / math.sqrt(ch), (ch, ch)) for _ in range(3)]
+    else:
+        conv = [g.normal(0, scale, (ch, 4, 3))] + [g.normal(0, scale / 2.5, (ch, ch, 3)) for _ in range(3)]
+    return Params(conv=conv, pw=pw, head0_w=g.normal(0, 0.15, (hidden, 3 * ch + N_SIDE)), head0_b=g.normal(0, 0.2, hidden),
                   head3_w=g.normal(0, 0.2, (1, hidden)), head3_b=g.normal(0, 0.1, 1),
                   s_sd=1.6, lvl_mu=0.0, lvl_sd=3.0, side_mu=g.normal(0, 0.1, N_SIDE),
-                  side_sd=np.abs(g.normal(0.7, 0.2, N_SIDE)) + 0.1, meta={'random_seed': seed, 'model': MODEL_ID})
+                  side_sd=np.abs(g.normal(0.7, 0.2, N_SIDE)) + 0.1, meta={'random_seed': seed, 'model': PB_MODEL_ID if sep else MODEL_ID})

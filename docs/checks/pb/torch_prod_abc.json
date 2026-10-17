@@ -1,0 +1,49 @@
+{
+ "model": "PB_s64h24_d1",
+ "bars": "btc_fresh_tail.csv.gz",
+ "n_bars": 26000,
+ "floor": 0.17530229687690735,
+ "eps": 0.0001,
+ "models": {
+  "prod_PB_s64h24_d1_L64_a_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 6.411209355405845e-06,
+   "p99_dlogit_non_tie": 2.3462768607318456e-06,
+   "max_dlogit_tie": 4.338463669151249e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 11.1
+  },
+  "prod_PB_s64h24_d1_L64_b_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 7.348994996103642e-06,
+   "p99_dlogit_non_tie": 2.4709495339503273e-06,
+   "max_dlogit_tie": 5.05359271041339e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 9.9
+  },
+  "prod_PB_s64h24_d1_L64_c_slim.npz": {
+   "windows": 25436,
+   "ties": 4,
+   "tie_share": 0.00015725743041358704,
+   "max_dlogit_non_tie": 6.77243362368074e-06,
+   "p99_dlogit_non_tie": 2.3686412838364027e-06,
+   "max_dlogit_tie": 5.247005802899718e-07,
+   "orient_mismatch_shape": 0,
+   "side_vs_shape_mismatch": 0,
+   "exact_zero_x_end": 0,
+   "pass_R2": true,
+   "secs": 6.7
+  }
+ },
+ "first_window_end": 264
+}

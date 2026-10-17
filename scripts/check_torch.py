@@ -4,7 +4,9 @@ Research side: data files written from the bars by mri.research_bridge (for NT3 
 ('multi_g'), to_shapes, side_feats and CNNBase (weights from the npz). One continuous segment: TRAINING from the first bar
 of the file, a short VALIDATION tail (its windows are not compared).
 
-    python scripts/check_torch.py [--model F3_g | NT3_PRV_ch48] [--bars artifacts/bars/btc_fresh_tail.csv.gz] [--npz ...]
+    python scripts/check_torch.py [--model F3_g | NT3_PRV_ch48 | PB_s64h24_d1] [--bars artifacts/bars/btc_fresh_tail.csv.gz]
+        [--npz ...]
+PB_s64h24_d1 (session 4): the NT3 inputs, research CNNBase with separable layers (make_cfg cnn_sep, research v6.3).
 """
 import argparse
 import glob
@@ -40,12 +42,12 @@ def research_model(T, model, npz_path):
     net = T.CNNBase(cfg['L'], cfg['cnn_ch'], cfg['cnn_k'], cfg['cnn_dil'], cfg['head_hidden'], cfg['dropout'], 1.0,
                       cfg['cnn_bn'], cfg['cnn_res'], cfg['cnn_cdrop'], cfg['cnn_pool'], cfg['cnn_in'], cfg['cnn_sdrop'],
                       cfg['cnn_valid'], cfg['cnn_bias'], cfg['cnn_ma'], T.SIDE_COLS[cfg['side']], 4, None, 'rw', None,
-                      T.N_LEVEL[cfg['price']], False)
+                      T.N_LEVEL[cfg['price']], False, cfg.get('cnn_sep', False))
     sd = {}
     for p in sorted(glob.glob(npz_path)):
         with np.load(p) as d:
             sd.update({k[3:]: torch.from_numpy(d[k]) for k in d.files if k.startswith('sd_')})
-    net.load_state_dict(sd)
+    net.load_state_dict(sd, strict=True)
     net.eval()
     return net
 
@@ -81,7 +83,7 @@ def research_logits(T, data_dir, npz_path, model='F3_g', asset='BTCUSDT', bs=327
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID])
+    ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID, nt3.PB_MODEL_ID])
     ap.add_argument('--bars', default=os.path.join(ROOT, 'artifacts/bars/btc_fresh_tail.csv.gz'))
     ap.add_argument('--npz', nargs='+', default=None, help='default: prod a / b / c of the model')
     ap.add_argument('--floor', type=float, default=None, help='floor_L64; default: BTCUSDT from artifacts/pack/floors.json')
@@ -89,7 +91,7 @@ def main():
     a = ap.parse_args()
     if a.npz is None:
         a.npz = [os.path.join(ROOT, f'artifacts/weights/prod_{a.model}_L64_{s}_slim.npz') for s in 'abc']
-    is_nt = a.model == nt3.MODEL_ID
+    is_nt = a.model in (nt3.MODEL_ID, nt3.PB_MODEL_ID)        # PB: NT3 inputs, separable layers from the weights
     floor = a.floor
     if floor is None:
         with open(os.path.join(ROOT, 'artifacts/pack/floors.json')) as fh:
