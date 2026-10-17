@@ -1,8 +1,11 @@
-"""Weights, buffers and calibration of the F3_g model (streamable CNN, research CNNBase).
+"""Weights, buffers and calibration of the F3_g model (streamable CNN, research CNNBase); the same container holds
+NT3_PRV_ch48 and PB_s64h24_d1 (channels and head are taken from the weights).
 
 Layout (research names in brackets):
     conv[0..3]  (blocks.i.0.weight)  shape (32, c_in, 3), c_in = 4 for the first layer
                 (channels: close, HL/2, HLC/3 steps; bar range level), dilations 1, 2, 4, 8, no bias
+    pw[0..2]    (blocks.i.1.weight, i = 1, 2, 3) only for separable layers (PB, research v6.3 cnn_sep): conv[1..3] are
+                then depthwise (ch, 1, 3) — per channel taps — and pw[i - 1] (ch, ch) mixes the channels (1 x 1), then ReLU
     head0_w, head0_b (head.0)        (64, 112), (64,)   input: [mean 32, max 32, last 32, side 16]
     head3_w, head3_b (head.3)        (1, 64), (1,)
     s_sd, lvl_mu, lvl_sd             input scales of path steps and of the range level (lvl_mu = 0)
@@ -34,19 +37,23 @@ class Params:
     side_mu: np.ndarray
     side_sd: np.ndarray
     meta: dict = field(default_factory=dict)
+    pw: list = None                 # separable layers 2..4: 3 arrays (ch, ch); None — ordinary convolutions
 
     @property
     def n_params(self):
-        return int(sum(w.size for w in self.conv) + self.head0_w.size + self.head0_b.size
-                   + self.head3_w.size + self.head3_b.size)
+        return int(sum(w.size for w in self.conv) + sum(w.size for w in (self.pw or ())) + self.head0_w.size
+                   + self.head0_b.size + self.head3_w.size + self.head3_b.size)
 
     def to_dict(self):
-        return {'conv': [w.tolist() for w in self.conv], 'dilations': list(DILATIONS),
+        d = {'conv': [w.tolist() for w in self.conv], 'dilations': list(DILATIONS),
                 'head0_w': self.head0_w.tolist(), 'head0_b': self.head0_b.tolist(),
                 'head3_w': self.head3_w.tolist(), 'head3_b': self.head3_b.tolist(),
                 's_sd': self.s_sd, 'lvl_mu': self.lvl_mu, 'lvl_sd': self.lvl_sd,
                 'side_mu': self.side_mu.tolist(), 'side_sd': self.side_sd.tolist(),
                 'side_names': list(SIDE_NAMES), 'side_cols_research': list(SIDE_COLS)}
+        if self.pw is not None:
+            d['pw'] = [w.tolist() for w in self.pw]
+        return d
 
 
 def _f64(x):
@@ -59,7 +66,9 @@ def from_state(sd, meta=None):
     lvl_mu = float(_f64(sd['lvl_mu'])[0])
     if lvl_mu != 0.0:
         raise ValueError(f"lvl_mu = {lvl_mu}: streaming needs a level without shift (research v5.7, streamable)")
+    sep = 'blocks.1.1.weight' in sd                        # research v6.3 cnn_sep: depthwise (ch, 1, 3) + pointwise
     return Params(conv=[_f64(sd[f'blocks.{i}.0.weight']) for i in range(4)],
+                  pw=[_f64(sd[f'blocks.{i}.1.weight'])[:, :, 0] for i in (1, 2, 3)] if sep else None,
                   head0_w=_f64(sd['head.0.weight']), head0_b=_f64(sd['head.0.bias']),
                   head3_w=_f64(sd['head.3.weight']), head3_b=_f64(sd['head.3.bias']),
                   s_sd=float(_f64(sd['s_sd'])), lvl_mu=lvl_mu, lvl_sd=float(_f64(sd['lvl_sd'])[0]),
@@ -82,6 +91,7 @@ def load_npz(path_or_glob):
 
 def from_dict(d):
     return Params(conv=[np.asarray(w, dtype=np.float64) for w in d['conv']],
+                  pw=[np.asarray(w, dtype=np.float64) for w in d['pw']] if d.get('pw') is not None else None,
                   head0_w=np.asarray(d['head0_w'], dtype=np.float64),
                   head0_b=np.asarray(d['head0_b'], dtype=np.float64),
                   head3_w=np.asarray(d['head3_w'], dtype=np.float64),

@@ -11,6 +11,10 @@ research nt_segment / SeriesData._nt_arrays), not clipped at the part start, and
 on the continuous bars of the tail without exclusions.
 
     python scripts/check_e2e.py [--seed a] [--model NT3_PRV_ch48 --set ALL] [--logits artifacts/calib/nt3_btc_val_logits.npz]
+    python scripts/check_e2e.py --model PB_s64h24_d1 --set ALL --seed a [--logits artifacts/calib/pb_btc_val_logits.npz]
+
+PB_s64h24_d1 (R3 amendment, session 4): NT3 semantics (separable layers from the weights); the gate is the TF32-off
+research logits of the Colab recomputation, the stored logits — reference only.
 
 --logits: the research logits of the same windows recomputed in Colab with TF32 off / on (scripts/colab_nt3_val_logits.py,
 after the R3 failure of session 3): the reference is compared with the TF32-off logits as well (the rule's threshold), and
@@ -37,7 +41,7 @@ VAL_START = '2025-07-01 00:00:00'
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--seed', default='a')
-    ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID])
+    ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID, nt3.PB_MODEL_ID])
     ap.add_argument('--set', default='C', choices=['C', 'ALL'], help="training set of the 'refit' model")
     ap.add_argument('--logits', default=None, help='npz of scripts/colab_nt3_val_logits.py')
     ap.add_argument('--floor', type=float, default=None)
@@ -48,7 +52,7 @@ def main():
         with open(os.path.join(ROOT, 'artifacts/pack/floors.json')) as fh:
             floor = json.load(fh)['smc_series_BTCUSDT_5M_N200.npz']['floor_L64']
     bars = read_bars(os.path.join(ROOT, 'artifacts/bars/btc_old_tail.csv.gz'))
-    is_nt = a.model == nt3.MODEL_ID
+    is_nt = a.model in (nt3.MODEL_ID, nt3.PB_MODEL_ID)
     p, arr = load_npz(os.path.join(ROOT, f'artifacts/calib/pool_{a.set}_{a.model}_L64_{a.seed}_refit_part*.npz'))
     st, sp = arr['BTCUSDT__val__st'], arr['BTCUSDT__val__sp'].astype(np.float64)
     t = bars['time'].to_numpy()

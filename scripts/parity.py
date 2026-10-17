@@ -2,13 +2,18 @@
 
 Input: TradingView 'Export chart data' CSV with the indicator in debug mode (columns: time, open, high, low, close and
 the plots 'dbg ...'). The reference recomputes from the same OHLC from the first exported bar, with the parameters of the
-export JSON:
-    NT3_PRV_ch48 (export/mri_model_nt3.json, default; R10 addition 2): mri.nt3 stream, floor and Platt of the symbol;
+export JSON (the model is taken from it):
+    PB_s64h24_d1 (export/mri_model_pb.json, default; R10 addendum 3): mri.pb stream, floor of the symbol, the ruler of the
+        export; the live part (mri.linem.LiveM, as Pine) from the first computed valid window; compared also z, m_ema,
+        s_ema (|d| <= 1e-6), log M (|d| <= 1e-5), n (exactly); first line bar — the first value of the visible plot 'M'
+        (R16; the visible M is reported, capped at the ceilings of the symbol);
+    NT3_PRV_ch48 (export/mri_model_nt3.json; R10 addition 2): mri.nt3 stream, floor and Platt of the symbol;
         17 side inputs; no EMA — the unconfirmed last bar is recognized by 'dbg confirmed' (count of confirmed bars)
         equal to the previous row (amendment of session 3);
     F3_g (export/mri_model.json, legacy): mri.stream, EMA adjust=True.
 
-    python scripts/parity.py chart.csv [--symbol BTCUSDT] [--export export/mri_model_nt3.json] [--out ...]
+    python scripts/parity.py chart.csv [--symbol BTCUSDT] [--export export/mri_model_pb.json] [--calc-bars N] [--out ...]
+    python scripts/parity.py artifacts/parity/btc5m_pb_tv_debug.csv --symbol BTCUSDT --out docs/checks/pb/parity_btc.json
 """
 import argparse
 import json
@@ -21,17 +26,61 @@ import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from mri import nt3  # noqa: E402
+from mri import linem, nt3, pb  # noqa: E402
 from mri.params import SIDE_NAMES, from_dict  # noqa: E402
 from mri.stream import run  # noqa: E402
 
 INPUTS = ['norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'ema7', 'ema1', 'D', 'x_end'] + [f'side_{n}' for n in SIDE_NAMES]
 INPUTS_NT3 = ['norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'D', 'x_end'] + [f'side_{n}' for n in nt3.SIDE_NAMES]
+INPUTS_PB = INPUTS_NT3
+LINE_PB = {'z': 1e-6, 'm_ema': 1e-6, 's_ema': 1e-6, 'logM': 1e-5}      # R10 addendum 3 (+ rounding of the export)
 TOL_IN, TOL_LOGIT, TOL_M, TIE_BAND = 1e-9, 1e-6, 1e-6, 1e-6
+TOL_M_PB = 1e-5                                                      # visible M of PB (reported): relative, as log M
 
 
 def is_nt3(ex):
     return ex['model'].get('id') == nt3.MODEL_ID
+
+
+def is_pb(ex):
+    return ex['model'].get('id') == pb.MODEL_ID
+
+
+def reference_pb(df, ex, symbol, calc_bars=0, span=None, warm=None):
+    """PB reference per bar: inputs and logit by the stream (logits of windows on the computed bars equal the full
+       stream), the live part by mri.linem.LiveM from the first computed valid window (R16), the visible M capped at the
+       ceilings of the symbol (or of the unknown symbol)."""
+    p = from_dict(ex['model'])
+    fl, ln = ex['floors'], ex['line']
+    known = symbol in fl['floor_L64']
+    floor = fl['floor_L64'][symbol] if known else fl['unknown_symbol']
+    ceil = ln['ceilings']['by_symbol'][symbol] if known else ln['ceilings']['unknown_symbol']
+    span = span or ln['live']['span_default']
+    warm = ln['warmup']['windows_default'] if warm is None else warm
+    q, zk = ln['ruler']['q'], ln['ruler']['zk']
+    res = nt3.run(df[['time', 'open', 'high', 'low', 'close']], p, floor, eps=ex['tie_rule']['eps'])
+    first = 0 if not calc_bars else max(len(df) - 1 - calc_bars - 64, 0) + 63
+    live = linem.LiveM(q, zk, span, warm, ln['live']['s_lo'])
+    rows = []
+    for x in res:
+        side = x.get('side_raw', [np.nan] * len(nt3.SIDE_NAMES))
+        row = {'norm': x['norm'], 'r': x['r'], 'step_hl2': x['step_hl2'], 'step_hlc3': x['step_hlc3'], 'g': x['g'],
+               'D': x.get('D', np.nan), 'x_end': x.get('x_end', np.nan), 'sgn': x.get('sgn', np.nan),
+               'logit': x['logit'] if x['bar'] >= first else np.nan, 'z': np.nan, 'm_ema': np.nan, 's_ema': np.nan,
+               'logM': np.nan, 'n': np.nan, 'M': np.nan, 'shown': False}
+        row.update({f'side_{n}': v for n, v in zip(nt3.SIDE_NAMES, side)})
+        if np.isfinite(row['logit']):
+            lv = live.update(row['logit'])
+            row.update({'z': lv['z'], 'm_ema': lv['m_ema'], 's_ema': lv['s_ema'], 'logM': lv['log_m'], 'n': lv['n'],
+                        'shown': lv['shown']})
+            if lv['shown']:
+                v, _, _ = linem.display(lv['log_m'], ceil['orange'], ceil['blue'])
+                row['M'] = float(v)
+        else:
+            for c in ['D', 'x_end', 'sgn'] + [f'side_{n}' for n in nt3.SIDE_NAMES]:
+                row[c] = np.nan                                      # Pine fills these only on computed windows
+        rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def load_tv(path):
@@ -76,7 +125,9 @@ def reference_nt3(df, ex, symbol):
     return pd.DataFrame(rows)
 
 
-def reference(df, ex, symbol):
+def reference(df, ex, symbol, calc_bars=0, **kw):
+    if is_pb(ex):
+        return reference_pb(df, ex, symbol, calc_bars, **kw)
     if is_nt3(ex):
         return reference_nt3(df, ex, symbol)
     p = from_dict(ex['model'])
@@ -127,7 +178,9 @@ def live_last_bar(tv, ref):
     return bool(np.isnan(a['logit']) and np.isfinite(ref['logit'].iloc[-1]) and all(a[k] == b[k] for k in state))
 
 
-def compare(tv, dec, ref, inputs=None):
+def compare(tv, dec, ref, inputs=None, line=None):
+    """line (PB): {column: tolerance} of the live part; then n is compared exactly, the visible M is reported and the
+       first line bar is the first value of the visible M (R16)."""
     inputs = INPUTS if inputs is None else inputs
     res, ok = {'bars': int(len(tv))}, True
     res['live_last_bar_excluded'] = live_last_bar(tv, ref)
@@ -137,7 +190,8 @@ def compare(tv, dec, ref, inputs=None):
     res['bar_index_contiguous_from_0'] = bool(bi is not None and np.array_equal(bi.to_numpy(), np.arange(len(tv))))
     ok &= res['bar_index_contiguous_from_0']
     rnd = lambda c: 0.5 * 10.0 ** -dec.get(c, 10)
-    for c in inputs + ['logit', 'M']:
+    cols = inputs + ['logit'] + (list(line) + ['n'] if line else []) + ['M']
+    for c in cols:
         if c not in tv:
             res[c] = 'missing'
             ok = False
@@ -147,9 +201,13 @@ def compare(tv, dec, ref, inputs=None):
         na_mismatch = int((np.isfinite(a) != np.isfinite(b)).sum())
         d = np.abs(a - b)
         if c == 'M':
-            tol = TOL_M * np.abs(b) + rnd(c)
+            tol = (TOL_M_PB if line else TOL_M) * np.abs(b) + rnd(c)
         elif c == 'logit':
             tol = TOL_LOGIT + rnd(c)
+        elif line and c in line:
+            tol = line[c] + rnd(c)
+        elif c == 'n':
+            tol = 0.0
         else:
             tol = TOL_IN * np.maximum(1.0, np.abs(b)) + rnd(c)
         bad = both & (d > tol)
@@ -157,7 +215,10 @@ def compare(tv, dec, ref, inputs=None):
                   'over_tol': int(bad.sum()), 'na_mismatch': na_mismatch,
                   'first_bad_bar': int(np.argmax(bad | (np.isfinite(a) != np.isfinite(b))))
                   if (bad.any() or na_mismatch) else None}
-        ok &= not bad.any() and na_mismatch == 0
+        if c == 'M' and line:
+            res[c]['reported_only'] = True                         # visible line: its first value is the R16 check
+        else:
+            ok &= not bad.any() and na_mismatch == 0
     if 'sgn' in tv and 'x_end' in tv:
         z = ref['x_end'] / ref['D']
         near = np.abs(z + 1e-4) <= TIE_BAND
@@ -168,9 +229,14 @@ def compare(tv, dec, ref, inputs=None):
                       'flipped': int((both & (b < 0)).sum()), 'compared': int(both.sum())}
         ok &= res['sgn']['mismatch'] == 0
     fs = lambda x: int(np.argmax(np.isfinite(x))) if np.isfinite(x).any() else None
-    res['first_line_bar'] = {'pine': fs(tv['logit'].to_numpy(float)) if 'logit' in tv else None,
-                             'reference': fs(ref['logit'].to_numpy(float))}
-    ok &= res['first_line_bar']['pine'] == res['first_line_bar']['reference']
+    key = 'M' if line else 'logit'
+    res['first_line_bar'] = {'pine': fs(tv[key].to_numpy(float)) if key in tv else None,
+                             'reference': fs(ref[key].to_numpy(float))}
+    ok &= res['first_line_bar']['pine'] is not None and res['first_line_bar']['pine'] == res['first_line_bar']['reference']
+    if line:
+        res['first_window_bar'] = {'pine': fs(tv['logit'].to_numpy(float)) if 'logit' in tv else None,
+                                   'reference': fs(ref['logit'].to_numpy(float))}
+        ok &= res['first_window_bar']['pine'] == res['first_window_bar']['reference']
     res['pass_R10'] = bool(ok)
     return res
 
@@ -179,19 +245,25 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('csv')
     ap.add_argument('--symbol', default='BTCUSDT')
-    ap.add_argument('--export', default=os.path.join(ROOT, 'export/mri_model_nt3.json'))
+    ap.add_argument('--export', default=os.path.join(ROOT, 'export/mri_model_pb.json'))
     ap.add_argument('--calc-bars', type=int, default=0, help="the indicator's 'Compute only the last N bars' at export")
+    ap.add_argument('--span', type=int, default=None, help='PB: span of the live part set in the indicator (default 8064)')
+    ap.add_argument('--warm', type=int, default=None, help='PB: line warm-up set in the indicator (default 288)')
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
     with open(a.export, encoding='utf-8') as fh:
         ex = json.load(fh)
     tv, dec = load_tv(a.csv)
-    ref = reference(tv, ex, a.symbol)
-    if a.calc_bars:          # Pine: the network starts at heavyFrom = last_bar_index - N - 64; first window 63 bars later
-        heavy0 = max(len(tv) - 1 - a.calc_bars - 64, 0)
-        cols = [c for c in ref.columns if c not in ('norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'ema7', 'ema1')]
-        ref.loc[:heavy0 + 62, cols] = np.nan
-    res = compare(tv, dec, ref, INPUTS_NT3 if is_nt3(ex) else INPUTS)
+    if is_pb(ex):
+        ref = reference_pb(tv, ex, a.symbol, a.calc_bars, a.span, a.warm)
+        res = compare(tv, dec, ref, INPUTS_PB, LINE_PB)
+    else:
+        ref = reference(tv, ex, a.symbol)
+        if a.calc_bars:      # Pine: the network starts at heavyFrom = last_bar_index - N - 64; first window 63 bars later
+            heavy0 = max(len(tv) - 1 - a.calc_bars - 64, 0)
+            cols = [c for c in ref.columns if c not in ('norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'ema7', 'ema1')]
+            ref.loc[:heavy0 + 62, cols] = np.nan
+        res = compare(tv, dec, ref, INPUTS_NT3 if is_nt3(ex) else INPUTS)
     res['model'] = ex['model'].get('id', 'F3_g')
     res['symbol'] = a.symbol
     res['decimals'] = dec

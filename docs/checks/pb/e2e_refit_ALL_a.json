@@ -1,0 +1,17 @@
+{
+ "model": "PB_s64h24_d1",
+ "set": "ALL",
+ "seed": "a",
+ "windows": 104599,
+ "same_window_set": true,
+ "last_end": "2026-06-30 02:25:00",
+ "floor": 0.17530229687690735,
+ "ties": 6,
+ "floor_binding": 299,
+ "max_dlogit_non_tie": 0.009182318802007816,
+ "p99": 0.004237498552670633,
+ "max_dlogit_tie": 0.0014378662088754268,
+ "max_dlogit_floor_binding": 0.005339018450721378,
+ "n_dlogit_gt_1e-4": 98377,
+ "pass_R3": false
+}

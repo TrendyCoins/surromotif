@@ -1,4 +1,7 @@
-"""Colab: logits of the BTC VAL windows of the NT3 'refit' models, recomputed by research code with TF32 off and on.
+"""Colab: logits of the BTC VAL windows of the NT3 (or PB) 'refit' models, recomputed by research code with TF32 off and on.
+
+Model: MRI_MODEL = 'NT3_PRV_ch48' (default, session 3 -> nt3_btc_val_logits.npz) or 'PB_s64h24_d1' (session 4, R3 amendment:
+the gate is the TF32-off logits -> pb_btc_val_logits.npz). Runs: 'refit' on ALL a, b and 'refit' on C a of the model.
 
 Why (rule R3, session 3): the reference (and research code on CPU, float32) reproduces the stored VAL logits of the NT3
 'refit' models (calib npz, BTCUSDT__val__sp) only to max |dlogit| ~0.012 instead of 1e-4; an emulation of TF32 convolutions
@@ -14,9 +17,10 @@ HOW TO RUN (in Colab, not locally):
     3) in a cell (MRI_PROJECT = the folder on your Drive that contains SMC/, as SMC_PROJECT_PATH of the Train notebook):
            import os
            os.environ['MRI_PROJECT'] = '<the folder that contains SMC/>'
+           os.environ['MRI_MODEL'] = 'PB_s64h24_d1'          # session 4; omit for NT3_PRV_ch48
            %run /content/colab_nt3_val_logits.py
        Drive is mounted by the script (a prompt may appear the first time).
-    4) the result nt3_btc_val_logits.npz (~3 MB) is downloaded by the browser (and stays in /content):
+    4) the result nt3_btc_val_logits.npz / pb_btc_val_logits.npz (~3 MB) is downloaded by the browser (and stays in /content):
        put it into artifacts/calib/ of the repo.
 Runs a few minutes (the BTC data with its smc_bars file is loaded once).
 """
@@ -28,10 +32,11 @@ import numpy as np
 
 PROJECT = os.environ.get('MRI_PROJECT', '')
 CODE = os.environ.get('MRI_RESEARCH_DIR', '/content')
-OUT = os.environ.get('MRI_OUT', 'nt3_btc_val_logits.npz')
-MODEL, L = 'NT3_PRV_ch48', 64
-RUNS = {'pool_ALL_NT3_PRV_ch48_L64_a_refit': 'a', 'pool_ALL_NT3_PRV_ch48_L64_b_refit': 'b',
-        'pool_C_NT3_PRV_ch48_L64_a_refit': 'a'}
+MODEL, L = os.environ.get('MRI_MODEL', 'NT3_PRV_ch48'), 64
+if MODEL not in ('NT3_PRV_ch48', 'PB_s64h24_d1'):
+    raise SystemExit(f"MRI_MODEL = '{MODEL}': 'NT3_PRV_ch48' or 'PB_s64h24_d1'")
+OUT = os.environ.get('MRI_OUT', 'nt3_btc_val_logits.npz' if MODEL == 'NT3_PRV_ch48' else 'pb_btc_val_logits.npz')
+RUNS = {f'pool_ALL_{MODEL}_L64_a_refit': 'a', f'pool_ALL_{MODEL}_L64_b_refit': 'b', f'pool_C_{MODEL}_L64_a_refit': 'a'}
 FEATS_EVERY = 10                                    # side inputs of every 10th window (data check)
 
 try:                                                # Colab: mount Drive here (in the notebook kernel); research/
@@ -67,7 +72,7 @@ win = data.windows(L)
 print(f"BTC data loaded: {time.time() - t0:.0f} s | history inputs: {'yes' if data.nt_ok else 'NO (smc_bars missing)'}")
 if not data.nt_ok:
     raise SystemExit("smc_bars_BTCUSDT_5M_N200.npz is missing in SMC/data/")
-out = {'device': np.array(gpu), 'torch': np.array(torch.__version__)}
+out = {'device': np.array(gpu), 'torch': np.array(torch.__version__), 'model': np.array(MODEL)}
 side_cols = list(T.SIDE_COLS['nt_PRV'])
 first_run = next(iter(RUNS))
 for run, seed in RUNS.items():
@@ -81,8 +86,8 @@ for run, seed in RUNS.items():
     net = T.CNNBase(cfg['L'], cfg['cnn_ch'], cfg['cnn_k'], cfg['cnn_dil'], cfg['head_hidden'], cfg['dropout'], 1.0,
                     cfg['cnn_bn'], cfg['cnn_res'], cfg['cnn_cdrop'], cfg['cnn_pool'], cfg['cnn_in'], cfg['cnn_sdrop'],
                     cfg['cnn_valid'], cfg['cnn_bias'], cfg['cnn_ma'], T.SIDE_COLS[cfg['side']], 4, None, 'rw', None,
-                    T.N_LEVEL[cfg['price']], False)
-    net.load_state_dict({k[3:]: torch.from_numpy(z[k]) for k in z.files if k.startswith('sd_')})
+                    T.N_LEVEL[cfg['price']], False, cfg.get('cnn_sep', False))   # PB: separable layers (v6.3)
+    net.load_state_dict({k[3:]: torch.from_numpy(z[k]) for k in z.files if k.startswith('sd_')}, strict=True)
     net = net.to(T.DEVICE).eval()
     feats = []
     for tf32 in (False, True):

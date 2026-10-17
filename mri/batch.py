@@ -28,14 +28,21 @@ def conv_inputs(f, p):
 
 
 def conv_stream(u, p):
-    """Layer outputs over all bars for one stream: list of (n, 32) arrays, layers 1..4."""
+    """Layer outputs over all bars for one stream: list of (n, ch) arrays, layers 1..4. Separable layers (p.pw, PB):
+       per-channel taps of the depthwise kernel, then the 1 x 1 channel mixing, then ReLU."""
     outs, x = [], u
-    for w, d in zip(p.conv, DILATIONS):
+    for i, (w, d) in enumerate(zip(p.conv, DILATIONS)):
         n = len(x)
+        sep = p.pw is not None and i > 0
         y = np.zeros((n, w.shape[0]))
         for k in range(3):                       # tap k sees x[t - (2 - k) * d]
             sh = (2 - k) * d
-            y[sh:] += x[:n - sh] @ w[:, :, k].T
+            if sep:
+                y[sh:] += x[:n - sh] * w[:, 0, k]
+            else:
+                y[sh:] += x[:n - sh] @ w[:, :, k].T
+        if sep:
+            y = y @ p.pw[i - 1].T
         x = np.maximum(y, 0.0)
         outs.append(x)
     return outs

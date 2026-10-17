@@ -1,0 +1,441 @@
+{
+ "model": "PB_s64h24_d1",
+ "nocal_json": "nocal_PB_s64h24_d1_20261017_140953.json",
+ "ruler": "glob_e",
+ "pool": {
+  "orange": 34.0,
+  "blue": 21.0
+ },
+ "share_pairs_ge_5": 0.967741935483871,
+ "by_symbol": {
+  "BTCUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "ETHUSDT": {
+   "orange": 3.0,
+   "blue": 21.0
+  },
+  "DOGEUSDT": {
+   "orange": 3.0,
+   "blue": 13.0
+  },
+  "SOLUSDT": {
+   "orange": 8.0,
+   "blue": 13.0
+  },
+  "ADAUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "BNBUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "BCHUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "DOTUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "UNIUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "XRPUSDT": {
+   "orange": 13.0,
+   "blue": 8.0
+  },
+  "LTCUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "DASHUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "ZECUSDT": {
+   "orange": 5.0,
+   "blue": 13.0
+  },
+  "SPELLUSDT": {
+   "orange": 5.0,
+   "blue": 8.0
+  },
+  "ICPUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "NEARUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "ZENUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "AVAXUSDT": {
+   "orange": 13.0,
+   "blue": 8.0
+  },
+  "FETUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "RAYUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "CAKEUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "INJUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "RUNEUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "PHAUSDT": {
+   "orange": 5.0,
+   "blue": 8.0
+  },
+  "QNTUSDT": {
+   "orange": 5.0,
+   "blue": 8.0
+  },
+  "HBARUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "AAVEUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  },
+  "VTHOUSDT": {
+   "orange": 5.0,
+   "blue": 8.0
+  },
+  "FILUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "LINKUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "XLMUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  }
+ },
+ "unseen_pool_H": {
+  "orange": 13.0,
+  "blue": 21.0
+ },
+ "unseen_H": {
+  "FILUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "LINKUSDT": {
+   "orange": 13.0,
+   "blue": 13.0
+  },
+  "XLMUSDT": {
+   "orange": 8.0,
+   "blue": 8.0
+  }
+ },
+ "unseen_symbol": {
+  "orange": 8.0,
+  "blue": 8.0
+ },
+ "cover_pool": [
+  0.6362069683259631,
+  0.2135230104621393
+ ],
+ "null_chart_cover": [
+  0.0015161492363906092,
+  0.007701218154558603
+ ],
+ "table": [
+  {
+   "asset": "BTCUSDT",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.6540968833584185,
+   "cover_blue": 0.22190852354976945,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "ETHUSDT",
+   "orange": 3.0,
+   "blue": 21.0,
+   "cover_orange": 0.7339542330147348,
+   "cover_blue": 0.18395471235056707,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "DOGEUSDT",
+   "orange": 3.0,
+   "blue": 13.0,
+   "cover_orange": 0.6889925319477332,
+   "cover_blue": 0.20810365158037025,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "SOLUSDT",
+   "orange": 8.0,
+   "blue": 13.0,
+   "cover_orange": 0.6630412899885918,
+   "cover_blue": 0.21943515065525207,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "ADAUSDT",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.6495048460852643,
+   "cover_blue": 0.2161612869208425,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "BNBUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6081189903270029,
+   "cover_blue": 0.23987403054327924,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "BCHUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6078170087526723,
+   "cover_blue": 0.2267018818724775,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "DOTUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6370756679544822,
+   "cover_blue": 0.21645368177852767,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "UNIUSDT",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.63149619886685,
+   "cover_blue": 0.22507693340107945,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "XRPUSDT",
+   "orange": 13.0,
+   "blue": 8.0,
+   "cover_orange": 0.6422620816596524,
+   "cover_blue": 0.22464553115203573,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "LTCUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.5891756382356607,
+   "cover_blue": 0.250385865344978,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "DASHUSDT",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.680211099500532,
+   "cover_blue": 0.19633116353979926,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "ZECUSDT",
+   "orange": 5.0,
+   "blue": 13.0,
+   "cover_orange": 0.7071162197658923,
+   "cover_blue": 0.1787970587953332,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "SPELLUSDT",
+   "orange": 5.0,
+   "blue": 8.0,
+   "cover_orange": 0.6017262888846064,
+   "cover_blue": 0.19321858549795626,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "ICPUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6202222200918407,
+   "cover_blue": 0.22382586687885267,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "NEARUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.614848865412085,
+   "cover_blue": 0.21576343818005772,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "ZENUSDT",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.6745932835463182,
+   "cover_blue": 0.19401117811160856,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "AVAXUSDT",
+   "orange": 13.0,
+   "blue": 8.0,
+   "cover_orange": 0.6611958470343492,
+   "cover_blue": 0.20240434853467035,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "FETUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6553143963723864,
+   "cover_blue": 0.2077201829145536,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "RAYUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6339250972762646,
+   "cover_blue": 0.20050583657587548,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "CAKEUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6215739471388444,
+   "cover_blue": 0.2187880472816865,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "INJUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6219670025213064,
+   "cover_blue": 0.2137454343261976,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "RUNEUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.6386188227162769,
+   "cover_blue": 0.1909399838728257,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "PHAUSDT",
+   "orange": 5.0,
+   "blue": 8.0,
+   "cover_orange": 0.6129561725161515,
+   "cover_blue": 0.20554100459810257,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "QNTUSDT",
+   "orange": 5.0,
+   "blue": 8.0,
+   "cover_orange": 0.5826614642751005,
+   "cover_blue": 0.22322669708851414,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "HBARUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.5652232266970885,
+   "cover_blue": 0.24775431162581127,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "AAVEUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.5864194572001036,
+   "cover_blue": 0.2429465732281351,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "VTHOUSDT",
+   "orange": 5.0,
+   "blue": 8.0,
+   "cover_orange": 0.5994649690556054,
+   "cover_blue": 0.19807365238342703,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "FILUSDT",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.6727478405920756,
+   "cover_blue": 0.19753429647879897,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "LINKUSDT",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.67733987786523,
+   "cover_blue": 0.19739528908744045,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "XLMUSDT",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.5762143973310581,
+   "cover_blue": 0.22858087833497906,
+   "unseen_in_training": false
+  },
+  {
+   "asset": "FILUSDT (unseen, refit C)",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.6729156081333704,
+   "cover_blue": 0.19675297907219758,
+   "unseen_in_training": true
+  },
+  {
+   "asset": "LINKUSDT (unseen, refit C)",
+   "orange": 13.0,
+   "blue": 13.0,
+   "cover_orange": 0.6725465195425219,
+   "cover_blue": 0.20033361773926048,
+   "unseen_in_training": true
+  },
+  {
+   "asset": "XLMUSDT (unseen, refit C)",
+   "orange": 8.0,
+   "blue": 8.0,
+   "cover_orange": 0.5720010353653977,
+   "cover_blue": 0.23234366461830488,
+   "unseen_in_training": true
+  }
+ ],
+ "reproduced": true
+}
