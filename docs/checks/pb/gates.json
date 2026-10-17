@@ -1,0 +1,450 @@
+{
+ "model": "PB_s64h24_d1",
+ "manifest_created": "2026-10-17 16:44:51",
+ "а": {
+  "files": 48,
+  "checks_ok": true,
+  "bad_files": [],
+  "runs": {
+   "pool_C_PB_s64h24_d1_L64_a_refit": {
+    "parts": 5,
+    "keys": 204,
+    "n_repeated": 0,
+    "repeated": []
+   },
+   "pool_C_PB_s64h24_d1_L64_b_refit": {
+    "parts": 5,
+    "keys": 204,
+    "n_repeated": 0,
+    "repeated": []
+   },
+   "pool_ALL_PB_s64h24_d1_L64_a_refit": {
+    "parts": 5,
+    "keys": 204,
+    "n_repeated": 0,
+    "repeated": []
+   },
+   "pool_ALL_PB_s64h24_d1_L64_b_refit": {
+    "parts": 5,
+    "keys": 204,
+    "n_repeated": 0,
+    "repeated": []
+   }
+  },
+  "ok": true
+ },
+ "б": {
+  "summary": "pool_summary_20261017_113110.json",
+  "pb_final": "PB_s64h24_d1",
+  "pb_base": "PB_s64h24",
+  "recipe_ok": true,
+  "pb_flag": false,
+  "pb_steps": [
+   [
+    "d1",
+    "PB_s64h24_d1",
+    "PB_s64h24",
+    0.017605039828876443,
+    0.0006988212828728768,
+    2,
+    0.01550509829507745,
+    0.0006781779893809632,
+    true
+   ]
+  ],
+  "epochs_summary": 22,
+  "prod_models_pine_in_summary": "NT3_PRV_ch48",
+  "chain_log": "smc_chain__20261017_083356.log",
+  "log_lines": {
+   "recipe": "✅ PB_s64h24_d1 'refit' (22 эпох) против 'stop': панель Δ VAL +0.0035 ± 0.0006 (сидов 2) | BTC Δ VAL +0.0038 ± 0.0015 | H Δ VAL +0.0032 ± 0.0009 — рецепт подтверждён",
+   "d1_step": "✅ PB_s64h24_d1 − PB_s64h24: панель Δ TUNE +0.0176 ± 0.0007 (сидов 2), Δ VAL +0.0155 ± 0.0007 — принимается PB_s64h24_d1",
+   "final": "🏆 итог этапа 2: PB_s64h24_d1 (PINE2_FINAL) — дальше 'refit' на C и ALL (задания PBG / PBR), сводка, боевое (PBP), затем MODE 'nocal'",
+   "vs_nt3": "· PB_s64h24_d1 − NT3_PRV_ch48 (цена упрощения): панель Δ TUNE +0.0104 ± 0.0008 (сидов 2), Δ VAL +0.0080 ± 0.0009 | BTC Δ VAL +0.0100 ± 0.0021 | H Δ VAL +0.0096 ± 0.0011 | все 31 Δ VAL +0.0083 ± 0.0008",
+   "vs_f3g": "· PB_s64h24_d1 − F3_g (старая F3 со временем): панель Δ TUNE +0.0216 ± 0.0015 (сидов 2), Δ VAL +0.0183 ± 0.0017 | BTC Δ VAL +0.0228 ± 0.0023 | H Δ VAL +0.0190 ± 0.0028 | все 31 Δ VAL +0.0197 ± 0.0020",
+   "epochs": "эпох фиксированного расписания PB_s64h24_d1: 22 (правило v4.9: лучшие эпохи 'stop' на C 28 / 15)"
+  },
+  "recipe_delta_val": [
+   0.0035,
+   0.0006
+  ],
+  "vs_nt3_panel_val": [
+   0.008,
+   0.0009
+  ],
+  "vs_nt3_btc_val": [
+   0.01,
+   0.0021
+  ],
+  "vs_nt3_h_val": [
+   0.0096,
+   0.0011
+  ],
+  "vs_f3g_panel_val": [
+   0.0183,
+   0.0017
+  ],
+  "epochs_log": [
+   22.0,
+   28.0,
+   15.0
+  ],
+  "log_consistent": true,
+  "ok": true
+ },
+ "в": {
+  "prod": {
+   "a": {
+    "t_cut": "2026-09-26 09:15:00",
+    "overlay": "data_fresh",
+    "epochs_cfg": 22,
+    "epochs_run": 22,
+    "set": "ALL",
+    "mode": "prod"
+   },
+   "b": {
+    "t_cut": "2026-09-26 09:15:00",
+    "overlay": "data_fresh",
+    "epochs_cfg": 22,
+    "epochs_run": 22,
+    "set": "ALL",
+    "mode": "prod"
+   },
+   "c": {
+    "t_cut": "2026-09-26 09:15:00",
+    "overlay": "data_fresh",
+    "epochs_cfg": 22,
+    "epochs_run": 22,
+    "set": "ALL",
+    "mode": "prod"
+   }
+  },
+  "refit": {
+   "pool_C_PB_s64h24_d1_L64_a_refit": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 22,
+    "epochs_run": 22,
+    "set": "C",
+    "mode": "refit"
+   },
+   "pool_C_PB_s64h24_d1_L64_b_refit": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 22,
+    "epochs_run": 22,
+    "set": "C",
+    "mode": "refit"
+   },
+   "pool_ALL_PB_s64h24_d1_L64_a_refit": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 22,
+    "epochs_run": 22,
+    "set": "ALL",
+    "mode": "refit"
+   },
+   "pool_ALL_PB_s64h24_d1_L64_b_refit": {
+    "t_cut": "2026-06-30 02:25:00",
+    "overlay": null,
+    "epochs_cfg": 22,
+    "epochs_run": 22,
+    "set": "ALL",
+    "mode": "refit"
+   }
+  },
+  "stop_best_ep_plus1": [
+   28,
+   15
+  ],
+  "epochs_rule_v4_9": 22,
+  "epochs_rule_half_up": 22,
+  "prod_ref_t_cut": {
+   "F3_g_a": "2026-09-26 09:15:00",
+   "F3_g_b": "2026-09-26 09:15:00",
+   "F3_g_c": "2026-09-26 09:15:00",
+   "NT3_PRV_ch48_a": "2026-09-26 09:15:00",
+   "NT3_PRV_ch48_b": "2026-09-26 09:15:00",
+   "NT3_PRV_ch48_c": "2026-09-26 09:15:00"
+  },
+  "one_data_end": true,
+  "one_overlay": true,
+  "epochs_all_equal_rule": true,
+  "same_end_as_F3_g_NT3": true,
+  "ok": true
+ },
+ "г": {
+  "research": {
+   "runs_equal_base_plus_d1": true,
+   "side_cols": [
+    28,
+    29,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    77,
+    78,
+    79,
+    86,
+    87,
+    88,
+    89
+   ],
+   "side_names": [
+    "log медианы |шага| окна",
+    "log среднего |шага| окна",
+    "путь до окна, кусок 1/8 (71 бар.), медиана диапазона",
+    "путь до окна, кусок 2/8 (64 бар.), медиана диапазона",
+    "путь до окна, кусок 3/8 (32 бар.), медиана диапазона",
+    "путь до окна, кусок 4/8 (16 бар.), медиана диапазона",
+    "путь до окна, кусок 5/8 (8 бар.), медиана диапазона",
+    "путь до окна, кусок 6/8 (4 бар.), медиана диапазона",
+    "путь до окна, кусок 7/8 (2 бар.), медиана диапазона",
+    "путь до окна, кусок 8/8 (2 бар.), медиана диапазона",
+    "положение close в диапазоне 200 баров",
+    "log ширины диапазона 200 баров, медиана диапазона",
+    "отклонение close от средней за 200 баров, медиана диапазона",
+    "log(ср. диапазон 16 / 200 баров)",
+    "log(ср. диапазон 64 / 200 баров)",
+    "log(среднее / медиана диапазона, 200 баров)",
+    "log(медиана |close − open| / медиана диапазона, 200 баров)"
+   ],
+   "dropout": 0.1,
+   "cnn_ch": 64,
+   "cnn_k": 3,
+   "cnn_dil": [
+    1,
+    2,
+    4,
+    8
+   ],
+   "cnn_bn": false,
+   "cnn_cdrop": 0.1,
+   "cnn_pool": "mml",
+   "cnn_in": "steps",
+   "cnn_valid": true,
+   "cnn_bias": false,
+   "cnn_sep": true,
+   "side": "nt_PRV",
+   "price": "multi_g",
+   "head_hidden": [
+    24
+   ],
+   "pine_weights_cfg": 18697,
+   "pine_cost_cfg": 32304,
+   "pine_weights_model": 18697,
+   "pine_cost_model": 32304
+  },
+  "models": {
+   "prod_PB_s64h24_d1_L64_a": {
+    "n_params": 18697,
+    "pine_w": 18697,
+    "pine": 32304,
+    "lvl_mu": 0.0,
+    "cfg_ok": true,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "strict_load": true,
+    "ok": true
+   },
+   "prod_PB_s64h24_d1_L64_b": {
+    "n_params": 18697,
+    "pine_w": 18697,
+    "pine": 32304,
+    "lvl_mu": 0.0,
+    "cfg_ok": true,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "strict_load": true,
+    "ok": true
+   },
+   "prod_PB_s64h24_d1_L64_c": {
+    "n_params": 18697,
+    "pine_w": 18697,
+    "pine": 32304,
+    "lvl_mu": 0.0,
+    "cfg_ok": true,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "strict_load": true,
+    "ok": true
+   },
+   "pool_C_PB_s64h24_d1_L64_a_refit": {
+    "n_params": 18697,
+    "pine_w": 18697,
+    "pine": 32304,
+    "lvl_mu": 0.0,
+    "cfg_ok": true,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "strict_load": true,
+    "ok": true
+   },
+   "pool_C_PB_s64h24_d1_L64_b_refit": {
+    "n_params": 18697,
+    "pine_w": 18697,
+    "pine": 32304,
+    "lvl_mu": 0.0,
+    "cfg_ok": true,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "strict_load": true,
+    "ok": true
+   },
+   "pool_ALL_PB_s64h24_d1_L64_a_refit": {
+    "n_params": 18697,
+    "pine_w": 18697,
+    "pine": 32304,
+    "lvl_mu": 0.0,
+    "cfg_ok": true,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "strict_load": true,
+    "ok": true
+   },
+   "pool_ALL_PB_s64h24_d1_L64_b_refit": {
+    "n_params": 18697,
+    "pine_w": 18697,
+    "pine": 32304,
+    "lvl_mu": 0.0,
+    "cfg_ok": true,
+    "shapes_ok": true,
+    "extra_keys": [],
+    "strict_load": true,
+    "ok": true
+   },
+   "pool_C_PB_s64h24_d1_L64_a": {
+    "pine_w": 18697,
+    "pine": 32304,
+    "cfg_ok": true,
+    "json_only": true,
+    "ok": true
+   },
+   "pool_C_PB_s64h24_d1_L64_b": {
+    "pine_w": 18697,
+    "pine": 32304,
+    "cfg_ok": true,
+    "json_only": true,
+    "ok": true
+   }
+  },
+  "ok": true
+ },
+ "д": {
+  "a": {
+   "train_assets": 31,
+   "same_as_prod": true,
+   "epochs": 22,
+   "epochs_run": 22,
+   "t_cut": "2026-06-30 02:25:00",
+   "set": "ALL",
+   "mode": "refit"
+  },
+  "b": {
+   "train_assets": 31,
+   "same_as_prod": true,
+   "epochs": 22,
+   "epochs_run": 22,
+   "t_cut": "2026-06-30 02:25:00",
+   "set": "ALL",
+   "mode": "refit"
+  },
+  "ok": true
+ },
+ "е": {
+  "model": "PB_s64h24_d1",
+  "ver": 2,
+  "src": [
+   "ALL",
+   "refit"
+  ],
+  "seeds": [
+   "a",
+   "b"
+  ],
+  "winner": "glob_e",
+  "pine_ruler": "glob_e",
+  "when": "20261017_140953",
+  "rules_equal": {
+   "null": true,
+   "cond_cols": true,
+   "half_cut": true,
+   "span": true,
+   "s_lo": true,
+   "warm": true,
+   "tol": true,
+   "min_n": true,
+   "ceil_pool": true,
+   "ceil_asset": true,
+   "pass_share": true,
+   "order": true,
+   "span_ref": true,
+   "short": true,
+   "unseen": true
+  },
+  "rules_keys_complete": true,
+  "edges_equal": true,
+  "knots_equal": true,
+  "zk_max_abs_diff": 0.0,
+  "pine_zk_equal": true,
+  "pine_span_s_lo_warm": [
+   8064,
+   0.75,
+   288
+  ],
+  "nocal_ver_research": 2,
+  "prod": {
+   "a": {
+    "tag_ok": true,
+    "t_cut_ok": true,
+    "overlay_ok": true,
+    "pine_w": 18697,
+    "pine": 32304,
+    "n_q": 37,
+    "q_strictly_increasing": true,
+    "q_first_last": [
+     -7.025109925270081,
+     3.3718535919190096
+    ],
+    "n_null": 3179790,
+    "ok": true
+   },
+   "b": {
+    "tag_ok": true,
+    "t_cut_ok": true,
+    "overlay_ok": true,
+    "pine_w": 18697,
+    "pine": 32304,
+    "n_q": 37,
+    "q_strictly_increasing": true,
+    "q_first_last": [
+     -6.993774024009705,
+     3.4300746390819574
+    ],
+    "n_null": 3179790,
+    "ok": true
+   },
+   "c": {
+    "tag_ok": true,
+    "t_cut_ok": true,
+    "overlay_ok": true,
+    "pine_w": 18697,
+    "pine": 32304,
+    "n_q": 37,
+    "q_strictly_increasing": true,
+    "q_first_last": [
+     -6.955640694141388,
+     3.411143198967026
+    ],
+    "n_null": 3179790,
+    "ok": true
+   }
+  },
+  "ok": true
+ },
+ "all_ok": true
+}
