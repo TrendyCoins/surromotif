@@ -228,3 +228,6 @@ __marimo__/
 # MRI: exceptions — small golden file, model export and the Pine weight libraries are committed on purpose
 !tests/golden/*.csv.gz
 !pine/lib/
+
+# MRI: artifacts/ — кладёт только Фёдор (веса, npz, логи): правила для данных выше на неё не действуют
+!artifacts/**
