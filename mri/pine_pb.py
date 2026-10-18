@@ -3,7 +3,7 @@
     python -m mri.pine_pb               # pine/proto_pb.pine: the production template on the real weights, ruler, floor
                                         # and ceiling, named "prototype" until the parity check (R10 addendum 4)
     python -m mri.pine_pb --production  # pine/mri.pine (after the TradingView measurements: default N of
-                                        # "Compute only the last N bars")
+                                        # "Compute only the last N bars"; no debug mode — decision of 2026-10-18)
 
 Weights: the dense float32 strings of mri/pine_gen.py (3 CJK characters per float32, bit for bit), 18 697 numbers =
 56 091 characters in strings of <= 3 999; every string sits in its own function wNN() that decodes it into WT at run time,
@@ -22,6 +22,7 @@ Compute per confirmed bar (the same as mri.pb.StreamingPB; tests/pine_sim_pb.py 
     (no array.shift on the ring); the line from nW >= 4096 with one mark at its start; one ceiling 10 for both colours.
 """
 import os
+import re
 
 import numpy as np
 
@@ -113,11 +114,11 @@ HEAD = r'''//@version=6
 // The line starts at the window {show} (bar {first_bar} of continuous data): before it the calibration set of this chart
 // is not full ({lw} windows) and nothing is drawn. On a random market M stays near 1.
 // M is a frequency ratio of the window's shape, not a forecast.
-// Checked range: up to {ceil} on both sides; above it the line stays at {ceil}, marked "{ceil}+".
+// Checked range: up to {ceil} on both sides; above it the line stays at {ceil}.
 // One floor of the window divisor for every symbol ({floor_short} of the bar norm).
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
 // Passport: weights {source}, data up to {data_end}, export of code {code_version}.
-indicator("{title}", shorttitle = "{short}", overlay = false, precision = 2, max_labels_count = 500)
+indicator("{title}", shorttitle = "{short}", overlay = false, precision = 2)
 
 // ---------------------------------------------------------------- inputs
 float thr      = input.float(3.0, "Threshold M", minval = 1.0, step = 0.25, tooltip = "Visual only: above the threshold the line is bright, below it is pale; dashed line at the threshold; optional marks on the price chart at M >= threshold.")
@@ -130,7 +131,7 @@ int   calcBars = input.int({calc_bars}, "Compute only the last N bars (0 = all h
 
 // ---------------------------------------------------------------- one floor and one ceiling for every symbol
 const float FLOOR = {floor}   // floor of the window divisor, in units of the bar norm (float32 of 0.2)
-const float CEIL  = {ceil_f}                  // checked range of M on both sides; above it "{ceil}+"
+const float CEIL  = {ceil_f}                  // checked range of M on both sides; above it the line stays at CEIL
 bool  tf5   = timeframe.period == "5"
 float GAPMS = 1.5 * timeframe.in_seconds() * 1000.0   // interval > 1.5 bars -> grid gap
 
@@ -426,15 +427,7 @@ color baseC  = more ? colMore : less ? colLess : color.gray
 plot(Mshow, "M", color = Mraw >= thr ? baseC : color.new(baseC, paleT), linewidth = 2)
 hline(1.0, "Random (M = 1)", color = color.gray, linestyle = hline.style_solid)
 hline(thr, "Threshold", color = color.gray, linestyle = hline.style_dashed)
-// above the checked range: "{ceil}+" once at the start of each run
-bool atO = more and Mraw > CEIL
-bool atB = less and Mraw > CEIL
-if barstate.isconfirmed and atO and not atO[1]
-    label.new(bar_index, CEIL, "{ceil}+", style = label.style_none, textcolor = colMore, size = size.small)
-if barstate.isconfirmed and atB and not atB[1]
-    label.new(bar_index, CEIL, "{ceil}+", style = label.style_none, textcolor = colLess, size = size.small)
-// the start of the line: one mark with a constant text at the window SHOW (a plot shape, not a label: labels share the
-// limit max_labels_count with "{ceil}+" and the oldest are removed)
+// the start of the line: one mark with a constant text at the window SHOW (a plot shape: no label limits)
 plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.gray, text = "{start_text}", textcolor = chart.fg_color, size = size.tiny)
 plotshape(showMarks and more and Mraw >= thr, "Mark: more frequent than random", shape.circle, location.abovebar, colMore, size = size.tiny, force_overlay = true)
 plotshape(showMarks and less and Mraw >= thr, "Mark: less frequent than random", shape.circle, location.abovebar, colLess, size = size.tiny, force_overlay = true)
@@ -473,6 +466,17 @@ plot(array.get(DBG, 2), "dbg sgn", display = display_dbg, precision = 10)
 plot(nConf, "dbg confirmed", display = display_dbg, precision = 0)
 plot(bar_index, "dbg bar_index", display = display_dbg, precision = 0)
 '''
+
+DEBUG_TOKENS = re.compile(r'\b(DBG|nConf|dbg|display_dbg)\b')
+DEBUG_HEADER = '// ---------------------------------------------------------------- debug values'
+
+
+def strip_debug(text):
+    """The production script without the debug mode (decision of 2026-10-18): the debug section at the end and every line
+       with a debug name (the input dbg, the array DBG, the counter nConf) are cut; nothing else changes."""
+    body = text[:text.index(DEBUG_HEADER)].rstrip('\n') + '\n'
+    return ''.join(ln for ln in body.splitlines(keepends=True) if not DEBUG_TOKENS.search(ln))
+
 
 START_TEXT = 'MRI starts here\\ncalibrated on {lw} windows of this chart'      # constant text of the mark at the line start
 
@@ -527,7 +531,8 @@ CALC_BARS_DEFAULT = 10000
 
 def make_indicator(ex, production=False, calc_bars=None):
     """The PB indicator from the export dict (export/mri_model_pb.json): production — pine/mri.pine (default N of the
-       measurement); prototype (pine/proto_pb.pine, the parity check is made on it) — N = 0 and the prototype title."""
+       measurement, no debug mode); prototype (pine/proto_pb.pine, the parity check is made on it) — N = 0, the debug
+       mode and the prototype title."""
     from .params import from_dict
     p = from_dict(ex['model'])
     if (ex['tie_rule']['eps'] != 1e-4 or ex['model']['id'] != 'PB_s64h24_d1' or len(p.side_mu) != len(SIDE_NAMES)
@@ -540,8 +545,9 @@ def make_indicator(ex, production=False, calc_bars=None):
     kw = {} if production else {'title': 'Market Randomness Index prototype', 'short': 'MRI proto'}
     if calc_bars is None:
         calc_bars = CALC_BARS_DEFAULT if production else 0
-    return make_script(p, (ln['ruler']['q'], ln['ruler']['zk']), ex['floor']['value'], ln['ceiling']['value'], live,
-                       ex['passport'], calc_bars=calc_bars, s_lo=ln['live']['s_lo'], **kw)
+    s = make_script(p, (ln['ruler']['q'], ln['ruler']['zk']), ex['floor']['value'], ln['ceiling']['value'], live,
+                    ex['passport'], calc_bars=calc_bars, s_lo=ln['live']['s_lo'], **kw)
+    return strip_debug(s) if production else s
 
 
 def sizes(text):

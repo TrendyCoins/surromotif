@@ -62,7 +62,7 @@ def test_export_line_floor_ceiling(ex):
     lv = ln['live']
     assert (lv['L'], lv['n0'], lv['lag'], lv['s_lo']) == (4032, 144, 64, 0.75)
     assert ln['show']['from_window'] == 4096 == linem.SHOW_FROM and ln['show']['first_line_bar_continuous'] == 4360
-    assert ln['ceiling'] == {**ln['ceiling'], 'value': 10.0, 'both_colours': True, 'label': '10+'}
+    assert ln['ceiling'] == {**ln['ceiling'], 'value': 10.0, 'both_colours': True} and 'label' not in ln['ceiling']
     assert ex['warmup']['first_line_bar_continuous'] == FIRST_LINE_BAR == 4360 and FIRST_WINDOW_END == 264
     txt = json.dumps(ex)
     assert 'drive' not in txt.lower() and 'span_default' not in txt and 'windows_default' not in txt

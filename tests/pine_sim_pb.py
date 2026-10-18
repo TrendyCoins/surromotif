@@ -76,8 +76,7 @@ def log_m_of(z, mE, sE, S_LO):
 
 def run(bars, p, floor, ruler, calc_bars=0, signed=None, s_lo=0.75, ceil=10.0, live=(4032, 144.0, 64, 4096)):
     """Per-bar dict of arrays: logit, z, m_win, s_win, k, log_m, n (debug plot: NaN where no window), shown, M (plotted
-       value), start (the line-start mark), plus (start of a run above the ceiling: label '10+'), side (bar -> 17 raw side
-       inputs)."""
+       value), start (the line-start mark), side (bar -> 17 raw side inputs)."""
     LW, N0, LAG, SHOW = live
     K1 = [p.conv[0][:, :, k] for k in range(3)]
     DW = [[p.conv[i][:, 0, k] for k in range(3)] for i in (1, 2, 3)]
@@ -99,9 +98,8 @@ def run(bars, p, floor, ruler, calc_bars=0, signed=None, s_lo=0.75, ceil=10.0, l
     hc = -1
     ser = {k: [] for k in ('nrm', 'rmeanB', 'bmedB', 'r16B', 'r64B', 'hmaxB', 'lminB', 'cmaB')}
     out = {k: np.full(n, np.nan) for k in ('logit', 'z', 'm_win', 's_win', 'k', 'log_m', 'n', 'M')}
-    for k in ('shown', 'start', 'plus'):
+    for k in ('shown', 'start'):
         out[k] = np.zeros(n, dtype=bool)
-    atO_prev = atB_prev = False
     side_out = {}
     na = math.nan
 
@@ -222,9 +220,6 @@ def run(bars, p, floor, ruler, calc_bars=0, signed=None, s_lo=0.75, ceil=10.0, l
         out['M'][bi] = na if math.isnan(Mraw) else (min(Mraw, ceil) if (more or less) else 1.0)
         out['shown'][bi] = shownM
         out['start'][bi] = shownM and nW == SHOW
-        atO, atB = more and Mraw > ceil, less and Mraw > ceil
-        out['plus'][bi] = (atO and not atO_prev) or (atB and not atB_prev)
-        atO_prev, atB_prev = atO, atB
         for k, v in (('logit', logit), ('z', zz), ('m_win', mW), ('s_win', sW), ('k', kW), ('log_m', logM)):
             out[k][bi] = v
         out['n'][bi] = na if math.isnan(logit) else nW
