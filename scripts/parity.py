@@ -3,21 +3,21 @@
 Input: TradingView 'Export chart data' CSV with the indicator in debug mode (columns: time, open, high, low, close and
 the plots 'dbg ...'). The reference recomputes from the same OHLC from the first exported bar, with the parameters of the
 export JSON (the model is taken from it):
-    PB_s64h24_d1 (export/mri_model_pb.json, default; R10 addendum 3): mri.pb stream, floor of the symbol, the ruler of the
-        export; the live part (mri.linem.LiveM, as Pine) from the first computed valid window; compared also z, m_ema,
-        s_ema (|d| <= 1e-6), log M (|d| <= 1e-5), n (exactly); first line bar — the first value of the visible plot 'M'
-        (R16; the visible M is reported, capped at the ceilings of the symbol);
+    PB_s64h24_d1 (export/mri_model_pb.json, default; R10 addendum 4, session 5): mri.pb stream, the one floor of the
+        export (R17), its ruler; the live part — formula A (mri.linem.LiveWin, as Pine: ring of 4096 z, S1, S2) from the
+        first computed valid window (R18); compared also z, m_win, s_win (|d| <= 1e-6), log M (|d| <= 1e-5), n and k
+        (exactly); first line bar — the first value of the visible plot 'M' (R18: 4360 on a full export from bar 0; the
+        visible M is reported, capped at the one ceiling);
     NT3_PRV_ch48 (export/mri_model_nt3.json; R10 addition 2): mri.nt3 stream, floor and Platt of the symbol;
         17 side inputs; no EMA — the unconfirmed last bar is recognized by 'dbg confirmed' (count of confirmed bars)
         equal to the previous row (amendment of session 3);
     F3_g (export/mri_model.json, legacy): mri.stream, EMA adjust=True.
 
     python scripts/parity.py chart.csv [--symbol BTCUSDT] [--export export/mri_model_pb.json] [--calc-bars N] [--out ...]
-    python scripts/parity.py artifacts/parity/btc5m_pb_tv_debug.csv --symbol BTCUSDT --out docs/checks/pb/parity_btc.json
+    python scripts/parity.py artifacts/parity/btc5m_pb5_tv_debug.csv --symbol BTCUSDT --out docs/checks/pb5/parity_btc.json
 
---partial (PB; docs/rules.md, «Справочная сверка по короткой выгрузке», not R10): the export holds only the last bars of the
-chart. The model part (264 bars of memory) is compared from row 264 of the export; the live part continues from the Pine
-state of the first compared window (n, m_ema, s_ema -> n1, n2, d), so its accumulation before that window is not checked.
+The session-4 PB parity (EMA live part, symbol tables) and its reference check on short exports (--partial) were run with
+the session-4 export: docs/checks/pb/parity_*.json, the code is in the git history.
 """
 import argparse
 import json
@@ -37,7 +37,7 @@ from mri.stream import run  # noqa: E402
 INPUTS = ['norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'ema7', 'ema1', 'D', 'x_end'] + [f'side_{n}' for n in SIDE_NAMES]
 INPUTS_NT3 = ['norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'D', 'x_end'] + [f'side_{n}' for n in nt3.SIDE_NAMES]
 INPUTS_PB = INPUTS_NT3
-LINE_PB = {'z': 1e-6, 'm_ema': 1e-6, 's_ema': 1e-6, 'logM': 1e-5}      # R10 addendum 3 (+ rounding of the export)
+LINE_PB = {'z': 1e-6, 'm_win': 1e-6, 's_win': 1e-6, 'logM': 1e-5}      # R10 addendum 4 (+ rounding of the export)
 TOL_IN, TOL_LOGIT, TOL_M, TIE_BAND = 1e-9, 1e-6, 1e-6, 1e-6
 TOL_M_PB = 1e-5                                                      # visible M of PB (reported): relative, as log M
 
@@ -50,93 +50,41 @@ def is_pb(ex):
     return ex['model'].get('id') == pb.MODEL_ID
 
 
-def reference_pb(df, ex, symbol, calc_bars=0, span=None, warm=None):
-    """PB reference per bar: inputs and logit by the stream (logits of windows on the computed bars equal the full
-       stream), the live part by mri.linem.LiveM from the first computed valid window (R16), the visible M capped at the
-       ceilings of the symbol (or of the unknown symbol)."""
+def reference_pb(df, ex, symbol=None, calc_bars=0):
+    """PB reference per bar (session 5): inputs and logit by the stream with the one floor of the export (logits of windows
+       on the computed bars equal the full stream), the live part by formula A (mri.linem.LiveWin) from the first computed
+       valid window (R18), the visible M capped at the one ceiling. The symbol does not change anything (no constants of
+       the symbol); it is kept for the report."""
     p = from_dict(ex['model'])
-    fl, ln = ex['floors'], ex['line']
-    known = symbol in fl['floor_L64']
-    floor = fl['floor_L64'][symbol] if known else fl['unknown_symbol']
-    ceil = ln['ceilings']['by_symbol'][symbol] if known else ln['ceilings']['unknown_symbol']
-    span = span or ln['live']['span_default']
-    warm = ln['warmup']['windows_default'] if warm is None else warm
+    ln = ex['line']
+    if (ln['live']['L'], ln['live']['n0'], ln['live']['lag'], ln['show']['from_window']) != (
+            linem.L_WIN, linem.N0, linem.LAG, linem.SHOW_FROM):
+        raise ValueError('export: live part not as mri.linem (formula A 4032 + 144, lag 64, shown from 4096)')
+    floor, ceil = ex['floor']['value'], ln['ceiling']['value']
     q, zk = ln['ruler']['q'], ln['ruler']['zk']
     res = nt3.run(df[['time', 'open', 'high', 'low', 'close']], p, floor, eps=ex['tie_rule']['eps'])
     first = 0 if not calc_bars else max(len(df) - 1 - calc_bars - 64, 0) + 63
-    live = linem.LiveM(q, zk, span, warm, ln['live']['s_lo'])
+    live = linem.LiveWin(q, zk, ln['live']['s_lo'])
     rows = []
     for x in res:
         side = x.get('side_raw', [np.nan] * len(nt3.SIDE_NAMES))
         row = {'norm': x['norm'], 'r': x['r'], 'step_hl2': x['step_hl2'], 'step_hlc3': x['step_hlc3'], 'g': x['g'],
                'D': x.get('D', np.nan), 'x_end': x.get('x_end', np.nan), 'sgn': x.get('sgn', np.nan),
-               'logit': x['logit'] if x['bar'] >= first else np.nan, 'z': np.nan, 'm_ema': np.nan, 's_ema': np.nan,
-               'logM': np.nan, 'n': np.nan, 'M': np.nan, 'shown': False}
+               'logit': x['logit'] if x['bar'] >= first else np.nan, 'z': np.nan, 'm_win': np.nan, 's_win': np.nan,
+               'k': np.nan, 'logM': np.nan, 'n': np.nan, 'M': np.nan, 'shown': False}
         row.update({f'side_{n}': v for n, v in zip(nt3.SIDE_NAMES, side)})
         if np.isfinite(row['logit']):
             lv = live.update(row['logit'])
-            row.update({'z': lv['z'], 'm_ema': lv['m_ema'], 's_ema': lv['s_ema'], 'logM': lv['log_m'], 'n': lv['n'],
-                        'shown': lv['shown']})
+            row.update({'z': lv['z'], 'm_win': lv['m_win'], 's_win': lv['s_win'], 'k': lv['k'], 'logM': lv['log_m'],
+                        'n': lv['n'], 'shown': lv['shown']})
             if lv['shown']:
-                v, _, _ = linem.display(lv['log_m'], ceil['orange'], ceil['blue'])
+                v, _, _ = linem.display(lv['log_m'], ceil, ceil)
                 row['M'] = float(v)
         else:
             for c in ['D', 'x_end', 'sgn'] + [f'side_{n}' for n in nt3.SIDE_NAMES]:
                 row[c] = np.nan                                      # Pine fills these only on computed windows
         rows.append(row)
     return pd.DataFrame(rows)
-
-
-PARTIAL_START = 264        # rows of the export before the first window with its whole memory inside the export
-
-
-def live_from_pine(ref, tv, ex, symbol, span=None):
-    """--partial: the live part of the reference continued from the Pine state after the first compared window w0
-       (rules: d = (1 - k^(n+1)) / (1 - k), n1 = m_ema d, n2 = (s_ema^2 + m_ema^2) d); returns (ref, w0)."""
-    ln, fl = ex['line'], ex['floors']
-    ceil = ln['ceilings']['by_symbol'][symbol] if symbol in fl['floor_L64'] else ln['ceilings']['unknown_symbol']
-    k = 1.0 - 2.0 / ((span or ln['live']['span_default']) + 1.0)
-    fin = np.isfinite(ref['logit'].to_numpy()) & np.isfinite(tv['logit'].to_numpy()) & np.isfinite(tv['n'].to_numpy())
-    fin[:PARTIAL_START] = False
-    if not fin.any():
-        raise SystemExit('--partial: no window with its 264-bar memory inside the export')
-    w0 = int(np.argmax(fin))
-    n, m, sd = int(tv['n'].iloc[w0]), float(tv['m_ema'].iloc[w0]), float(tv['s_ema'].iloc[w0])
-    d = (1.0 - k ** (n + 1)) / (1.0 - k)
-    n1, n2 = m * d, (sd * sd + m * m) * d
-    ref = ref.copy()
-    ref.loc[:w0, ['m_ema', 's_ema', 'logM', 'n', 'M']] = np.nan
-    ref.loc[w0, ['m_ema', 's_ema', 'n']] = [m, sd, n]
-    for i in range(w0 + 1, len(ref)):
-        if not np.isfinite(ref.at[i, 'logit']):
-            continue
-        z = ref.at[i, 'z']
-        n += 1
-        n1, n2, d = k * n1 + z, k * n2 + z * z, k * d + 1.0
-        me = n1 / d
-        se = float(np.sqrt(max(n2 / d - me * me, 0.0)))
-        lm = linem.log_m1(z, me, se, ln['live']['s_lo'])
-        ref.loc[i, ['m_ema', 's_ema', 'logM', 'n']] = [me, se, lm, n]
-        if n >= ln['warmup']['windows_default']:
-            ref.at[i, 'M'] = float(linem.display(lm, ceil['orange'], ceil['blue'])[0])
-    return ref, w0
-
-
-def compare_partial(tv, dec, ref, w0):
-    """--partial: rows from w0 (the first compared window, row >= 264); the live part from w0 + 1."""
-    tv_, ref_ = tv.iloc[w0:].reset_index(drop=True), ref.iloc[w0:].reset_index(drop=True)
-    for c in ('logM', 'M'):                                     # the state of w0 itself is taken from Pine
-        tv_.loc[0, c] = np.nan
-        ref_.loc[0, c] = np.nan
-    res = compare(tv_, dec, ref_, INPUTS_PB, LINE_PB, from0=False)
-    res['partial'] = {'first_row': int(w0), 'first_bar_index': int(tv['bar_index'].iloc[w0]),
-                      'export_first_bar_index': int(tv['bar_index'].iloc[0]), 'rows': int(len(tv)),
-                      'live_state_from_pine': {'n': int(tv['n'].iloc[w0]), 'm_ema': float(tv['m_ema'].iloc[w0]),
-                                               's_ema': float(tv['s_ema'].iloc[w0])},
-                      'not_checked': 'accumulation of the live part before the first compared window; first line bar (R16)'}
-    res['pass_partial'] = res.pop('pass_R10')
-    res['pass_R10'] = None
-    return res
 
 
 def load_tv(path):
@@ -235,9 +183,9 @@ def live_last_bar(tv, ref):
 
 
 def compare(tv, dec, ref, inputs=None, line=None, from0=True):
-    """line (PB): {column: tolerance} of the live part; then n is compared exactly, the visible M is reported and the
-       first line bar is the first value of the visible M (R16). from0 = False (--partial): bar_index only contiguous,
-       the first line bar is not checked."""
+    """line (PB): {column: tolerance} of the live part; then n and k are compared exactly, the visible M is reported and
+       the first line bar is the first value of the visible M (R18). from0 = False: bar_index only contiguous, the first
+       line bar is not checked."""
     inputs = INPUTS if inputs is None else inputs
     res, ok = {'bars': int(len(tv))}, True
     res['live_last_bar_excluded'] = live_last_bar(tv, ref)
@@ -251,7 +199,7 @@ def compare(tv, dec, ref, inputs=None, line=None, from0=True):
         res['bar_index_contiguous'] = bool(bi is not None and (np.diff(bi.to_numpy()) == 1).all())
         ok &= res['bar_index_contiguous']
     rnd = lambda c: 0.5 * 10.0 ** -dec.get(c, 10)
-    cols = inputs + ['logit'] + (list(line) + ['n'] if line else []) + ['M']
+    cols = inputs + ['logit'] + (list(line) + ['n', 'k'] if line else []) + ['M']
     for c in cols:
         if c not in tv:
             res[c] = 'missing'
@@ -267,7 +215,7 @@ def compare(tv, dec, ref, inputs=None, line=None, from0=True):
             tol = TOL_LOGIT + rnd(c)
         elif line and c in line:
             tol = line[c] + rnd(c)
-        elif c == 'n':
+        elif c in ('n', 'k'):
             tol = 0.0
         else:
             tol = TOL_IN * np.maximum(1.0, np.abs(b)) + rnd(c)
@@ -277,7 +225,7 @@ def compare(tv, dec, ref, inputs=None, line=None, from0=True):
                   'first_bad_bar': int(np.argmax(bad | (np.isfinite(a) != np.isfinite(b))))
                   if (bad.any() or na_mismatch) else None}
         if c == 'M' and line:
-            res[c]['reported_only'] = True                         # visible line: its first value is the R16 check
+            res[c]['reported_only'] = True                         # visible line: its first value is the R18 check
         else:
             ok &= not bad.any() and na_mismatch == 0
     if 'sgn' in tv and 'x_end' in tv:
@@ -310,20 +258,13 @@ def main():
     ap.add_argument('--symbol', default='BTCUSDT')
     ap.add_argument('--export', default=os.path.join(ROOT, 'export/mri_model_pb.json'))
     ap.add_argument('--calc-bars', type=int, default=0, help="the indicator's 'Compute only the last N bars' at export")
-    ap.add_argument('--span', type=int, default=None, help='PB: span of the live part set in the indicator (default 8064)')
-    ap.add_argument('--warm', type=int, default=None, help='PB: line warm-up set in the indicator (default 288)')
-    ap.add_argument('--partial', action='store_true', help='PB: the export holds only the last bars (reference check, not R10)')
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
     with open(a.export, encoding='utf-8') as fh:
         ex = json.load(fh)
     tv, dec = load_tv(a.csv)
-    if is_pb(ex) and a.partial:
-        ref = reference_pb(tv, ex, a.symbol, 0, a.span, a.warm)
-        ref, w0 = live_from_pine(ref, tv, ex, a.symbol, a.span)
-        res = compare_partial(tv, dec, ref, w0)
-    elif is_pb(ex):
-        ref = reference_pb(tv, ex, a.symbol, a.calc_bars, a.span, a.warm)
+    if is_pb(ex):
+        ref = reference_pb(tv, ex, a.symbol, a.calc_bars)
         res = compare(tv, dec, ref, INPUTS_PB, LINE_PB)
     else:
         ref = reference(tv, ex, a.symbol)

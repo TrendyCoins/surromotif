@@ -1,9 +1,8 @@
-"""scripts/parity.py for PB (R10 addendum 3) on a synthetic 'Export chart data' CSV made from the reference itself (values
-rounded to 10 decimals, time in UNIX seconds, the visible 'M' plot and the 'dbg' plots): passes; a logit off by 2e-6, z off
-by 2e-6, log M off by 2e-5, a wrong window number, a missing bar make it fail; the unconfirmed last bar is excluded only if
-'dbg confirmed' did not advance; 'Compute only the last N bars' (the live part from the first computed window); the
-coarse-tick symbol (exact ties) passes too; first line bar 552 (R16)."""
-import json
+"""scripts/parity.py for PB, session 5 (R10 addendum 4) on a synthetic 'Export chart data' CSV made from the reference itself
+(values rounded to 10 decimals, time in UNIX seconds, the visible 'M' plot and the 'dbg' plots): passes; a logit off by
+2e-6, z / m_win off by 2e-6, log M off by 2e-5, a wrong window number or k, a missing bar make it fail; the unconfirmed last
+bar is excluded only if 'dbg confirmed' did not advance; 'Compute only the last N bars' (the live part from the first
+computed window); the coarse-tick symbol (exact ties) passes too; first line bar 4360 (R18)."""
 import os
 import sys
 
@@ -29,7 +28,7 @@ def fake(ex, b, symbol, path, calc_bars=0):
     ref = parity.reference_pb(b, ex, symbol, calc_bars)
     out = pd.DataFrame({'time': b['time'] // 1000, 'open': b['open'], 'high': b['high'], 'low': b['low'],
                         'close': b['close'], 'M': ref['M']})
-    for c in ['logit', 'z', 'm_ema', 's_ema', 'logM', 'n'] + parity.INPUTS_PB + ['sgn']:
+    for c in ['logit', 'z', 'm_win', 's_win', 'k', 'logM', 'n'] + parity.INPUTS_PB + ['sgn']:
         out['dbg ' + c] = ref[c]
     out['dbg confirmed'] = np.arange(1, len(b) + 1)
     out['dbg bar_index'] = np.arange(len(b))
@@ -39,7 +38,7 @@ def fake(ex, b, symbol, path, calc_bars=0):
 
 @pytest.fixture(scope='module')
 def fake_csv(ex, tmp_path_factory):
-    b = synth.bars(1500, seed=21, gaps=[(1200, 2)])
+    b = synth.bars(4700, seed=21, gaps=[(4500, 2)])
     b[['open', 'high', 'low', 'close']] = b[['open', 'high', 'low', 'close']].round(4)
     return fake(ex, b, 'BTCUSDT', tmp_path_factory.mktemp('tv') / 'chart.csv')
 
@@ -52,16 +51,16 @@ def run(path, ex, symbol='BTCUSDT', calc_bars=0):
 def test_parity_passes_on_reference_export(fake_csv, ex):
     res = run(fake_csv, ex)
     assert res['pass_R10'], res
-    assert res['logit']['compared'] > 900 and res['first_line_bar'] == {'pine': 552, 'reference': 552}
-    assert res['first_window_bar']['pine'] == 264 and res['n']['compared'] == res['logit']['compared']
-    assert all(res[c]['over_tol'] == 0 for c in ('z', 'm_ema', 's_ema', 'logM'))
+    assert res['logit']['compared'] > 4300 and res['first_line_bar'] == {'pine': 4360, 'reference': 4360}
+    assert res['first_window_bar']['pine'] == 264 and res['n']['compared'] == res['logit']['compared'] == res['k']['compared']
+    assert all(res[c]['over_tol'] == 0 for c in ('z', 'm_win', 's_win', 'logM', 'k'))
 
 
 def test_parity_catches_errors(fake_csv, ex, tmp_path):
     df = pd.read_csv(fake_csv)
-    i = int(np.argmax(np.isfinite(df['dbg logit'])) + 400)
-    for col, eps in (('dbg logit', 2e-6), ('dbg z', 2e-6), ('dbg s_ema', 2e-6), ('dbg logM', 2e-5), ('dbg n', 1.0),
-                     ('dbg side_close_dev', 1e-6)):
+    i = int(np.argmax(np.isfinite(df['dbg logit'])) + 4200)
+    for col, eps in (('dbg logit', 2e-6), ('dbg z', 2e-6), ('dbg m_win', 2e-6), ('dbg s_win', 2e-6), ('dbg logM', 2e-5),
+                     ('dbg n', 1.0), ('dbg k', 1.0), ('dbg side_close_dev', 1e-6)):
         bad = df.copy()
         bad.loc[i, col] += eps
         bad.to_csv(tmp_path / 'a.csv', index=False, float_format='%.10f', na_rep='NaN')
@@ -93,41 +92,15 @@ def test_live_last_bar_by_confirmed_counter(fake_csv, ex, tmp_path):
 
 
 def test_calc_bars_live_part_from_first_computed_window(ex, tmp_path):
-    b = synth.bars(1500, seed=23)
-    path = fake(ex, b, 'BTCUSDT', tmp_path / 'n.csv', calc_bars=800)
-    res = run(path, ex, calc_bars=800)
-    first_w = 1500 - 1 - 800 - 64 + 63
-    assert res['pass_R10'] and res['first_window_bar']['pine'] == first_w and res['first_line_bar']['pine'] == first_w + 288
+    b = synth.bars(4700, seed=23)
+    path = fake(ex, b, 'BTCUSDT', tmp_path / 'n.csv', calc_bars=4300)
+    res = run(path, ex, calc_bars=4300)
+    first_w = 4700 - 1 - 4300 - 64 + 63
+    assert res['pass_R10'] and res['first_window_bar']['pine'] == first_w and res['first_line_bar']['pine'] == first_w + 4096
     assert not run(path, ex, calc_bars=0)['pass_R10']                  # the full-history reference differs there
 
 
 def test_coarse_tick_symbol(ex, tmp_path):
-    b = synth.bars(1000, seed=2, tick=0.0001)
+    b = synth.bars(4500, seed=2, tick=0.0001)
     res = run(fake(ex, b, 'XLMUSDT', tmp_path / 'x.csv'), ex, 'XLMUSDT')
     assert res['pass_R10'] and res['sgn']['ties_abs_z_lt_1e-9'] > 0
-
-
-def run_partial(path, ex, symbol='BTCUSDT'):
-    tv, dec = parity.load_tv(str(path))
-    ref, w0 = parity.live_from_pine(parity.reference_pb(tv, ex, symbol), tv, ex, symbol)
-    return parity.compare_partial(tv, dec, ref, w0)
-
-
-def test_partial_export(ex, tmp_path):
-    """--partial (reference check on a short export, not R10): passes on the last 900 bars of a synthetic chart; catches a
-       wrong logit and a live part of another span; the first compared window is row 264 of the export."""
-    b = synth.bars(1500, seed=25)
-    full = pd.read_csv(fake(ex, b, 'BTCUSDT', tmp_path / 'f.csv'))
-    full.iloc[600:].to_csv(tmp_path / 'p.csv', index=False, float_format='%.10f', na_rep='NaN')
-    res = run_partial(tmp_path / 'p.csv', ex)
-    assert res['pass_partial'] and res['pass_R10'] is None and res['partial']['first_row'] == 264
-    assert res['partial']['first_bar_index'] == 864 and res['logM']['compared'] > 500
-    bad = full.iloc[600:].copy()
-    bad.iloc[400, bad.columns.get_loc('dbg logit')] += 2e-6
-    bad.to_csv(tmp_path / 'q.csv', index=False, float_format='%.10f', na_rep='NaN')
-    assert not run_partial(tmp_path / 'q.csv', ex)['pass_partial']
-    ex2 = json.loads(json.dumps(ex))
-    ex2['line']['live']['span_default'] = 4000                      # Pine with another span: the recursion differs
-    other = pd.read_csv(fake(ex2, b, 'BTCUSDT', tmp_path / 'g.csv'))
-    other.iloc[600:].to_csv(tmp_path / 'r.csv', index=False, float_format='%.10f', na_rep='NaN')
-    assert not run_partial(tmp_path / 'r.csv', ex)['pass_partial']
