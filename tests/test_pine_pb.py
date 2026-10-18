@@ -1,7 +1,8 @@
-"""PB Pine template (mri/pine_pb.py): its line-by-line transliteration (tests/pine_sim_pb.py) == the reference stream
-(mri.pb) < 1e-10, with and without 'compute only the last N bars', first line bar 552 (R16); the weights decoded from the
-script strings are the export weights bit for bit; strings only inside functions; the script fits the size measured on
-TradingView; tables, ruler and ceilings = export; project rules on wording, colors, literals."""
+"""PB Pine template (mri/pine_pb.py), session 5: its line-by-line transliteration (tests/pine_sim_pb.py) == the reference
+stream (mri.pb) < 1e-10, with and without 'compute only the last N bars', first line bar 4360 (R18) with one start mark;
+the weights decoded from the script strings are the export weights bit for bit; strings only inside functions; the script
+fits the size measured on TradingView; FLOOR, CEIL, ruler, L, n0, lag and the start of the line = export, no symbol tables,
+no settings of the live part; project rules on wording, colors, literals."""
 import os
 import re
 import sys
@@ -19,64 +20,73 @@ from mri.pine_gen import ALPHA0, decode_dense  # noqa: E402
 from mri.pine_pb import (CALC_BARS_DEFAULT, PRODUCTION, PROTO, SIZE_LIMIT_UTF8, flat_values, make_indicator,  # noqa: E402
                           make_script, sizes, weight_decls)
 
-FLOOR = 0.2
+FLOOR = pb.FLOOR
 G = np.random.default_rng(3)
 RULER = (np.sort(G.normal(-1.0, 1.4, 37)) + np.arange(37) * 1e-3, np.sort(G.normal(0, 1.2, 37)))
+LIVE = {'L': 4032, 'n0': 144, 'lag': 64, 'show_from_window': 4096}
 
 
-@pytest.mark.parametrize('calc_bars', [0, 700])
+@pytest.mark.parametrize('calc_bars', [0, 4250])
 def test_pine_template_logic_equals_stream(calc_bars):
-    b = synth.bars(1500, seed=5, gaps=[(1100, 3)])
+    b = synth.bars(4700, seed=5, gaps=[(1100, 3)])
     p = pb.random_params(seed=6)
-    sp = pine_sim_pb.run(b, p, FLOOR, RULER, calc_bars=calc_bars, signed=nt3.SIDE_SIGNED[2:], span=400, warm=100)
-    ref = pb.run(b, p, FLOOR, *RULER, span=400, warm=100)
+    sp = pine_sim_pb.run(b, p, FLOOR, RULER, calc_bars=calc_bars, signed=nt3.SIDE_SIGNED[2:])
+    ref = pb.run(b, p, FLOOR, *RULER)
     if calc_bars:            # windows of the computed bars have the logits of the full stream; the live part starts there
         heavy0 = len(b) - 1 - calc_bars - L
         assert np.isfinite([x['logit'] for x in ref[:heavy0 + L - 1]]).any()
-        live = linem.LiveM(*RULER, span=400, warm=100)
+        live = linem.LiveWin(*RULER)
         for x in ref:
-            x.update({'z': np.nan, 'm_ema': np.nan, 's_ema': np.nan, 'log_m': np.nan, 'shown': False})
+            x.update({'z': np.nan, 'm_win': np.nan, 's_win': np.nan, 'k': -1, 'log_m': np.nan, 'shown': False})
             if x['bar'] >= heavy0 + L - 1 and np.isfinite(x['logit']):
                 x.update(live.update(x['logit']))
             else:
                 x['logit'] = np.nan
     sl = np.array([x['logit'] for x in ref])
     fin = np.isfinite(sl)
-    assert np.array_equal(fin, np.isfinite(sp['logit'])) and fin.sum() > 300
+    assert np.array_equal(fin, np.isfinite(sp['logit'])) and fin.sum() > 4100
     assert np.abs(sp['logit'][fin] - sl[fin]).max() < 1e-10
-    for k in ('z', 'm_ema', 's_ema', 'log_m'):
+    for k in ('z', 'm_win', 's_win', 'log_m'):
         assert np.abs(sp[k][fin] - np.array([x[k] for x in ref])[fin]).max() < 1e-10, k
+    assert np.array_equal(sp['k'][fin], np.array([x['k'] for x in ref])[fin])
     assert np.array_equal(sp['shown'], np.array([x['shown'] for x in ref]))
     assert max(np.abs(sp['side'][i] - x['side_raw']).max() for i, x in enumerate(ref) if np.isfinite(x['logit'])) < 1e-10
     first = int(np.argmax(sp['shown']))
-    if calc_bars == 0:
-        assert int(np.argmax(fin)) == 264 and first == 264 + 100
-    else:
-        assert int(np.argmax(fin)) == heavy0 + L - 1 and first == heavy0 + L - 1 + 100
+    w0 = 264 if calc_bars == 0 else heavy0 + L - 1                   # first computed window
+    assert int(np.argmax(fin)) == w0
+    assert first == w0 + 4096 + 64                                    # 64 windows over the gap at bar 1100 are invalid
+    assert np.where(sp['start'])[0].tolist() == [first]               # one mark at the start of the line
     n = sp['n'][fin]
     assert np.array_equal(n, np.arange(fin.sum()))
     m = sp['M'][sp['shown']]
     lm = sp['log_m'][sp['shown']]
-    assert np.allclose(m, np.where(lm > 0, np.minimum(np.exp(lm), 34.0), np.where(lm < 0, np.minimum(np.exp(-lm), 21.0), 1.0)))
+    assert np.allclose(m, np.where(lm != 0, np.minimum(np.exp(np.abs(lm)), 10.0), 1.0), rtol=1e-14, atol=0.0)
 
 
-def test_first_line_bar_552_default_warmup():
-    b = synth.bars(800, seed=7)
+def test_first_line_bar_4360():
+    b = synth.bars(4450, seed=7)
     p = pb.random_params(seed=8)
     sp = pine_sim_pb.run(b, p, FLOOR, RULER, signed=nt3.SIDE_SIGNED[2:])
-    assert int(np.argmax(np.isfinite(sp['logit']))) == 264 and int(np.argmax(sp['shown'])) == 552
+    assert int(np.argmax(np.isfinite(sp['logit']))) == 264 and int(np.argmax(sp['shown'])) == 4360
+    assert np.where(sp['start'])[0].tolist() == [4360] and sp['k'][4359] == 4032 and sp['n'][4360] == 4096
 
 
-TABLE = {'BTCUSDT': {'floor': 0.17, 'ceil_more': 13.0, 'ceil_less': 13.0},
-         'ETHUSDT': {'floor': 0.18, 'ceil_more': 3.0, 'ceil_less': 21.0}}
-UNKNOWN = {'floor': 0.2, 'ceil_more': 8.0, 'ceil_less': 8.0}
-PASSPORT = {'weights_source': 'random', 'data_end': '-', 'code_version': 'test', 'ceil_pool': {'orange': 34.0, 'blue': 21.0}}
+def test_ceiling_label_at_run_starts():
+    """'10+' once at the start of each run above 10 (both colours), the line at 10 there."""
+    lm = np.log([2.0, 12.0, 15.0, 3.0, 1 / 11.0, 1 / 20.0, 11.0])
+    v, col, cap = linem.display(lm)
+    starts = cap & ~np.concatenate([[False], (cap & (col > 0))[:-1]]) & (col > 0) | \
+        cap & ~np.concatenate([[False], (cap & (col < 0))[:-1]]) & (col < 0)
+    assert starts.tolist() == [False, True, False, False, True, False, True] and (v[cap] == 10.0).all()
+
+
+PASSPORT = {'weights_source': 'random', 'data_end': '-', 'code_version': 'test'}
 
 
 @pytest.fixture(scope='module')
 def proto():
     p = pb.random_params(seed=11)
-    return p, make_script(p, RULER, TABLE, UNKNOWN, PASSPORT)
+    return p, make_script(p, RULER, FLOOR, 10.0, LIVE, PASSPORT)
 
 
 def script_weights(script):
@@ -148,15 +158,29 @@ def test_wording_colors_literals(proto, which):
     assert [ln.strip() for ln in body.splitlines() if re.search(r'\btime\b', ln)] == [
         'bool  gap    = bar_index > 0 and (time - time[1]) > GAPMS']          # time: grid gaps only
     dbg = re.findall(r'^plot\([^\n]*"dbg ([^"]+)"', code, flags=re.M)
-    assert dbg == ['logit', 'z', 'm_ema', 's_ema', 'logM', 'n', 'norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'D', 'x_end',
-                   'sgn'] + [f'side_{n}' for n in nt3.SIDE_NAMES] + ['confirmed', 'bar_index']     # R10 addendum 3
+    assert dbg == ['logit', 'z', 'm_win', 's_win', 'k', 'logM', 'n', 'norm', 'r', 'step_hl2', 'step_hlc3', 'g', 'D',
+                   'x_end', 'sgn'] + [f'side_{n}' for n in nt3.SIDE_NAMES] + ['confirmed', 'bar_index']   # R10 addendum 4
     assert len(re.findall(r'^plot\(', code, flags=re.M)) == 1 + len(dbg)
-    # the live part changes only on a confirmed bar with a valid window
+    # the live part changes only on a confirmed bar with a valid window; the ring without array.shift
     blk = code[code.index('if barstate.isconfirmed and bar_index >= heavyFrom'):code.index('// ------', code.index(
         'if barstate.isconfirmed and bar_index >= heavyFrom'))]
-    for v in ('n1', 'n2', 'dd'):
-        assert len(re.findall(rf'^\s+{v}\s+:=', code, flags=re.M)) == 1 and re.search(rf'\n        {v}\s+:=', blk)
+    for v in ('S1', 'S2'):
+        assert len(re.findall(rf'^\s+{v}\s+[-+]=', code, flags=re.M)) == 2 and len(re.findall(rf'\n\s+{v}\s+[-+]=', blk)) == 2
+    assert re.findall(r'array\.\w+\(ZR\b', code) == ['array.get(ZR', 'array.set(ZR', 'array.get(ZR']
+    assert all(f'array.{fn}(ZR' in blk for fn in ('get', 'set')) and 'array.shift(ZR' not in code
     assert len(re.findall(r'nW\s+\+= 1', code)) == 1 and re.search(r'\n        nW\s+\+= 1', blk)
+    # one floor, one ceiling, no constants of the symbol and no settings of the live part
+    for x in ('syminfo.ticker', 'buildFloors', 'buildCeil', 'FLOORS', 'CEILO', 'CEILB', 'known', 'spanIn', 'warmIn',
+              'not a Binance spot', 'span / warm', 'KEMA', 'm_ema'):
+        assert x not in code, x
+    assert len(re.findall(r'^const float FLOOR = 0\.20000000298023224 ', code, flags=re.M)) == 1
+    assert len(re.findall(r'^const float CEIL  = 10\.0 ', code, flags=re.M)) == 1
+    # the start mark: a plot shape with a constant text (not a label), at the window SHOW only
+    st = re.findall(r'^plotshape\(shownM and nW == SHOW, "Line start", shape\.diamond, location\.bottom, color\.gray, '
+                    r'text = "([^"]+)", textcolor = chart\.fg_color, size = size\.tiny\)$', code, flags=re.M)
+    assert st == ['MRI starts here\\ncalibrated on 4032 windows of this chart']
+    nocom = re.sub(r'//.*', '', code)
+    assert nocom.count('label.new(') == 2 and nocom.count('"10+"') == 2
 
 
 @pytest.mark.parametrize('production', [False, True])
@@ -172,23 +196,18 @@ def test_script_is_generated_from_export(production):
     assert np.array_equal(np.array(decode_dense(''.join(script_weights(script)))),
                           flat_values(from_dict(ex['model'])).astype(np.float64))
 
-    def table(fn):
-        body = re.search(rf'{fn}\(\) =>\n(.*?)\n    m\n', script, flags=re.S).group(1)
-        return {k: float(v) for k, v in re.findall(r'map\.put\(m, "([A-Z]+)", (-?[0-9.]+)\)', body)}
-    c = ex['line']['ceilings']
-    assert table('buildFloors') == ex['floors']['floor_L64']
-    assert table('buildCeilMore') == {a: v['orange'] for a, v in c['by_symbol'].items()}
-    assert table('buildCeilLess') == {a: v['blue'] for a, v in c['by_symbol'].items()}
-    unk = lambda name: float(re.search(rf'var float {name}\s*= known \? map\.get\(\w+, syminfo\.ticker\) : (-?[0-9.]+)',
-                                       script).group(1))
-    assert unk('FLOOR') == ex['floors']['unknown_symbol']
-    assert unk('CEIL_O') == c['unknown_symbol']['orange'] and unk('CEIL_B') == c['unknown_symbol']['blue']
+    const = lambda name: re.search(rf'^const (?:float|int)\s+{name}\s*= (-?[0-9.]+)', script, flags=re.M).group(1)
+    assert const('FLOOR') == repr(ex['floor']['value']) == '0.20000000298023224'
+    assert float(const('FLOOR')) == ex['floor']['value'] == pb.FLOOR
+    assert float(const('CEIL')) == ex['line']['ceiling']['value'] == 10.0
+    lv = ex['line']['live']
+    assert (int(const('LW')), float(const('N0')), int(const('LAG')), int(const('SHOW'))) == (
+        lv['L'], lv['n0'], lv['lag'], ex['line']['show']['from_window']) == (4032, 144, 64, 4096)
+    assert float(const('S_LO')) == lv['s_lo'] == 0.75
     arr = lambda name: [float(x) for x in re.search(rf'var array<float> {name} = array\.from\(([^)]*)\)', script).group(1)
                         .split(', ')]
     assert arr('RQ') == ex['line']['ruler']['q'] and arr('RZ') == ex['line']['ruler']['zk']
-    assert re.search(r'const int   SPAN0  = 8064\b', script) and re.search(r'const int   WARM0  = 288\b', script)
-    assert 'input.int(8064, "Live part: span, bars"' in script and 'input.int(288, "Line warm-up, windows"' in script
-    assert 'const float S_LO   = 0.75' in script
+    assert 'map.put(m, "' not in script and 'syminfo' not in script
     if production:
         assert 'indicator("Market Randomness Index", shorttitle = "MRI", overlay = false' in script
         assert f'input.int({CALC_BARS_DEFAULT}, "Compute only the last N bars' in script and CALC_BARS_DEFAULT == 10000
@@ -213,18 +232,19 @@ def test_production_differs_from_prototype_only_in_title_and_default_n():
 
 
 def test_pine_template_on_real_weights_equals_golden():
-    """The transliteration with the export weights, ruler and floor of BTC on the first 1200 bars of the golden file."""
+    """The transliteration with the export weights, ruler, floor and ceiling on the first 4600 bars of the golden file."""
     import pandas as pd
     from mri.export_pb import EXPORT, GOLDEN, load_export, params_line
     ex = load_export(os.path.join(ROOT, EXPORT))
-    g = pd.read_csv(os.path.join(ROOT, GOLDEN), nrows=1200)
+    g = pd.read_csv(os.path.join(ROOT, GOLDEN), nrows=4600)
     p, q, zk = params_line(ex)
-    c = ex['line']['ceilings']['by_symbol']['BTCUSDT']
-    sp = pine_sim_pb.run(g[['time', 'open', 'high', 'low', 'close']], p, ex['floors']['floor_L64']['BTCUSDT'], (q, zk),
-                         signed=nt3.SIDE_SIGNED[2:], ceil=(c['orange'], c['blue']))
+    sp = pine_sim_pb.run(g[['time', 'open', 'high', 'low', 'close']], p, ex['floor']['value'], (q, zk),
+                         signed=nt3.SIDE_SIGNED[2:], ceil=ex['line']['ceiling']['value'])
     fin = np.isfinite(g['logit'].to_numpy())
     assert np.array_equal(fin, np.isfinite(sp['logit']))
-    for k in ('logit', 'z', 'm_ema', 's_ema', 'log_m'):
+    for k in ('logit', 'z', 'm_win', 's_win', 'log_m'):
         x = g[k].to_numpy()[fin]
         assert np.abs(sp[k][fin] - x).max() < 1e-9 * max(1.0, np.abs(x).max()), k
-    assert np.array_equal(sp['shown'], g['shown'].to_numpy() > 0) and int(np.argmax(sp['shown'])) == 552
+    assert np.array_equal(sp['k'][fin], g['k'].to_numpy()[fin])
+    assert np.array_equal(sp['shown'], g['shown'].to_numpy() > 0) and int(np.argmax(sp['shown'])) == 4360
+    assert np.where(sp['start'])[0].tolist() == [4360]

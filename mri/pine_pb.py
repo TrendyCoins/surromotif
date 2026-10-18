@@ -1,7 +1,7 @@
-"""Pine Script v6 generator of the PB_s64h24_d1 indicator — one script, no libraries (session 4).
+"""Pine Script v6 generator of the PB_s64h24_d1 indicator — one script, no libraries (sessions 4-5).
 
-    python -m mri.pine_pb               # pine/proto_pb.pine: the production template on the real weights, ruler and
-                                        # ceilings, named "prototype" until the parity check (R10 addendum 3)
+    python -m mri.pine_pb               # pine/proto_pb.pine: the production template on the real weights, ruler, floor
+                                        # and ceiling, named "prototype" until the parity check (R10 addendum 4)
     python -m mri.pine_pb --production  # pine/mri.pine (after the TradingView measurements: default N of
                                         # "Compute only the last N bars")
 
@@ -16,8 +16,10 @@ Compute per confirmed bar (the same as mri.pb.StreamingPB; tests/pine_sim_pb.py 
     per channel 3 taps with the dilation from the ring of the previous layer (elementwise), then one matrix.mult (64 x 64)
     by (64 x 2), then ReLU; layer 4 into two (CH x 33) matrices; pooled mean / max / last over 33 positions, / D; head
     209 -> 24 -> 1. History inputs — as NT3 (mri/pine_nt3.py: per-bar scale series read back with [63] / [65],
-    ta.highest / ta.lowest / ta.sma over 199 bars, path chunks at fixed offsets). Line M: z by the ruler (37 knots), the
-    live part — `var` state n1, n2, d, n — changes only on barstate.isconfirmed and only on a valid window.
+    ta.highest / ta.lowest / ta.sma over 199 bars, path chunks at fixed offsets). Line M (session 5, rules R17-R19): one
+    floor FLOOR for every symbol, z by the ruler (37 knots), the live part — formula A: `var` ring of 4096 z (index
+    n % 4096), running S1, S2 and the window number nW — changes only on barstate.isconfirmed and only on a valid window
+    (no array.shift on the ring); the line from nW >= 4096 with one mark at its start; one ceiling 10 for both colours.
 """
 import os
 
@@ -25,7 +27,7 @@ import numpy as np
 
 from .nt3 import SIDE_NAMES, SIDE_SIGNED
 from .pine_gen import ALPHA0, ALPHA_N, encode_dense, fmt
-from .pine_nt3 import ALPHA_BLOCK, DECODE_FLOAT, STR_MAX, chunk_offsets, float_list, fmt_d, symbol_tables
+from .pine_nt3 import ALPHA_BLOCK, DECODE_FLOAT, STR_MAX, chunk_offsets, float_list, fmt_d
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 L = 64
@@ -106,11 +108,13 @@ HEAD = r'''//@version=6
 // M = 1 — indistinguishable from random. The SuMo classifier (a streaming CNN, {n_w} weights inside this script) scores
 // the window and the 200 bars before it, in bars only (no clock, no calendar). The score becomes M without constants of
 // the symbol: a ruler of the model (z — the place of the score among random windows, one table for every symbol) and a
-// live part of this chart (how the scores of this chart's windows are spread: EMA of z and z^2 over {span} bars);
-// M is the ratio of the two bells "windows of this chart" / "random windows". On a random market M stays near 1.
+// live part of this chart: the mean and spread of z over the last {lw} windows ending {lag} windows before the current
+// one, plus {n0} virtual random windows; M is the ratio of the two bells "windows of this chart" / "random windows".
+// The line starts at the window {show} (bar {first_bar} of continuous data): before it the calibration set of this chart
+// is not full ({lw} windows) and nothing is drawn. On a random market M stays near 1.
 // M is a frequency ratio of the window's shape, not a forecast.
-// Checked range: each table symbol and side has its ceiling (at most {pool_o} more frequent / {pool_b} less frequent; for
-// symbols outside the table {unk_o} / {unk_b}); above it the line stays at the ceiling, marked "N+".
+// Checked range: up to {ceil} on both sides; above it the line stays at {ceil}, marked "{ceil}+".
+// One floor of the window divisor for every symbol ({floor_short} of the bar norm).
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
 // Passport: weights {source}, data up to {data_end}, export of code {code_version}.
 indicator("{title}", shorttitle = "{short}", overlay = false, precision = 2, max_labels_count = 500)
@@ -121,20 +125,12 @@ int   paleT    = input.int(70, "Transparency below the threshold", minval = 0, m
 color colMore  = input.color(color.rgb(242, 140, 40), "More frequent than random", tooltip = "M > 1 on the more frequent side: windows of this shape are M times more frequent in real markets than in a random walk.")
 color colLess  = input.color(color.rgb(47, 128, 237), "Less frequent than random", tooltip = "M > 1 on the less frequent side: windows of this shape are M times less frequent in real markets than in a random walk.")
 bool  showMarks = input.bool(false, "Marks on the price chart at M >= threshold")
-int   spanIn   = input.int({span}, "Live part: span, bars", minval = 2, group = "Advanced", tooltip = "EMA span of the live part (spread of the scores of this chart). The promise of the line is checked at {span} only.")
-int   warmIn   = input.int({warm}, "Line warm-up, windows", minval = 0, group = "Advanced", tooltip = "The line is shown from the window number {warm} of the chart (windows counted from 0). The promise is checked at {warm} only.")
 bool  dbg      = input.bool(false, "Debug values (parity check)", group = "Advanced", tooltip = "Plots the internal values of each bar for checking against the Python reference (Export chart data).")
-int   calcBars = input.int({calc_bars}, "Compute only the last N bars (0 = all history)", minval = 0, group = "Advanced", tooltip = "The network and the live part run on the last N bars only (TradingView limits the script time on the whole history); the line appears after the warm-up.")
+int   calcBars = input.int({calc_bars}, "Compute only the last N bars (0 = all history)", minval = 0, group = "Advanced", tooltip = "The network and the live part run on the last N bars only (TradingView limits the script time on the whole history); the line starts {show} windows after the first computed window.")
 
-// ---------------------------------------------------------------- symbol table: floor of the window divisor, ceilings of M
-{tables}
-var map<string, float> FLOORS = buildFloors()
-var map<string, float> CEILO  = buildCeilMore()
-var map<string, float> CEILB  = buildCeilLess()
-bool  known = syminfo.prefix == "BINANCE" and not str.endswith(syminfo.ticker, ".P") and map.contains(FLOORS, syminfo.ticker)
-var float FLOOR  = known ? map.get(FLOORS, syminfo.ticker) : {floor_unknown}
-var float CEIL_O = known ? map.get(CEILO, syminfo.ticker) : {ceil_o_unknown}   // checked range of M, more frequent side
-var float CEIL_B = known ? map.get(CEILB, syminfo.ticker) : {ceil_b_unknown}   // checked range of M, less frequent side
+// ---------------------------------------------------------------- one floor and one ceiling for every symbol
+const float FLOOR = {floor}   // floor of the window divisor, in units of the bar norm (float32 of 0.2)
+const float CEIL  = {ceil_f}                  // checked range of M on both sides; above it "{ceil}+"
 bool  tf5   = timeframe.period == "5"
 float GAPMS = 1.5 * timeframe.in_seconds() * 1000.0   // interval > 1.5 bars -> grid gap
 
@@ -150,8 +146,10 @@ const float EPS    = 0.0001       // orientation tie rule: flip only if X_end < 
 const float SQ199  = {sq199}
 const float S_SD   = {s_sd}
 const float LVL_SD = {lvl_sd}
-const int   SPAN0  = {span}         // live part: checked span, bars
-const int   WARM0  = {warm}          // line warm-up: checked number of windows
+const int   LW     = {lw}         // live part: windows in the calibration set
+const float N0     = {n0_f}        // virtual random windows (z = 0, spread 1)
+const int   LAG    = {lag}           // the set ends LAG windows before the current one (no shared bars)
+const int   SHOW   = {show}         // the line from the window number SHOW (= LW + LAG, the full set); ring size of z
 const float S_LO   = {s_lo}
 const float PEAK_EPS = 0.000000000001
 var array<float> SIDE_MU = array.from({side_mu})
@@ -191,12 +189,12 @@ var float prevD2 = na                              // (HLC/3 - close) / norm of 
 var int   okRun  = 0                               // consecutive valid bars
 var int   firstR = -1                              // bar_index of the first valid r
 var int   nConf  = 0                               // confirmed bars processed (debug: the state advanced)
-// live part of the line M: EMA of z and z^2 over the valid windows of this chart (n1, n2 / d), window number nW
-var float n1 = 0.0
-var float n2 = 0.0
-var float dd = 0.0
+// live part of the line M: z of the last SHOW valid windows in a ring (index nW % SHOW), sums S1, S2 of z and z^2 over
+// the calibration set (windows nW - SHOW + 1 .. nW - LAG), window number nW
+var array<float> ZR = array.new<float>(SHOW, 0.0)
+var float S1 = 0.0
+var float S2 = 0.0
 var int   nW = -1
-var float KEMA = 1.0 - 2.0 / (spanIn + 1.0)
 
 // conv rings: inputs (4 x 2*3), layers 1..3 (CH x 2*5, 2*9, 2*17); layer 4 per stream (CH x 33)
 var matrix<float> R0  = matrix.new<float>(4, 6, 0.0)
@@ -367,8 +365,9 @@ array<float> HST = array.from(P1h, P2h, P3h, P4h, P5h, P6h, P7h, P8h, R1h, R2h, 
 int heavyFrom = calcBars == 0 ? 0 : math.max(last_bar_index - calcBars - L, 0)
 float logit = na
 float zz    = na
-float mE    = na
-float sE    = na
+float mW    = na
+float sW    = na
+int   kW    = na
 float logM  = na
 
 if barstate.isconfirmed
@@ -397,59 +396,69 @@ if barstate.isconfirmed and bar_index >= heavyFrom
         logit := computeLogit(hc, HST)
         zz    := rulerZ(logit)
         nW    += 1
-        n1    := KEMA * n1 + zz
-        n2    := KEMA * n2 + zz * zz
-        dd    := KEMA * dd + 1.0
-        mE    := n1 / dd
-        sE    := math.sqrt(math.max(n2 / dd - mE * mE, 0.0))
-        logM  := logMOf(zz, mE, sE)
+        int slotZ = nW % SHOW
+        if nW >= SHOW                              // the window nW - SHOW leaves the set
+            float zo = array.get(ZR, slotZ)
+            S1 -= zo
+            S2 -= zo * zo
+        array.set(ZR, slotZ, zz)
+        if nW >= LAG                               // the window nW - LAG enters it
+            float zi = array.get(ZR, (nW - LAG) % SHOW)
+            S1 += zi
+            S2 += zi * zi
+        kW    := math.min(math.max(nW - LAG + 1, 0), LW)
+        float kk = math.max(kW, 1)
+        float mh = S1 / kk
+        float vh = math.max(S2 / kk - mh * mh, 0.0)
+        mW    := S1 / (kW + N0)
+        sW    := math.sqrt((kW * vh + N0) / (kW + N0))
+        logM  := logMOf(zz, mW, sW)
 
 '''
 
 FOOT = r'''// ---------------------------------------------------------------- display
-bool  shownM = not na(logM) and nW >= warmIn
+bool  shownM = not na(logM) and nW >= SHOW
 float Mraw   = shownM ? math.exp(math.abs(logM)) : na
 bool  more   = shownM and logM > 0
 bool  less   = shownM and logM < 0
-float Mshow  = na(Mraw) ? na : more ? math.min(Mraw, CEIL_O) : less ? math.min(Mraw, CEIL_B) : 1.0
+float Mshow  = na(Mraw) ? na : more or less ? math.min(Mraw, CEIL) : 1.0
 color baseC  = more ? colMore : less ? colLess : color.gray
 plot(Mshow, "M", color = Mraw >= thr ? baseC : color.new(baseC, paleT), linewidth = 2)
 hline(1.0, "Random (M = 1)", color = color.gray, linestyle = hline.style_solid)
 hline(thr, "Threshold", color = color.gray, linestyle = hline.style_dashed)
-// above the ceiling: "N+" once at the start of each run
-bool atO = more and Mraw > CEIL_O
-bool atB = less and Mraw > CEIL_B
+// above the checked range: "{ceil}+" once at the start of each run
+bool atO = more and Mraw > CEIL
+bool atB = less and Mraw > CEIL
 if barstate.isconfirmed and atO and not atO[1]
-    label.new(bar_index, CEIL_O, str.tostring(CEIL_O) + "+", style = label.style_none, textcolor = colMore, size = size.small)
+    label.new(bar_index, CEIL, "{ceil}+", style = label.style_none, textcolor = colMore, size = size.small)
 if barstate.isconfirmed and atB and not atB[1]
-    label.new(bar_index, CEIL_B, str.tostring(CEIL_B) + "+", style = label.style_none, textcolor = colLess, size = size.small)
+    label.new(bar_index, CEIL, "{ceil}+", style = label.style_none, textcolor = colLess, size = size.small)
+// the start of the line: one mark with a constant text at the window SHOW (a plot shape, not a label: labels share the
+// limit max_labels_count with "{ceil}+" and the oldest are removed)
+plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.gray, text = "{start_text}", textcolor = chart.fg_color, size = size.tiny)
 plotshape(showMarks and more and Mraw >= thr, "Mark: more frequent than random", shape.circle, location.abovebar, colMore, size = size.tiny, force_overlay = true)
 plotshape(showMarks and less and Mraw >= thr, "Mark: less frequent than random", shape.circle, location.abovebar, colLess, size = size.tiny, force_overlay = true)
 
 // ---------------------------------------------------------------- messages
-var table MSG = table.new(position.top_right, 1, 4, bgcolor = color.new(color.gray, 85))
+var table MSG = table.new(position.top_right, 1, 2, bgcolor = color.new(color.gray, 85))
 if barstate.islast
-    table.clear(MSG, 0, 0, 0, 3)
+    table.clear(MSG, 0, 0, 0, 1)
     int row = 0
     if not tf5
         table.cell(MSG, 0, row, "MRI: the model was trained and checked on 5-minute bars only", text_size = size.small, text_color = chart.fg_color)
         row += 1
-    if not known
-        table.cell(MSG, 0, row, "{unknown_msg}", text_size = size.small, text_color = chart.fg_color)
-        row += 1
-    if spanIn != SPAN0 or warmIn != WARM0
-        table.cell(MSG, 0, row, "MRI: span / warm-up differ from the checked " + str.tostring(SPAN0) + " / " + str.tostring(WARM0) + ": not checked", text_size = size.small, text_color = chart.fg_color)
-        row += 1
-    if nW < warmIn
-        int left = nW >= 0 ? warmIn - nW : (firstR < 0 ? NN + 1 : math.max(firstR, NN + 1)) + L - 1 - bar_index + warmIn
+    if nW < SHOW
+        int firstEnd = math.max((firstR < 0 ? NN + 1 : math.max(firstR, NN + 1)) + L - 1, heavyFrom + L - 1)
+        int left = nW >= 0 ? SHOW - nW : firstEnd - bar_index + SHOW
         table.cell(MSG, 0, row, "MRI warm-up: " + str.tostring(left) + " bars to the first value", text_size = size.small, text_color = chart.fg_color)
 
-// ---------------------------------------------------------------- debug values (parity with the Python reference, R10 addendum 3)
+// ---------------------------------------------------------------- debug values (parity with the Python reference, R10 addendum 4)
 display_dbg = dbg ? display.all : display.none
 plot(logit, "dbg logit", display = display_dbg, precision = 10)
 plot(zz, "dbg z", display = display_dbg, precision = 10)
-plot(mE, "dbg m_ema", display = display_dbg, precision = 10)
-plot(sE, "dbg s_ema", display = display_dbg, precision = 10)
+plot(mW, "dbg m_win", display = display_dbg, precision = 10)
+plot(sW, "dbg s_win", display = display_dbg, precision = 10)
+plot(kW, "dbg k", display = display_dbg, precision = 0)
 plot(logM, "dbg logM", display = display_dbg, precision = 10)
 plot(na(logit) ? na : nW, "dbg n", display = display_dbg, precision = 0)
 plot(nrm, "dbg norm", display = display_dbg, precision = 10)
@@ -465,20 +474,22 @@ plot(nConf, "dbg confirmed", display = display_dbg, precision = 0)
 plot(bar_index, "dbg bar_index", display = display_dbg, precision = 0)
 '''
 
-TABLE_FIELDS = [('buildFloors', 'floor'), ('buildCeilMore', 'ceil_more'), ('buildCeilLess', 'ceil_less')]
-UNKNOWN_MSG = 'MRI: not a Binance spot symbol of the table: floor and ceilings of an unknown symbol, accuracy not verified'
+START_TEXT = 'MRI starts here\\ncalibrated on {lw} windows of this chart'      # constant text of the mark at the line start
 
 
-def make_script(p, ruler, table, unknown, passport, title='Market Randomness Index', short='MRI', calc_bars=0,
-                span=8064, warm=288, s_lo=0.75, unknown_msg=UNKNOWN_MSG):
-    """The indicator text. p: Params (PB shapes, separable); ruler: (q, zk) — 37 numbers each; table: {symbol: floor,
-       ceil_more, ceil_less}; unknown: the same fields for a symbol outside the table; passport: weights_source,
-       data_end, code_version."""
+def make_script(p, ruler, floor, ceil, live, passport, title='Market Randomness Index', short='MRI', calc_bars=0,
+                s_lo=0.75, start_text=START_TEXT):
+    """The indicator text. p: Params (PB shapes, separable); ruler: (q, zk) — 37 numbers each; floor — one floor of the
+       window divisor (R17); ceil — one ceiling for both colours (R19); live: {L, n0, lag, show_from_window} (R18);
+       passport: weights_source, data_end, code_version."""
     if p.pw is None:
         raise ValueError('the PB template needs separable layers 2..4')
     q, zk = (list(map(float, x)) for x in ruler)
     if len(q) != len(zk) or not np.all(np.diff(q) > 0):
         raise ValueError('ruler: strictly increasing quantiles and their z')
+    lw, n0, lag, show = (int(live[k]) for k in ('L', 'n0', 'lag', 'show_from_window'))
+    if show != lw + lag:
+        raise ValueError('the line starts at the full set: show_from_window = L + lag')
     vals = flat_values(p)
     ch, hidden, n_side = p.conv[0].shape[0], p.head0_w.shape[0], len(p.side_mu)
     n_feat = 3 * ch + n_side
@@ -491,51 +502,46 @@ def make_script(p, ruler, table, unknown, passport, title='Market Randomness Ind
                        for k, (n, e, s) in enumerate(chunk_offsets()))
     dbg_side = '\n'.join(f'plot(array.get(DBG, {3 + j}), "dbg side_{nm}", display = display_dbg, precision = 10)'
                          for j, nm in enumerate(SIDE_NAMES))
-    g = lambda v: f'{v:g}'
-    pool = passport.get('ceil_pool', {'orange': max(v['ceil_more'] for v in table.values()),
-                                      'blue': max(v['ceil_less'] for v in table.values())})
-    head = HEAD.format(title_line=title if short == 'MRI' else f'{title} ({short})', n_w=len(vals), span=span, warm=warm,
-                       pool_o=g(pool['orange']), pool_b=g(pool['blue']), unk_o=g(unknown['ceil_more']),
-                       unk_b=g(unknown['ceil_less']), source=passport['weights_source'], data_end=passport['data_end'],
+    cg = f'{float(ceil):g}'
+    head = HEAD.format(title_line=title if short == 'MRI' else f'{title} ({short})', n_w=len(vals), lw=lw, lag=lag, n0=n0,
+                       show=show, first_bar=264 + show, ceil=cg, floor_short=f'{float(floor):.1f}',
+                       source=passport['weights_source'], data_end=passport['data_end'],
                        code_version=passport['code_version'], title=title, short=short, calc_bars=calc_bars,
-                       tables=symbol_tables(table, TABLE_FIELDS), floor_unknown=fmt(unknown['floor']),
-                       ceil_o_unknown=fmt(unknown['ceil_more']), ceil_b_unknown=fmt(unknown['ceil_less']))
+                       floor=repr(float(floor)), ceil_f=fmt_d(float(ceil)))
     consts = CONSTS.format(ch=ch, hidden=hidden, n_side=n_side, sq199=fmt_d(np.sqrt(199.0)), s_sd=fmt(p.s_sd),
                            lvl_sd=fmt(p.lvl_sd), side_mu=float_list(p.side_mu), side_sd=float_list(p.side_sd),
-                           signed=', '.join('1.0' if s else '0.0' for s in SIDE_SIGNED[2:]), span=span, warm=warm,
-                           s_lo=fmt_d(s_lo), ruler_q=', '.join(fmt_d(x) for x in q), ruler_z=', '.join(fmt_d(x) for x in zk))
+                           signed=', '.join('1.0' if s else '0.0' for s in SIDE_SIGNED[2:]), lw=lw, n0_f=f'{n0}.0',
+                           lag=lag, show=show, s_lo=fmt_d(s_lo), ruler_q=', '.join(fmt_d(x) for x in q),
+                           ruler_z=', '.join(fmt_d(x) for x in zk))
     core = CORE.format(weights_title=wtitle, weights=wblock, matrices=mdecl, off_h3=off, off_h3_end=off + hidden,
                        off_hb3=off + hidden, chunks=chunks)
-    foot = FOOT.format(dbg_side=dbg_side, unknown_msg=unknown_msg)
+    foot = FOOT.format(dbg_side=dbg_side, ceil=cg, start_text=start_text.format(lw=lw))
     return head + consts + core + foot
 
 
-# 'Compute only the last N bars' of the production script, from the Pine Profiler (BINANCE:BTCUSDT 5M, 21 832 bars):
-# N = 0 — 23 s (heavy part ~1.0 ms per bar), N = 10000 — 12 s; a 40 000-bar chart with N = 10000 — ~13 s (limit 40 s)
+# 'Compute only the last N bars' of the production script, from the Pine Profiler of session 4 (BINANCE:BTCUSDT 5M,
+# 21 832 bars): N = 0 — 23 s (heavy part ~1.0 ms per bar), N = 10000 — 12 s; a 40 000-bar chart with N = 10000 — ~13 s
+# (limit 40 s). Session 5 keeps N = 10000 (the line on the last ~5 900 bars: 4096 windows of the computed part first)
 CALC_BARS_DEFAULT = 10000
 
 
 def make_indicator(ex, production=False, calc_bars=None):
     """The PB indicator from the export dict (export/mri_model_pb.json): production — pine/mri.pine (default N of the
-       measurement); prototype (pine/proto_pb.pine, the parity check was made on it) — N = 0 and the prototype title."""
+       measurement); prototype (pine/proto_pb.pine, the parity check is made on it) — N = 0 and the prototype title."""
     from .params import from_dict
     p = from_dict(ex['model'])
     if (ex['tie_rule']['eps'] != 1e-4 or ex['model']['id'] != 'PB_s64h24_d1' or len(p.side_mu) != len(SIDE_NAMES)
-            or ex['line']['ruler']['kind'] != 'glob_e'):
-        raise ValueError('the template has EPS = 0.0001, the 17 side inputs and the glob_e ruler of PB_s64h24_d1')
-    ln, fl = ex['line'], ex['floors']
-    ceil = ln['ceilings']
-    table = {a: {'floor': fl['floor_L64'][a], 'ceil_more': ceil['by_symbol'][a]['orange'],
-                 'ceil_less': ceil['by_symbol'][a]['blue']} for a in fl['floor_L64']}
-    unk = {'floor': fl['unknown_symbol'], 'ceil_more': ceil['unknown_symbol']['orange'],
-           'ceil_less': ceil['unknown_symbol']['blue']}
-    passport = {**ex['passport'], 'ceil_pool': ceil['pool']}
+            or ex['line']['ruler']['kind'] != 'glob_e' or ex.get('format_version') != 4):
+        raise ValueError('the template has EPS = 0.0001, the 17 side inputs, the glob_e ruler of PB_s64h24_d1 and the '
+                         'session-5 line (export format 4)')
+    ln = ex['line']
+    live = {'L': ln['live']['L'], 'n0': ln['live']['n0'], 'lag': ln['live']['lag'],
+            'show_from_window': ln['show']['from_window']}
     kw = {} if production else {'title': 'Market Randomness Index prototype', 'short': 'MRI proto'}
     if calc_bars is None:
         calc_bars = CALC_BARS_DEFAULT if production else 0
-    return make_script(p, (ln['ruler']['q'], ln['ruler']['zk']), table, unk, passport,
-                       calc_bars=calc_bars, span=ln['live']['span_default'],
-                       warm=ln['warmup']['windows_default'], s_lo=ln['live']['s_lo'], **kw)
+    return make_script(p, (ln['ruler']['q'], ln['ruler']['zk']), ex['floor']['value'], ln['ceiling']['value'], live,
+                       ex['passport'], calc_bars=calc_bars, s_lo=ln['live']['s_lo'], **kw)
 
 
 def sizes(text):
@@ -558,7 +564,7 @@ def main():
         fh.write(s)
     print(f'{path}: {sizes(s)}, {len(s.splitlines())} lines')
     if sizes(s)['utf8'] > SIZE_LIMIT_UTF8:
-        raise SystemExit(f'{path}: larger than {SIZE_LIMIT_UTF8} bytes UTF-8 — shrink the code first (rules, session 4)')
+        raise SystemExit(f'{path}: larger than {SIZE_LIMIT_UTF8} bytes UTF-8 — shrink the code first (rules, sessions 4-5)')
 
 
 if __name__ == '__main__':
