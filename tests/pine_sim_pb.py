@@ -1,8 +1,8 @@
 """Line-by-line Python transliteration of the PB Pine template (mri/pine_pb.py CORE / FOOT): the same state variables,
 interleaved ring matrices, slot arithmetic, separable layers (per channel taps into DWM, one matrix product), per-bar scale
 series read back with [63] / [65], ta.highest / ta.lowest / ta.sma over 199 bars, path chunks at fixed offsets, the ruler
-search, the `var` live part (n1, n2, dd, nW) and the display. Checks the Pine algorithm (not its syntax) against mri.pb
-(tests/test_pine_pb.py). Keep in sync with the template."""
+search, the `var` live part of session 5 (ring ZR of 4096 z, S1, S2, nW) and the display (one ceiling, the start mark).
+Checks the Pine algorithm (not its syntax) against mri.pb (tests/test_pine_pb.py). Keep in sync with the template."""
 import math
 
 import numpy as np
@@ -74,9 +74,11 @@ def log_m_of(z, mE, sE, S_LO):
     return -(zc - m) * (zc - m) / (2.0 * s * s) - math.log(s) + zc * zc / 2.0
 
 
-def run(bars, p, floor, ruler, calc_bars=0, signed=None, span=8064, warm=288, s_lo=0.75, ceil=(34.0, 21.0)):
-    """Per-bar dict of arrays: logit, z, m_ema, s_ema, log_m, n (debug plot: NaN where no window), shown, M (plotted
-       value), side (bar -> 17 raw side inputs)."""
+def run(bars, p, floor, ruler, calc_bars=0, signed=None, s_lo=0.75, ceil=10.0, live=(4032, 144.0, 64, 4096)):
+    """Per-bar dict of arrays: logit, z, m_win, s_win, k, log_m, n (debug plot: NaN where no window), shown, M (plotted
+       value), start (the line-start mark), plus (start of a run above the ceiling: label '10+'), side (bar -> 17 raw side
+       inputs)."""
+    LW, N0, LAG, SHOW = live
     K1 = [p.conv[0][:, :, k] for k in range(3)]
     DW = [[p.conv[i][:, 0, k] for k in range(3)] for i in (1, 2, 3)]
     PW = p.pw
@@ -88,16 +90,18 @@ def run(bars, p, floor, ruler, calc_bars=0, signed=None, span=8064, warm=288, s_
     RNG, BODY, WR, WABS = [], [], [0.0] * L, [0.0] * L
     prevC = prevD1 = prevD2 = math.nan
     okRun, firstR, nConf = 0, -1, 0
-    n1 = n2 = dd = 0.0
+    ZR = [0.0] * SHOW
+    S1 = S2 = 0.0
     nW = -1
-    KEMA = 1.0 - 2.0 / (span + 1.0)
     R0, R1, R2, R3 = np.zeros((4, 6)), np.zeros((CH, 10)), np.zeros((CH, 18)), np.zeros((CH, 34))
     R4P, R4M = np.zeros((CH, 33)), np.zeros((CH, 33))
     DWM = np.zeros((CH, 2))
     hc = -1
     ser = {k: [] for k in ('nrm', 'rmeanB', 'bmedB', 'r16B', 'r64B', 'hmaxB', 'lminB', 'cmaB')}
-    out = {k: np.full(n, np.nan) for k in ('logit', 'z', 'm_ema', 's_ema', 'log_m', 'n', 'M')}
-    out['shown'] = np.zeros(n, dtype=bool)
+    out = {k: np.full(n, np.nan) for k in ('logit', 'z', 'm_win', 's_win', 'k', 'log_m', 'n', 'M')}
+    for k in ('shown', 'start', 'plus'):
+        out[k] = np.zeros(n, dtype=bool)
+    atO_prev = atB_prev = False
     side_out = {}
     na = math.nan
 
@@ -140,7 +144,7 @@ def run(bars, p, floor, ruler, calc_bars=0, signed=None, span=8064, warm=288, s_
                     clip_log(hist('r16B', bi, L - 1) / rmeanW), clip_log(hist('r64B', bi, L - 1) / rmeanW),
                     clip_log(rmeanW / rmedW), clip_log(bmedW / rmedW)]
         heavyFrom = 0 if calc_bars == 0 else max(last_bar_index - calc_bars - L, 0)
-        logit = zz = mE = sE = logM = na
+        logit = zz = mW = sW = kW = logM = na
         # confirmed bar
         RNG.append(rngNow)
         BODY.append(abs(close - op))
@@ -194,19 +198,34 @@ def run(bars, p, floor, ruler, calc_bars=0, signed=None, span=8064, warm=288, s_
                 side_out[bi] = np.array(side)
                 zz = ruler_z(logit, RQ, RZ)
                 nW += 1
-                n1 = KEMA * n1 + zz
-                n2 = KEMA * n2 + zz * zz
-                dd = KEMA * dd + 1.0
-                mE = n1 / dd
-                sE = math.sqrt(max(n2 / dd - mE * mE, 0.0))
-                logM = log_m_of(zz, mE, sE, s_lo)
+                slotZ = nW % SHOW
+                if nW >= SHOW:
+                    zo = ZR[slotZ]
+                    S1 -= zo
+                    S2 -= zo * zo
+                ZR[slotZ] = zz
+                if nW >= LAG:
+                    zi = ZR[(nW - LAG) % SHOW]
+                    S1 += zi
+                    S2 += zi * zi
+                kW = min(max(nW - LAG + 1, 0), LW)
+                kk = float(max(kW, 1))
+                mh = S1 / kk
+                vh = max(S2 / kk - mh * mh, 0.0)
+                mW = S1 / (kW + N0)
+                sW = math.sqrt((kW * vh + N0) / (kW + N0))
+                logM = log_m_of(zz, mW, sW, s_lo)
         # display
-        shownM = not math.isnan(logM) and nW >= warm
+        shownM = not math.isnan(logM) and nW >= SHOW
         Mraw = math.exp(abs(logM)) if shownM else na
         more, less = shownM and logM > 0, shownM and logM < 0
-        out['M'][bi] = na if math.isnan(Mraw) else (min(Mraw, ceil[0]) if more else min(Mraw, ceil[1]) if less else 1.0)
+        out['M'][bi] = na if math.isnan(Mraw) else (min(Mraw, ceil) if (more or less) else 1.0)
         out['shown'][bi] = shownM
-        for k, v in (('logit', logit), ('z', zz), ('m_ema', mE), ('s_ema', sE), ('log_m', logM)):
+        out['start'][bi] = shownM and nW == SHOW
+        atO, atB = more and Mraw > ceil, less and Mraw > ceil
+        out['plus'][bi] = (atO and not atO_prev) or (atB and not atB_prev)
+        atO_prev, atB_prev = atO, atB
+        for k, v in (('logit', logit), ('z', zz), ('m_win', mW), ('s_win', sW), ('k', kW), ('log_m', logM)):
             out[k][bi] = v
         out['n'][bi] = na if math.isnan(logit) else nW
     out['side'] = side_out

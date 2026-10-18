@@ -9,9 +9,14 @@ The research data scripts run their main() on import (Drive I/O), so the arithme
     smc_bars    <- research/sumo_class_bars.py, prepare (raw OHLC of the parts + 200 CSV bars before each part; NT3 history)
 tests/test_bridge.py checks the copies of make_parts and of the smc_bars prepare against the originals bit for bit (the
 original bars script runs as is in a subprocess on a synthetic CSV).
+
+floor_override (session 5, rule R17): the divisor floor of every series of a research SeriesData set to one value for a
+block, as research/sumo_class_ceil.py floor_override — that function itself (the Ceil file imports without side effects).
 """
+import importlib.util
 import json
 import os
+import sys
 import time
 import zlib
 
@@ -19,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 N = 200
+FLOOR = float(np.float32(0.2))         # rule R17: one floor of the window divisor for every symbol
 PRICES = {'hl2': lambda h, l, c: (h + l) / 2.0,
           'hlc3': lambda h, l, c: (h + l + c) / 3.0}
 
@@ -190,3 +196,20 @@ def write_research_files(bars, out_dir, asset, t_start, t_valid, floor_L64, with
     if with_bars:
         write_bars_file(df, out_dir, asset, N=N)
     return rows
+
+
+def _ceil_module():
+    """research/sumo_class_ceil.py as a module (only definitions: main() runs under __main__, drive.mount is in a try)."""
+    if 'sumo_class_ceil' not in sys.modules:
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'research', 'sumo_class_ceil.py')
+        spec = importlib.util.spec_from_file_location('sumo_class_ceil', path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules['sumo_class_ceil'] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules['sumo_class_ceil']
+
+
+def floor_override(data, L=64, value=FLOOR):
+    """Context manager: data.windows(L)['floor'] and ['floor_t'] (float32) of every series = value inside the block (research
+       datasets made inside take it), afterwards the same objects as before — research/sumo_class_ceil.py floor_override."""
+    return _ceil_module().floor_override(data, L, value)

@@ -1,0 +1,277 @@
+{
+ "ceil_json": "ceil_20261018_115426.json",
+ "live_json": "live_20261018_093025.json",
+ "nocal_json": "nocal_PB_s64h24_d1_20261017_140953.json",
+ "a": {
+  "live_ver": "'1.1'",
+  "ceil_ver": "1",
+  "logs": {
+   "live": [
+    "live_run_20261018_092258.log",
+    "live_stand_20261018_091127.log"
+   ],
+   "ceil": [
+    "ceil_run_20261018_114523.log",
+    "ceil_stand_20261018_114317.log"
+   ]
+  },
+  "stand": {
+   "passed": 18,
+   "total": 18,
+   "minutes": 0.67,
+   "checks": [
+    "✅ корзины NC_EDGES, min_n 1000: все строки равны — 20 строк",
+    "✅ выбор — 10, все пары ок, незнакомые ок — выбор 10",
+    "✅ кривая пула: отношения в [0.9; 1.1] во всех корзинах с данными — от 0.972 до 1.011",
+    "✅ (Ц3): незнакомого ассета нет в данных — не прошло (по оставшимся не засчитывается) — есть — True, одного нет — False",
+    "✅ при C = 10 «завышает» ровно у 7 оранжевых пар заражённых ассетов — 7 пар",
+    "✅ ни один кандидат не прошёл (завышение с силы 2), незнакомые не прошли — выбор None",
+    "✅ при C = 10 без данных > 10% пар, завышают <= 10%; выбор — 3 — без данных 62, завышают 0 из 62; выбор 3",
+    "✅ stop_C: линейка половины 0 — по суррогатам половины 1 без пропущенного; пропущенный не влияет; своя половина не влияет",
+    "✅ stop_C: окна счёта — каждое окно с позиции 4096 ровно один раз — 207232 окон",
+    "✅ refit_ALL: линейка половины 0 — по суррогатам половины 1 без пропущенного; пропущенный не влияет; своя половина не влияет",
+    "✅ refit_ALL: окна счёта — каждое окно с позиции 4096 ровно один раз — 207232 окон",
+    "✅ внутри блока пол 0.2 у всех рядов, после — те же объекты, что были",
+    "✅ пол сработал: медиана или среднее |r| ниже пола (обученный ниже 0.2 — ниже 0.2; выше, UNI — ниже обученного); ровно 0.2 — нигде",
+    "✅ обученный пол 0.2 в float32 (как в файлах данных) — не «другой»; 0.1756 и 0.2025 — другие",
+    "✅ кэш: оценки с полом 0.2 и со старым (float32), медиана и среднее |r|, недели, обученные полы — как записаны",
+    "✅ пересчёт со старым полом — у основного источника и prod a",
+    "✅ модели пересчёта: 'stop' C a / b, 'refit' ALL a / b, prod a — pool_C_PB_s64h24_d1_L64_a, pool_C_PB_s64h24_d1_L64_b, pool_ALL_PB_s64h24_d1_L64_a_refit, pool_ALL_PB_s64h24_d1_L64_b_refit, prod_PB_s64h24_d1_L64_a",
+    "✅ json и рисунок пишутся — /tmp/ceil_stand_4ulnaxvg/out_ceil/ceil_stand_20261018_170245.json",
+    "✅ СТЕНД: 18 из 18 проверок"
+   ]
+  }
+ },
+ "b": {
+  "dq_nocal": 0.04671207094192553,
+  "n_affected_btc": 834,
+  "preflight_n": 104599
+ },
+ "c": {
+  "formula_a_live": {
+   "stop_C": {
+    "bce": 0.5744734171067518,
+    "gp_col": 0.049116765572569256,
+    "ceil": {
+     "orange": 34.0,
+     "blue": 34.0
+    },
+    "share": 1.0,
+    "cover3": [
+     0.24888687617735764,
+     0.04701882828740263
+    ]
+   },
+   "refit_ALL": {
+    "bce": 0.5614618611422448,
+    "gp_col": 0.049186950194372386,
+    "ceil": {
+     "orange": 34.0,
+     "blue": 34.0
+    },
+    "share": 0.967741935483871,
+    "cover3": [
+     0.2942792811090929,
+     0.0507573398225147
+    ]
+   }
+  }
+ },
+ "e": {
+  "n_affected_btc": {
+   "pool_ALL_PB_s64h24_d1_L64_a_refit": 834,
+   "pool_ALL_PB_s64h24_d1_L64_b_refit": 834,
+   "prod_PB_s64h24_d1_L64_a": 834
+  },
+  "parts": 6
+ },
+ "checks": [
+  {
+   "gate": "а",
+   "check": "на месте три research-файла и json Live / Ceil",
+   "ok": true,
+   "note": "5 файлов"
+  },
+  {
+   "gate": "а",
+   "check": "логи Live и Ceil (стенд и run)",
+   "ok": true,
+   "note": "live: live_run_20261018_092258.log, live_stand_20261018_091127.log; ceil: ceil_run_20261018_114523.log, ceil_stand_20261018_114317.log"
+  },
+  {
+   "gate": "а",
+   "check": "research-файлы импортируются без побочных эффектов (ничего не напечатано, файлов не создано, main не запущен)",
+   "ok": true,
+   "note": "код 0; печать импорта: \"'1.1' 1 1 none none none\"; новые файлы: []; stderr: ''"
+  },
+  {
+   "gate": "а",
+   "check": "CEIL_VER = 1",
+   "ok": true,
+   "note": "CEIL_VER = 1"
+  },
+  {
+   "gate": "а",
+   "check": "LIVE_VER = '1.1'",
+   "ok": true,
+   "note": "LIVE_VER = '1.1' (json Live — ver 1)"
+  },
+  {
+   "gate": "а",
+   "check": "код обучения v6.3: NOCAL s_lo 0.75, 37 узлов = nocal json",
+   "ok": true,
+   "note": "s_lo 0.75, узлов 37"
+  },
+  {
+   "gate": "а",
+   "check": "стенд Ceil локально: 18 из 18",
+   "ok": true,
+   "note": "18 из 18, 0.7 мин"
+  },
+  {
+   "gate": "б",
+   "check": "model 'PB_s64h24_d1', ver 1",
+   "ok": true,
+   "note": "PB_s64h24_d1, ver 1"
+  },
+  {
+   "gate": "б",
+   "check": "rules = CEIL research поле в поле",
+   "ok": true,
+   "note": "17 полей"
+  },
+  {
+   "gate": "б",
+   "check": "rules: floor 0.2, formula, candidates, refs, fine_max, share_*, main, confirm, prod_seeds",
+   "ok": true,
+   "note": "floor 0.2, formula 4032+144, candidates [10, 8, 5, 3], refs [13, 21], fine_max 5.0, share_over 0.1, share_nodata 0.1, main stop_C, confirm refit_ALL, prod_seeds ['a']"
+  },
+  {
+   "gate": "б",
+   "check": "формат: rules.edges кончается null (в CEIL — math.inf)",
+   "ok": true,
+   "note": "edges [1.0, 1.25, 1.5, 2.0, 3.0, 5.0, 8.0, 10.0, 13.0, 21.0, 34.0, None]"
+  },
+  {
+   "gate": "б",
+   "check": "формат: ключи by_c — строки ('10')",
+   "ok": true,
+   "note": "{'stop_C|после': ['10', '13', '21', '3', '5', '8'], 'stop_C|до': ['10', '13', '21', '3', '5', '8'], 'refit_ALL|после': ['10', '13', '21', '3', '5', '8'], 'refit_ALL|до': ['10', '13', '21', '3', '5', '8']}"
+  },
+  {
+   "gate": "б",
+   "check": "check_nocal.ok и check_live.ok",
+   "ok": true,
+   "note": "nocal True, live True; check_live — поля ['json', 'ok', 'rows']"
+  },
+  {
+   "gate": "б",
+   "check": "preflight.ok (same_windows, same_unaffected = 0, dev_npz <= 0.02)",
+   "ok": true,
+   "note": "same_windows True, same_unaffected 0.0, dev_npz 1.34e-02, n 104599, n_affected 834"
+  },
+  {
+   "gate": "б",
+   "check": "p_ok; gates_p — all у обоих «после»",
+   "ok": true,
+   "note": "stop_C, до (npz): {'a': True, 'b': True, 'c': True, 'all': True}; refit_ALL, до (npz): {'a': True, 'b': True, 'c': True, 'all': True}; stop_C, после: {'a': True, 'b': True, 'c': True, 'all': True}; refit_ALL, после: {'a': True, 'b': True, 'c': True, 'all': True}"
+  },
+  {
+   "gate": "б",
+   "check": "choice = 10, choice_old_floors = 10",
+   "ok": true,
+   "note": "10 / 10"
+  },
+  {
+   "gate": "б",
+   "check": "export: floor 0.2, ceiling 10, live {L 4032, n0 144, lag 64, show_from_window 4096}",
+   "ok": true,
+   "note": "floor 0.2, ceiling 10, live {'L': 4032, 'n0': 144, 'lag': 64, 'show_from_window': 4096}"
+  },
+  {
+   "gate": "б",
+   "check": "export.ruler: seed 'a', tag, t_cut = json боевой prod a, same_tag / same_t_cut, n_null = nocal",
+   "ok": true,
+   "note": "seed a, tag prod_PB_s64h24_d1_L64_a, t_cut 2026-09-26 09:15:00 (prod json 2026-09-26 09:15:00), same True / True, n_null 3179790 (nocal 3179790)"
+  },
+  {
+   "gate": "б",
+   "check": "export.ruler q — 37 строго возрастающих; max |q − nocal q| = dq_nocal <= 0.05",
+   "ok": true,
+   "note": "37 чисел, max |Δq| 0.046712 (dq_nocal 0.046712), floor 0.2"
+  },
+  {
+   "gate": "б",
+   "check": "json ruler.a = export.ruler",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "gate": "в",
+   "check": "model; verdict.a_pick '4032+144', b_pick '4032+144·B3'",
+   "ok": true,
+   "note": "PB_s64h24_d1, 4032+144, 4032+144·B3"
+  },
+  {
+   "gate": "в",
+   "check": "подтверждение пройдено (A3 и B3)",
+   "ok": true,
+   "note": "a: ok True, лучший 4032+144; b: ok True, лучший 4032+144·B3"
+  },
+  {
+   "gate": "в",
+   "check": "rules = LIVE research: lag 64, 4032 в L, 144 в f2_n0, null_cover_max 0.05",
+   "ok": true,
+   "note": "24 полей; lag 64, L [2016, 3024, 4032], f2_n0 [144, 288, 576, 1152]"
+  },
+  {
+   "gate": "в",
+   "check": "формула А json Live (bce, gp_col, ceil, share, cover3) = formula_a json Ceil «до (npz)» бит в бит",
+   "ok": true,
+   "note": "stop_C: bce 0.5744734171067518, gp_col 0.049116765572569256, ceil {'orange': 34.0, 'blue': 34.0}, share 1.0, cover3 [0.24888687617735764, 0.04701882828740263] | refit_ALL: bce 0.5614618611422448, gp_col 0.049186950194372386, ceil {'orange': 34.0, 'blue': 34.0}, share 0.967741935483871, cover3 [0.2942792811090929, 0.0507573398225147]"
+  },
+  {
+   "gate": "г",
+   "check": "export.live = variants_a() '4032+144' (L 4032, lag 64, prior 'null', n0 144)",
+   "ok": true,
+   "note": "L 4032, lag 64, prior null, n0 144, kind win"
+  },
+  {
+   "gate": "г",
+   "check": "options_b -> показ B3 = 4096 = show_from_window",
+   "ok": true,
+   "note": "B3 show 4096"
+  },
+  {
+   "gate": "д",
+   "check": "sha256 и размер частей — по manifest",
+   "ok": true,
+   "note": "6 частей"
+  },
+  {
+   "gate": "д",
+   "check": "meta каждого tag: tag, floor 0.2, ver 1",
+   "ok": true,
+   "note": "pool_ALL_PB_s64h24_d1_L64_a_refit: floor 0.2, ver 1; pool_ALL_PB_s64h24_d1_L64_b_refit: floor 0.2, ver 1; prod_PB_s64h24_d1_L64_a: floor 0.2, ver 1"
+  },
+  {
+   "gate": "д",
+   "check": "недели wk каждого ассета 'refit' ALL a / b и prod a = недели npz 'refit' ALL",
+   "ok": true,
+   "note": "3 tag × 31 ассетов × 2 npz"
+  },
+  {
+   "gate": "д",
+   "check": "у BTC VAL окон, где пол срабатывает, — 834 у каждого tag",
+   "ok": true,
+   "note": "{'pool_ALL_PB_s64h24_d1_L64_a_refit': 834, 'pool_ALL_PB_s64h24_d1_L64_b_refit': 834, 'prod_PB_s64h24_d1_L64_a': 834} (обученный пол BTC 0.17530229687690735)"
+  }
+ ],
+ "ok": {
+  "а": true,
+  "б": true,
+  "в": true,
+  "г": true,
+  "д": true
+ }
+}

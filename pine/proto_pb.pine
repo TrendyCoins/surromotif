@@ -8,13 +8,15 @@
 // M = 1 — indistinguishable from random. The SuMo classifier (a streaming CNN, 18697 weights inside this script) scores
 // the window and the 200 bars before it, in bars only (no clock, no calendar). The score becomes M without constants of
 // the symbol: a ruler of the model (z — the place of the score among random windows, one table for every symbol) and a
-// live part of this chart (how the scores of this chart's windows are spread: EMA of z and z^2 over 8064 bars);
-// M is the ratio of the two bells "windows of this chart" / "random windows". On a random market M stays near 1.
+// live part of this chart: the mean and spread of z over the last 4032 windows ending 64 windows before the current
+// one, plus 144 virtual random windows; M is the ratio of the two bells "windows of this chart" / "random windows".
+// The line starts at the window 4096 (bar 4360 of continuous data): before it the calibration set of this chart
+// is not full (4032 windows) and nothing is drawn. On a random market M stays near 1.
 // M is a frequency ratio of the window's shape, not a forecast.
-// Checked range: each table symbol and side has its ceiling (at most 34 more frequent / 21 less frequent; for
-// symbols outside the table 8 / 8); above it the line stays at the ceiling, marked "N+".
+// Checked range: up to 10 on both sides; above it the line stays at 10, marked "10+".
+// One floor of the window divisor for every symbol (0.2 of the bar norm).
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
-// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code d8296e7.
+// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 1e94030.
 indicator("Market Randomness Index prototype", shorttitle = "MRI proto", overlay = false, precision = 2, max_labels_count = 500)
 
 // ---------------------------------------------------------------- inputs
@@ -23,124 +25,12 @@ int   paleT    = input.int(70, "Transparency below the threshold", minval = 0, m
 color colMore  = input.color(color.rgb(242, 140, 40), "More frequent than random", tooltip = "M > 1 on the more frequent side: windows of this shape are M times more frequent in real markets than in a random walk.")
 color colLess  = input.color(color.rgb(47, 128, 237), "Less frequent than random", tooltip = "M > 1 on the less frequent side: windows of this shape are M times less frequent in real markets than in a random walk.")
 bool  showMarks = input.bool(false, "Marks on the price chart at M >= threshold")
-int   spanIn   = input.int(8064, "Live part: span, bars", minval = 2, group = "Advanced", tooltip = "EMA span of the live part (spread of the scores of this chart). The promise of the line is checked at 8064 only.")
-int   warmIn   = input.int(288, "Line warm-up, windows", minval = 0, group = "Advanced", tooltip = "The line is shown from the window number 288 of the chart (windows counted from 0). The promise is checked at 288 only.")
 bool  dbg      = input.bool(false, "Debug values (parity check)", group = "Advanced", tooltip = "Plots the internal values of each bar for checking against the Python reference (Export chart data).")
-int   calcBars = input.int(0, "Compute only the last N bars (0 = all history)", minval = 0, group = "Advanced", tooltip = "The network and the live part run on the last N bars only (TradingView limits the script time on the whole history); the line appears after the warm-up.")
+int   calcBars = input.int(0, "Compute only the last N bars (0 = all history)", minval = 0, group = "Advanced", tooltip = "The network and the live part run on the last N bars only (TradingView limits the script time on the whole history); the line starts 4096 windows after the first computed window.")
 
-// ---------------------------------------------------------------- symbol table: floor of the window divisor, ceilings of M
-buildFloors() =>
-    map<string, float> m = map.new<string, float>()
-    map.put(m, "BTCUSDT", 0.17557531595230103)
-    map.put(m, "ETHUSDT", 0.18518517911434174)
-    map.put(m, "DOGEUSDT", 0.1610305905342102)
-    map.put(m, "SOLUSDT", 0.20000000298023224)
-    map.put(m, "ADAUSDT", 0.20000000298023224)
-    map.put(m, "BNBUSDT", 0.16880816221237183)
-    map.put(m, "BCHUSDT", 0.20000000298023224)
-    map.put(m, "DOTUSDT", 0.20000000298023224)
-    map.put(m, "UNIUSDT", 0.20248538255691528)
-    map.put(m, "XRPUSDT", 0.19362260401248932)
-    map.put(m, "LTCUSDT", 0.19251661002635956)
-    map.put(m, "DASHUSDT", 0.20000000298023224)
-    map.put(m, "ZECUSDT", 0.20000000298023224)
-    map.put(m, "SPELLUSDT", 0.17500001192092896)
-    map.put(m, "ICPUSDT", 0.20000000298023224)
-    map.put(m, "NEARUSDT", 0.20000000298023224)
-    map.put(m, "ZENUSDT", 0.20000000298023224)
-    map.put(m, "AVAXUSDT", 0.20000000298023224)
-    map.put(m, "FETUSDT", 0.1666666716337204)
-    map.put(m, "RAYUSDT", 0.17996746301651)
-    map.put(m, "CAKEUSDT", 0.20000000298023224)
-    map.put(m, "INJUSDT", 0.19910044968128204)
-    map.put(m, "RUNEUSDT", 0.20000000298023224)
-    map.put(m, "PHAUSDT", 0.1666666716337204)
-    map.put(m, "QNTUSDT", 0.20000000298023224)
-    map.put(m, "HBARUSDT", 0.18859648704528809)
-    map.put(m, "AAVEUSDT", 0.20000000298023224)
-    map.put(m, "VTHOUSDT", 0.15904566645622253)
-    map.put(m, "FILUSDT", 0.20000000298023224)
-    map.put(m, "LINKUSDT", 0.20000000298023224)
-    map.put(m, "XLMUSDT", 0.19565217196941376)
-    m
-
-buildCeilMore() =>
-    map<string, float> m = map.new<string, float>()
-    map.put(m, "BTCUSDT", 13.0)
-    map.put(m, "ETHUSDT", 3.0)
-    map.put(m, "DOGEUSDT", 3.0)
-    map.put(m, "SOLUSDT", 8.0)
-    map.put(m, "ADAUSDT", 13.0)
-    map.put(m, "BNBUSDT", 8.0)
-    map.put(m, "BCHUSDT", 8.0)
-    map.put(m, "DOTUSDT", 8.0)
-    map.put(m, "UNIUSDT", 13.0)
-    map.put(m, "XRPUSDT", 13.0)
-    map.put(m, "LTCUSDT", 8.0)
-    map.put(m, "DASHUSDT", 13.0)
-    map.put(m, "ZECUSDT", 5.0)
-    map.put(m, "SPELLUSDT", 5.0)
-    map.put(m, "ICPUSDT", 8.0)
-    map.put(m, "NEARUSDT", 8.0)
-    map.put(m, "ZENUSDT", 13.0)
-    map.put(m, "AVAXUSDT", 13.0)
-    map.put(m, "FETUSDT", 8.0)
-    map.put(m, "RAYUSDT", 8.0)
-    map.put(m, "CAKEUSDT", 8.0)
-    map.put(m, "INJUSDT", 8.0)
-    map.put(m, "RUNEUSDT", 8.0)
-    map.put(m, "PHAUSDT", 5.0)
-    map.put(m, "QNTUSDT", 5.0)
-    map.put(m, "HBARUSDT", 8.0)
-    map.put(m, "AAVEUSDT", 8.0)
-    map.put(m, "VTHOUSDT", 5.0)
-    map.put(m, "FILUSDT", 13.0)
-    map.put(m, "LINKUSDT", 13.0)
-    map.put(m, "XLMUSDT", 8.0)
-    m
-
-buildCeilLess() =>
-    map<string, float> m = map.new<string, float>()
-    map.put(m, "BTCUSDT", 13.0)
-    map.put(m, "ETHUSDT", 21.0)
-    map.put(m, "DOGEUSDT", 13.0)
-    map.put(m, "SOLUSDT", 13.0)
-    map.put(m, "ADAUSDT", 13.0)
-    map.put(m, "BNBUSDT", 8.0)
-    map.put(m, "BCHUSDT", 8.0)
-    map.put(m, "DOTUSDT", 8.0)
-    map.put(m, "UNIUSDT", 13.0)
-    map.put(m, "XRPUSDT", 8.0)
-    map.put(m, "LTCUSDT", 8.0)
-    map.put(m, "DASHUSDT", 13.0)
-    map.put(m, "ZECUSDT", 13.0)
-    map.put(m, "SPELLUSDT", 8.0)
-    map.put(m, "ICPUSDT", 8.0)
-    map.put(m, "NEARUSDT", 8.0)
-    map.put(m, "ZENUSDT", 13.0)
-    map.put(m, "AVAXUSDT", 8.0)
-    map.put(m, "FETUSDT", 8.0)
-    map.put(m, "RAYUSDT", 8.0)
-    map.put(m, "CAKEUSDT", 8.0)
-    map.put(m, "INJUSDT", 8.0)
-    map.put(m, "RUNEUSDT", 8.0)
-    map.put(m, "PHAUSDT", 8.0)
-    map.put(m, "QNTUSDT", 8.0)
-    map.put(m, "HBARUSDT", 8.0)
-    map.put(m, "AAVEUSDT", 8.0)
-    map.put(m, "VTHOUSDT", 8.0)
-    map.put(m, "FILUSDT", 13.0)
-    map.put(m, "LINKUSDT", 13.0)
-    map.put(m, "XLMUSDT", 8.0)
-    m
-
-var map<string, float> FLOORS = buildFloors()
-var map<string, float> CEILO  = buildCeilMore()
-var map<string, float> CEILB  = buildCeilLess()
-bool  known = syminfo.prefix == "BINANCE" and not str.endswith(syminfo.ticker, ".P") and map.contains(FLOORS, syminfo.ticker)
-var float FLOOR  = known ? map.get(FLOORS, syminfo.ticker) : 0.20000000298023224
-var float CEIL_O = known ? map.get(CEILO, syminfo.ticker) : 8.0   // checked range of M, more frequent side
-var float CEIL_B = known ? map.get(CEILB, syminfo.ticker) : 8.0   // checked range of M, less frequent side
+// ---------------------------------------------------------------- one floor and one ceiling for every symbol
+const float FLOOR = 0.20000000298023224   // floor of the window divisor, in units of the bar norm (float32 of 0.2)
+const float CEIL  = 10.0                  // checked range of M on both sides; above it "10+"
 bool  tf5   = timeframe.period == "5"
 float GAPMS = 1.5 * timeframe.in_seconds() * 1000.0   // interval > 1.5 bars -> grid gap
 
@@ -154,15 +44,17 @@ const float EPS    = 0.0001       // orientation tie rule: flip only if X_end < 
 const float SQ199  = 14.106735979665885
 const float S_SD   = 1.639866590499878
 const float LVL_SD = 3.0354878902435303
-const int   SPAN0  = 8064         // live part: checked span, bars
-const int   WARM0  = 288          // line warm-up: checked number of windows
+const int   LW     = 4032         // live part: windows in the calibration set
+const float N0     = 144.0        // virtual random windows (z = 0, spread 1)
+const int   LAG    = 64           // the set ends LAG windows before the current one (no shared bars)
+const int   SHOW   = 4096         // the line from the window number SHOW (= LW + LAG, the full set); ring size of z
 const float S_LO   = 0.75
 const float PEAK_EPS = 0.000000000001
 var array<float> SIDE_MU = array.from(-0.7276527285575867, -0.4728940725326538, -0.002803180832415819, -0.004501380492001772, -0.008173704147338867, -0.01189641933888197, -0.007660059258341789, -0.009849835187196732, -0.009672779589891434, -0.007220071740448475, -0.01198785100132227, 0.26920822262763977, -0.01155487447977066, -0.053360652178525925, -0.02351038157939911, 0.17075224220752716, -0.7795129418373108)
 var array<float> SIDE_SD = array.from(0.3408026099205017, 0.332811176776886, 0.8233931064605713, 0.8488000631332397, 0.9028509259223938, 0.9557002782821655, 0.9768329858779907, 0.9842464327812195, 1.0071159601211548, 1.003914713859558, 0.5456293821334839, 0.3652992248535156, 0.5230543613433838, 0.3484621047973633, 0.22603869438171387, 0.11931874603033066, 0.2921563982963562)
 var array<float> HSIGNED = array.from(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0)   // history inputs that take the orientation sign
 // ruler of the model: 37 quantiles of the scores of random (surrogate) windows and their places on the bell, Phi^-1(knot)
-var array<float> RQ = array.from(-7.025109925270081, -6.2680360116958616, -5.351326169967652, -4.680313410758973, -4.285142073631286, -4.007191371917725, -3.600932080745697, -3.312128667831421, -3.08439838886261, -2.739846749305725, -2.3660499095916747, -1.9274097621440889, -1.6031630516052244, -1.3419525623321533, -1.11983882188797, -0.9212513387203216, -0.7389652132987976, -0.568019750714302, -0.40375061333179474, -0.24408542215824075, -0.08481186777353292, 0.07128542065620429, 0.2361426532268524, 0.40947944670915604, 0.5985206007957465, 0.8156552165746688, 1.0861481428146362, 1.3017928326129913, 1.4909413576126096, 1.6110794258117676, 1.762421442270279, 1.9671146011352532, 2.10830664396286, 2.303217413425443, 2.629850342273734, 3.053760960578855, 3.3718535919190096)
+var array<float> RQ = array.from(-6.978397854328155, -6.2416182165145875, -5.339706645011902, -4.67393871307373, -4.279769127368927, -4.002815628051758, -3.5978470611572266, -3.30995982170105, -3.082679557800293, -2.7384358644485474, -2.364975166320801, -1.9266277194023134, -1.6026323318481444, -1.3415021896362305, -1.1194049000740052, -0.920944705605507, -0.738708460330963, -0.5678192734718323, -0.4036383330821991, -0.24403732120990723, -0.08478299826383597, 0.07147179991006858, 0.23627424836158745, 0.4094924256205559, 0.5984859466552737, 0.8155845195055008, 1.0859818339347842, 1.3016016483306885, 1.4907219529151912, 1.6108340644836423, 1.7621917259693156, 1.9669368505477902, 2.107443605661392, 2.302595295906067, 2.6287530291080508, 3.052435485363004, 3.3705199701786093)
 var array<float> RZ = array.from(-3.090232306167813, -2.878161739095483, -2.575829303548901, -2.3263478740408408, -2.1700903775845606, -2.053748910631823, -1.880793608151251, -1.75068607125217, -1.6448536269514729, -1.4757910281791706, -1.2815515655446004, -1.0364333894937898, -0.8416212335729142, -0.6744897501960817, -0.5244005127080409, -0.38532046640756773, -0.2533471031357997, -0.12566134685507402, 0.0, 0.12566134685507416, 0.2533471031357997, 0.38532046640756773, 0.5244005127080407, 0.6744897501960817, 0.8416212335729143, 1.0364333894937898, 1.2815515655446004, 1.475791028179171, 1.6448536269514722, 1.7506860712521692, 1.8807936081512509, 2.0537489106318225, 2.17009037758456, 2.3263478740408408, 2.5758293035489004, 2.878161739095483, 3.090232306167813)
 
 // ---------------------------------------------------------------- weights: 18697 float32, 56091 characters (3 per weight) in 15 strings, one function each
@@ -277,12 +169,12 @@ var float prevD2 = na                              // (HLC/3 - close) / norm of 
 var int   okRun  = 0                               // consecutive valid bars
 var int   firstR = -1                              // bar_index of the first valid r
 var int   nConf  = 0                               // confirmed bars processed (debug: the state advanced)
-// live part of the line M: EMA of z and z^2 over the valid windows of this chart (n1, n2 / d), window number nW
-var float n1 = 0.0
-var float n2 = 0.0
-var float dd = 0.0
+// live part of the line M: z of the last SHOW valid windows in a ring (index nW % SHOW), sums S1, S2 of z and z^2 over
+// the calibration set (windows nW - SHOW + 1 .. nW - LAG), window number nW
+var array<float> ZR = array.new<float>(SHOW, 0.0)
+var float S1 = 0.0
+var float S2 = 0.0
 var int   nW = -1
-var float KEMA = 1.0 - 2.0 / (spanIn + 1.0)
 
 // conv rings: inputs (4 x 2*3), layers 1..3 (CH x 2*5, 2*9, 2*17); layer 4 per stream (CH x 33)
 var matrix<float> R0  = matrix.new<float>(4, 6, 0.0)
@@ -460,8 +352,9 @@ array<float> HST = array.from(P1h, P2h, P3h, P4h, P5h, P6h, P7h, P8h, R1h, R2h, 
 int heavyFrom = calcBars == 0 ? 0 : math.max(last_bar_index - calcBars - L, 0)
 float logit = na
 float zz    = na
-float mE    = na
-float sE    = na
+float mW    = na
+float sW    = na
+int   kW    = na
 float logM  = na
 
 if barstate.isconfirmed
@@ -490,57 +383,67 @@ if barstate.isconfirmed and bar_index >= heavyFrom
         logit := computeLogit(hc, HST)
         zz    := rulerZ(logit)
         nW    += 1
-        n1    := KEMA * n1 + zz
-        n2    := KEMA * n2 + zz * zz
-        dd    := KEMA * dd + 1.0
-        mE    := n1 / dd
-        sE    := math.sqrt(math.max(n2 / dd - mE * mE, 0.0))
-        logM  := logMOf(zz, mE, sE)
+        int slotZ = nW % SHOW
+        if nW >= SHOW                              // the window nW - SHOW leaves the set
+            float zo = array.get(ZR, slotZ)
+            S1 -= zo
+            S2 -= zo * zo
+        array.set(ZR, slotZ, zz)
+        if nW >= LAG                               // the window nW - LAG enters it
+            float zi = array.get(ZR, (nW - LAG) % SHOW)
+            S1 += zi
+            S2 += zi * zi
+        kW    := math.min(math.max(nW - LAG + 1, 0), LW)
+        float kk = math.max(kW, 1)
+        float mh = S1 / kk
+        float vh = math.max(S2 / kk - mh * mh, 0.0)
+        mW    := S1 / (kW + N0)
+        sW    := math.sqrt((kW * vh + N0) / (kW + N0))
+        logM  := logMOf(zz, mW, sW)
 
 // ---------------------------------------------------------------- display
-bool  shownM = not na(logM) and nW >= warmIn
+bool  shownM = not na(logM) and nW >= SHOW
 float Mraw   = shownM ? math.exp(math.abs(logM)) : na
 bool  more   = shownM and logM > 0
 bool  less   = shownM and logM < 0
-float Mshow  = na(Mraw) ? na : more ? math.min(Mraw, CEIL_O) : less ? math.min(Mraw, CEIL_B) : 1.0
+float Mshow  = na(Mraw) ? na : more or less ? math.min(Mraw, CEIL) : 1.0
 color baseC  = more ? colMore : less ? colLess : color.gray
 plot(Mshow, "M", color = Mraw >= thr ? baseC : color.new(baseC, paleT), linewidth = 2)
 hline(1.0, "Random (M = 1)", color = color.gray, linestyle = hline.style_solid)
 hline(thr, "Threshold", color = color.gray, linestyle = hline.style_dashed)
-// above the ceiling: "N+" once at the start of each run
-bool atO = more and Mraw > CEIL_O
-bool atB = less and Mraw > CEIL_B
+// above the checked range: "10+" once at the start of each run
+bool atO = more and Mraw > CEIL
+bool atB = less and Mraw > CEIL
 if barstate.isconfirmed and atO and not atO[1]
-    label.new(bar_index, CEIL_O, str.tostring(CEIL_O) + "+", style = label.style_none, textcolor = colMore, size = size.small)
+    label.new(bar_index, CEIL, "10+", style = label.style_none, textcolor = colMore, size = size.small)
 if barstate.isconfirmed and atB and not atB[1]
-    label.new(bar_index, CEIL_B, str.tostring(CEIL_B) + "+", style = label.style_none, textcolor = colLess, size = size.small)
+    label.new(bar_index, CEIL, "10+", style = label.style_none, textcolor = colLess, size = size.small)
+// the start of the line: one mark with a constant text at the window SHOW (a plot shape, not a label: labels share the
+// limit max_labels_count with "10+" and the oldest are removed)
+plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.gray, text = "MRI starts here\ncalibrated on 4032 windows of this chart", textcolor = chart.fg_color, size = size.tiny)
 plotshape(showMarks and more and Mraw >= thr, "Mark: more frequent than random", shape.circle, location.abovebar, colMore, size = size.tiny, force_overlay = true)
 plotshape(showMarks and less and Mraw >= thr, "Mark: less frequent than random", shape.circle, location.abovebar, colLess, size = size.tiny, force_overlay = true)
 
 // ---------------------------------------------------------------- messages
-var table MSG = table.new(position.top_right, 1, 4, bgcolor = color.new(color.gray, 85))
+var table MSG = table.new(position.top_right, 1, 2, bgcolor = color.new(color.gray, 85))
 if barstate.islast
-    table.clear(MSG, 0, 0, 0, 3)
+    table.clear(MSG, 0, 0, 0, 1)
     int row = 0
     if not tf5
         table.cell(MSG, 0, row, "MRI: the model was trained and checked on 5-minute bars only", text_size = size.small, text_color = chart.fg_color)
         row += 1
-    if not known
-        table.cell(MSG, 0, row, "MRI: not a Binance spot symbol of the table: floor and ceilings of an unknown symbol, accuracy not verified", text_size = size.small, text_color = chart.fg_color)
-        row += 1
-    if spanIn != SPAN0 or warmIn != WARM0
-        table.cell(MSG, 0, row, "MRI: span / warm-up differ from the checked " + str.tostring(SPAN0) + " / " + str.tostring(WARM0) + ": not checked", text_size = size.small, text_color = chart.fg_color)
-        row += 1
-    if nW < warmIn
-        int left = nW >= 0 ? warmIn - nW : (firstR < 0 ? NN + 1 : math.max(firstR, NN + 1)) + L - 1 - bar_index + warmIn
+    if nW < SHOW
+        int firstEnd = math.max((firstR < 0 ? NN + 1 : math.max(firstR, NN + 1)) + L - 1, heavyFrom + L - 1)
+        int left = nW >= 0 ? SHOW - nW : firstEnd - bar_index + SHOW
         table.cell(MSG, 0, row, "MRI warm-up: " + str.tostring(left) + " bars to the first value", text_size = size.small, text_color = chart.fg_color)
 
-// ---------------------------------------------------------------- debug values (parity with the Python reference, R10 addendum 3)
+// ---------------------------------------------------------------- debug values (parity with the Python reference, R10 addendum 4)
 display_dbg = dbg ? display.all : display.none
 plot(logit, "dbg logit", display = display_dbg, precision = 10)
 plot(zz, "dbg z", display = display_dbg, precision = 10)
-plot(mE, "dbg m_ema", display = display_dbg, precision = 10)
-plot(sE, "dbg s_ema", display = display_dbg, precision = 10)
+plot(mW, "dbg m_win", display = display_dbg, precision = 10)
+plot(sW, "dbg s_win", display = display_dbg, precision = 10)
+plot(kW, "dbg k", display = display_dbg, precision = 0)
 plot(logM, "dbg logM", display = display_dbg, precision = 10)
 plot(na(logit) ? na : nW, "dbg n", display = display_dbg, precision = 0)
 plot(nrm, "dbg norm", display = display_dbg, precision = 10)

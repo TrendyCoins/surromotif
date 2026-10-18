@@ -71,3 +71,38 @@ def test_bars_copy_matches_original_script(tmp_path):
             assert mo == mc
         else:
             assert orig[k].dtype == copy[k].dtype and np.array_equal(orig[k], copy[k]), k
+
+
+def test_floor_override(tmp_path):
+    """Rule R17 on the research side: inside the block every series has the floor 0.2 (float32, also the torch tensor),
+       afterwards the same objects as before; on a real research SeriesData built from synthetic bars and on the stand
+       object of research Ceil."""
+    import tempfile
+    from mri.research_bridge import FLOOR, _ceil_module, floor_override, write_research_files
+    assert FLOOR == 0.20000000298023224
+    ce = _ceil_module()
+    dd = ce._DummyData([0.1756, 0.2, 0.2025])
+    w0 = dd.windows(64)
+    old, old_t = w0['floor'], w0['floor_t']
+    with floor_override(dd, 64) as w:
+        assert np.all(w['floor'] == np.float32(0.2)) and np.all(w['floor_t'].numpy() == np.float32(0.2))
+        assert w['floor'].dtype == np.float32
+    assert dd.windows(64)['floor'] is old and dd.windows(64)['floor_t'] is old_t
+    assert np.array_equal(old, np.float32([0.1756, 0.2, 0.2025]))
+    # a real research data set
+    os.environ.setdefault('SMC_MODE', 'none')
+    os.environ.setdefault('SMC_PROJECT_PATH', tempfile.mkdtemp() + '/')
+    sys.path.insert(0, os.path.join(ROOT, 'research'))
+    import sumo_class_train as T
+    b = synth.bars(1500, seed=21)
+    t0 = str(np.datetime64(int(b['time'].iloc[0]), 'ms'))
+    t1 = str(np.datetime64(int(b['time'].iloc[1200]), 'ms'))
+    write_research_files(b, str(tmp_path) + '/', 'BTCUSDT', t0, t1, 0.1753023)
+    T.DATA_DIR, T.DATA_OVERLAY = str(tmp_path) + '/', None
+    data = T.SeriesData(['BTCUSDT'], '5M', 200, '2100-01-01', 'multi_g')
+    w = data.windows(64)
+    old, old_t = w['floor'], w['floor_t']
+    assert np.all(old == np.float32(0.1753023))
+    with floor_override(data, 64) as w2:
+        assert np.all(data.windows(64)['floor'] == np.float32(FLOOR)) and np.all(w2['floor_t'].numpy() == np.float32(FLOOR))
+    assert data.windows(64)['floor'] is old and data.windows(64)['floor_t'] is old_t

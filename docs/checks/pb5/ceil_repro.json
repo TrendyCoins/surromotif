@@ -1,0 +1,143 @@
+{
+ "ceil_json": "ceil_20261018_115426.json",
+ "source": "refit_ALL",
+ "check_nocal": {
+  "ok": true,
+  "bit": true,
+  "same_rules": true
+ },
+ "assets": [
+  "BTCUSDT",
+  "ETHUSDT",
+  "DOGEUSDT",
+  "SOLUSDT",
+  "ADAUSDT",
+  "BNBUSDT",
+  "BCHUSDT",
+  "DOTUSDT",
+  "UNIUSDT",
+  "XRPUSDT",
+  "LTCUSDT",
+  "DASHUSDT",
+  "ZECUSDT",
+  "SPELLUSDT",
+  "ICPUSDT",
+  "NEARUSDT",
+  "ZENUSDT",
+  "AVAXUSDT",
+  "FETUSDT",
+  "RAYUSDT",
+  "CAKEUSDT",
+  "INJUSDT",
+  "RUNEUSDT",
+  "PHAUSDT",
+  "QNTUSDT",
+  "HBARUSDT",
+  "AAVEUSDT",
+  "VTHOUSDT",
+  "FILUSDT",
+  "LINKUSDT",
+  "XLMUSDT"
+ ],
+ "conds": {
+  "до": {
+   "logm_cells_max_d": 0.0,
+   "rule_way1": {
+    "ok": true,
+    "max_d_fact_exp_ratio": 3.552713678800501e-15,
+    "mismatches": [],
+    "n_mismatches": 0
+   },
+   "rule_way2": {
+    "ok": true,
+    "max_d_fact_exp_ratio": 3.552713678800501e-15,
+    "mismatches": [],
+    "n_mismatches": 0
+   },
+   "logm_eval_max_d": 0.0,
+   "fa_way1": {
+    "d_bce": 0.0,
+    "d_cover3": 0.0,
+    "ceil_same": true,
+    "share_same": true,
+    "ok": true,
+    "d_gp_col": 0.0,
+    "gp_col": [
+     0.049186950194372386,
+     0.049186950194372386
+    ],
+    "bce": [
+     0.5614618611422448,
+     0.5614618611422448
+    ]
+   },
+   "fa_way2": {
+    "d_bce": 0.0,
+    "d_cover3": 0.0,
+    "ceil_same": true,
+    "share_same": true,
+    "ok": true,
+    "bce": [
+     0.5614618611422448,
+     0.5614618611422448
+    ]
+   },
+   "ok": true,
+   "minutes": 0.3
+  },
+  "после": {
+   "logm_cells_max_d": 0.0,
+   "rule_way1": {
+    "ok": true,
+    "max_d_fact_exp_ratio": 3.552713678800501e-15,
+    "mismatches": [],
+    "n_mismatches": 0
+   },
+   "rule_way2": {
+    "ok": true,
+    "max_d_fact_exp_ratio": 3.552713678800501e-15,
+    "mismatches": [],
+    "n_mismatches": 0
+   },
+   "logm_eval_max_d": 0.0,
+   "fa_way1": {
+    "d_bce": 0.0,
+    "d_cover3": 0.0,
+    "ceil_same": true,
+    "share_same": true,
+    "ok": true,
+    "d_gp_col": 0.0,
+    "gp_col": [
+     0.049195010087762565,
+     0.049195010087762565
+    ],
+    "bce": [
+     0.5614019203625372,
+     0.5614019203625372
+    ]
+   },
+   "fa_way2": {
+    "d_bce": 0.0,
+    "d_cover3": 0.0,
+    "ceil_same": true,
+    "share_same": true,
+    "ok": true,
+    "bce": [
+     0.5614019203625372,
+     0.5614019203625372
+    ]
+   },
+   "ok": true,
+   "minutes": 0.3
+  }
+ },
+ "choice_json": 10,
+ "ruler": {
+  "n_null": 3179790,
+  "n_null_json": 3179790,
+  "bit_exact": true,
+  "max_abs_diff": 0.0
+ },
+ "reproduced": true,
+ "minutes": 0.8
+}

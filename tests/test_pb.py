@@ -1,8 +1,9 @@
-"""PB reference and the line M on synthetic data (thresholds — docs/rules.md, session 4):
+"""PB reference and the line M on synthetic data (thresholds — docs/rules.md, sessions 4 and 5):
     the separable layer by the stream == a direct convolution by its formula; bar-by-bar stream == vectorized (< 1e-10;
-    fine / coarse tick, grid gaps); line M == research _nc_z / _nc_live / _nc_logm (<= 1e-12); the streaming EMA == pandas
-    ewm(span, adjust=True) (<= 1e-12); m = 0, s = 1 -> M = 1; M does not decrease in z for any m >= 0, s; warm-up R16
-    (window numbers over valid windows, invalid windows do not move the state); first line bar 552 on continuous data."""
+    fine / coarse tick, grid gaps), the line of session 5 included (formula A: m_win, s_win, k, log M); line M ==
+    research _nc_z / _nc_logm (<= 1e-12); m = 0, s = 1 -> M = 1; M does not decrease in z for any m >= 0, s; start of the
+    line R18 (window numbers over valid windows, invalid windows do not move the state); first line bar 4360 on continuous
+    data. The EMA of session 4 (record, not exported): streaming EMA == pandas and research _nc_live (<= 1e-12)."""
 import math
 import os
 import sys
@@ -21,7 +22,7 @@ from mri.batch import conv_stream  # noqa: E402
 from mri.features import bar_features  # noqa: E402
 from mri.params import DILATIONS  # noqa: E402
 
-FLOOR = 0.2
+FLOOR = pb.FLOOR
 G = np.random.default_rng(11)
 Q = np.sort(G.normal(-1.0, 1.4, 37)) + np.arange(37) * 1e-3            # strictly increasing ruler of a fake model
 ZK = np.sort(G.normal(0, 1.2, 37))
@@ -78,41 +79,54 @@ def test_stream_equals_vectorized(kind):
          'coarse': lambda: synth.bars(1500, seed=2, tick=0.0001),
          'gaps': lambda: synth.bars(1500, seed=3, gaps=[(500, 1), (900, 5), (930, 2)])}[kind]()
     p = pb.random_params(seed=4)
-    s = pb.run(b, p, FLOOR, Q, ZK, warm=50, span=300)
-    v = pb.chart(b, p, FLOOR, Q, ZK, warm=50, span=300)
+    s = pb.run(b, p, FLOOR, Q, ZK)
+    v = pb.chart(b, p, FLOOR, Q, ZK)
     sl = np.array([x['logit'] for x in s])
     assert np.array_equal(np.isfinite(sl), v['valid'])
     T = np.where(v['valid'])[0]
     assert np.abs(sl[T] - v['logit'][T]).max() < 1e-10
-    for k in ('z', 'm_ema', 's_ema', 'log_m'):
+    for k in ('z', 'm_win', 's_win', 'log_m'):
         sk = np.array([x[k] for x in s])
         assert np.array_equal(np.isfinite(sk), v['valid']), k
         assert np.abs(sk[T] - v[k][T]).max() < 1e-10, k
     assert np.array_equal(np.array([x['n'] if x['logit'] == x['logit'] else -1 for x in s]), v['n'])
+    assert np.array_equal(np.array([x['k'] for x in s]), v['k'])
     assert np.array_equal(np.array([x['shown'] for x in s]), v['shown'])
     if kind != 'gaps':
-        assert T[0] == 264 and np.where(v['shown'])[0][0] == 264 + 50
+        assert T[0] == 264
 
 
-def test_first_line_bar_552():
-    b = synth.bars(700, seed=5)
-    v = pb.chart(b, pb.random_params(seed=6), FLOOR, Q, ZK)
+@pytest.fixture(scope='module')
+def long_chart():
+    b = synth.bars(4700, seed=5, gaps=[(3000, 2)])
+    return pb.chart(b, pb.random_params(seed=6), FLOOR, Q, ZK), pb.chart(b.iloc[:2990].reset_index(drop=True),
+                                                                          pb.random_params(seed=6), FLOOR, Q, ZK)
+
+
+def test_first_line_bar_4360(long_chart):
+    """Continuous data: first window ends at bar 264 (R13), the line from the window 4096 — bar 4360 (R18); with a gap
+       before that the start moves by the windows that lost validity."""
+    b = synth.bars(4400, seed=15)
+    v = pb.chart(b, pb.random_params(seed=16), FLOOR, Q, ZK)
     assert np.where(v['valid'])[0][0] == 264
-    assert np.where(v['shown'])[0][0] == 264 + linem.WARM == 552
-    assert v['n'][552] == 288
+    assert np.where(v['shown'])[0][0] == 264 + linem.SHOW_FROM == 4360
+    assert v['n'][4360] == 4096 and v['k'][4360] == 4032 and v['k'][4359] == 4032 and v['k'][264 + 63] == 0
 
 
-def test_warmup_counts_valid_windows_only():
-    b = synth.bars(1300, seed=7, gaps=[(700, 3)])
-    v = pb.chart(b, pb.random_params(seed=8), FLOOR, Q, ZK, warm=500)
+def test_line_start_counts_valid_windows_only(long_chart):
+    v, head = long_chart
     T = np.where(v['valid'])[0]
     assert np.array_equal(v['n'][T], np.arange(len(T)))
-    assert not v['valid'][700:700 + L].any()                          # windows over the gap: no number, no state
-    assert T[435] == 699 and T[436] == 700 + L                         # 264..699 — 436 windows, then from bar 764
-    assert np.where(v['shown'])[0][0] == T[500] == 764 + 64
-    # the state after the gap continues from the last valid window (no reset): equal to the EMA over valid windows only
-    m, s = linem.live(linem.ruler_z(v['logit'][T], Q, ZK))
-    assert np.abs(m - v['m_ema'][T]).max() < 1e-12 and np.abs(s - v['s_ema'][T]).max() < 1e-12
+    assert not v['valid'][3000:3000 + L].any()                        # windows over the gap: no number, no state
+    assert T[2735] == 2999 and T[2736] == 3000 + L                     # 264..2999 — 2736 windows, then from bar 3064
+    assert np.where(v['shown'])[0][0] == T[4096] == 3064 + 4096 - 2736
+    # the state after the gap continues from the last valid window (no reset): formula A over valid windows only
+    m, s, k = linem.live_win(linem.ruler_z(v['logit'][T], Q, ZK))
+    assert np.abs(m - v['m_win'][T]).max() < 1e-12 and np.abs(s - v['s_win'][T]).max() < 1e-12
+    assert np.array_equal(k, v['k'][T])
+    # the bars before the gap give the same numbers on a shorter chart (the line does not look ahead)
+    Th = np.where(head['valid'])[0]
+    assert np.array_equal(head['m_win'][Th], v['m_win'][Th]) and np.array_equal(head['log_m'][Th], v['log_m'][Th])
 
 
 def test_ruler_scalar_equals_np_interp():
@@ -150,6 +164,8 @@ def test_display_and_ceiling():
     v, col, cap = linem.display(np.log([0.5, 1.0, 2.0, 50.0, 1 / 50.0]), 34.0, 21.0)
     assert list(col) == [-1, 0, 1, 1, -1] and list(cap) == [False, False, False, True, True]
     assert np.allclose(v, [2.0, 1.0, 2.0, 34.0, 21.0])
+    v, col, cap = linem.display(np.log([50.0, 1 / 50.0]))                # session 5: one ceiling 10 (R19)
+    assert np.allclose(v, [10.0, 10.0]) and list(cap) == [True, True]
 
 
 def test_line_matches_research(research):

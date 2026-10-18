@@ -1,0 +1,56 @@
+{
+ "model": "PB_s64h24_d1",
+ "floor": 0.20000000298023224,
+ "windows": 104599,
+ "same_window_set": true,
+ "last_end": "2026-06-30 02:25:00",
+ "floor_trained_btc": 0.17530229687690735,
+ "models": {
+  "refit_a": {
+   "tag": "pool_ALL_PB_s64h24_d1_L64_a_refit",
+   "ties": 6,
+   "max_dlogit_non_tie": 9.728133944397754e-06,
+   "p99": 3.065944338445094e-06,
+   "max_dlogit_tie": 6.60504641425419e-07,
+   "n_dlogit_gt_1e-4": 0,
+   "n_affected": 834,
+   "max_dlogit_affected": 4.029188800380723e-06,
+   "n_floor_acts_reference": 834,
+   "affected_eq_floor_acts": true,
+   "med_max_abs_diff": 1.1406167033101156e-07,
+   "mabs_max_abs_diff": 3.395533472172474e-07,
+   "pass_R3": true
+  },
+  "refit_b": {
+   "tag": "pool_ALL_PB_s64h24_d1_L64_b_refit",
+   "ties": 6,
+   "max_dlogit_non_tie": 1.1961247256664365e-05,
+   "p99": 3.0464151597531247e-06,
+   "max_dlogit_tie": 1.344866927821542e-06,
+   "n_dlogit_gt_1e-4": 0,
+   "n_affected": 834,
+   "max_dlogit_affected": 4.167068129667939e-06,
+   "n_floor_acts_reference": 834,
+   "affected_eq_floor_acts": true,
+   "med_max_abs_diff": 1.1406167033101156e-07,
+   "mabs_max_abs_diff": 3.395533472172474e-07,
+   "pass_R3": true
+  },
+  "prod_a": {
+   "tag": "prod_PB_s64h24_d1_L64_a",
+   "ties": 6,
+   "max_dlogit_non_tie": 9.347460962594312e-06,
+   "p99": 2.8005071806669405e-06,
+   "max_dlogit_tie": 1.0906273377742082e-06,
+   "n_dlogit_gt_1e-4": 0,
+   "n_affected": 834,
+   "max_dlogit_affected": 3.219958023326086e-06,
+   "n_floor_acts_reference": 834,
+   "affected_eq_floor_acts": true,
+   "med_max_abs_diff": 1.1406167033101156e-07,
+   "mabs_max_abs_diff": 3.395533472172474e-07,
+   "pass_R3": true
+  }
+ },
+ "pass_R3": true
+}
