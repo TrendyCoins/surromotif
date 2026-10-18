@@ -3,7 +3,7 @@
  "live_json": "live_20261018_093025.json",
  "nocal_json": "nocal_PB_s64h24_d1_20261017_140953.json",
  "a": {
-  "live_ver": "1",
+  "live_ver": "'1.1'",
   "ceil_ver": "1",
   "logs": {
    "live": [
@@ -18,7 +18,7 @@
   "stand": {
    "passed": 18,
    "total": 18,
-   "minutes": 0.71,
+   "minutes": 0.68,
    "checks": [
     "✅ корзины NC_EDGES, min_n 1000: все строки равны — 20 строк",
     "✅ выбор — 10, все пары ок, незнакомые ок — выбор 10",
@@ -37,7 +37,7 @@
     "✅ кэш: оценки с полом 0.2 и со старым (float32), медиана и среднее |r|, недели, обученные полы — как записаны",
     "✅ пересчёт со старым полом — у основного источника и prod a",
     "✅ модели пересчёта: 'stop' C a / b, 'refit' ALL a / b, prod a — pool_C_PB_s64h24_d1_L64_a, pool_C_PB_s64h24_d1_L64_b, pool_ALL_PB_s64h24_d1_L64_a_refit, pool_ALL_PB_s64h24_d1_L64_b_refit, prod_PB_s64h24_d1_L64_a",
-    "✅ json и рисунок пишутся — /tmp/ceil_stand_uckgrq7l/out_ceil/ceil_stand_20261018_164835.json",
+    "✅ json и рисунок пишутся — /tmp/ceil_stand_p760y2jn/out_ceil/ceil_stand_20261018_165021.json",
     "✅ СТЕНД: 18 из 18 проверок"
    ]
   }
@@ -94,7 +94,7 @@
    "gate": "а",
    "check": "research-файлы импортируются без побочных эффектов (ничего не напечатано, файлов не создано, main не запущен)",
    "ok": true,
-   "note": "код 0; печать импорта: '1 1 1 none none none'; новые файлы: []; stderr: ''"
+   "note": "код 0; печать импорта: \"'1.1' 1 1 none none none\"; новые файлы: []; stderr: ''"
   },
   {
    "gate": "а",
@@ -105,8 +105,8 @@
   {
    "gate": "а",
    "check": "LIVE_VER = '1.1'",
-   "ok": false,
-   "note": "LIVE_VER = 1 (json Live — ver 1)"
+   "ok": true,
+   "note": "LIVE_VER = '1.1' (json Live — ver 1)"
   },
   {
    "gate": "а",
@@ -236,7 +236,7 @@
   }
  ],
  "ok": {
-  "а": false,
+  "а": true,
   "б": true,
   "в": true,
   "г": true
