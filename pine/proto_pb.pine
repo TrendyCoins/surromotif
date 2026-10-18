@@ -13,11 +13,11 @@
 // The line starts at the window 4096 (bar 4360 of continuous data): before it the calibration set of this chart
 // is not full (4032 windows) and nothing is drawn. On a random market M stays near 1.
 // M is a frequency ratio of the window's shape, not a forecast.
-// Checked range: up to 10 on both sides; above it the line stays at 10, marked "10+".
+// Checked range: up to 10 on both sides; above it the line stays at 10.
 // One floor of the window divisor for every symbol (0.2 of the bar norm).
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
-// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 1e94030.
-indicator("Market Randomness Index prototype", shorttitle = "MRI proto", overlay = false, precision = 2, max_labels_count = 500)
+// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 103b072.
+indicator("Market Randomness Index prototype", shorttitle = "MRI proto", overlay = false, precision = 2)
 
 // ---------------------------------------------------------------- inputs
 float thr      = input.float(3.0, "Threshold M", minval = 1.0, step = 0.25, tooltip = "Visual only: above the threshold the line is bright, below it is pale; dashed line at the threshold; optional marks on the price chart at M >= threshold.")
@@ -30,7 +30,7 @@ int   calcBars = input.int(0, "Compute only the last N bars (0 = all history)", 
 
 // ---------------------------------------------------------------- one floor and one ceiling for every symbol
 const float FLOOR = 0.20000000298023224   // floor of the window divisor, in units of the bar norm (float32 of 0.2)
-const float CEIL  = 10.0                  // checked range of M on both sides; above it "10+"
+const float CEIL  = 10.0                  // checked range of M on both sides; above it the line stays at CEIL
 bool  tf5   = timeframe.period == "5"
 float GAPMS = 1.5 * timeframe.in_seconds() * 1000.0   // interval > 1.5 bars -> grid gap
 
@@ -411,15 +411,7 @@ color baseC  = more ? colMore : less ? colLess : color.gray
 plot(Mshow, "M", color = Mraw >= thr ? baseC : color.new(baseC, paleT), linewidth = 2)
 hline(1.0, "Random (M = 1)", color = color.gray, linestyle = hline.style_solid)
 hline(thr, "Threshold", color = color.gray, linestyle = hline.style_dashed)
-// above the checked range: "10+" once at the start of each run
-bool atO = more and Mraw > CEIL
-bool atB = less and Mraw > CEIL
-if barstate.isconfirmed and atO and not atO[1]
-    label.new(bar_index, CEIL, "10+", style = label.style_none, textcolor = colMore, size = size.small)
-if barstate.isconfirmed and atB and not atB[1]
-    label.new(bar_index, CEIL, "10+", style = label.style_none, textcolor = colLess, size = size.small)
-// the start of the line: one mark with a constant text at the window SHOW (a plot shape, not a label: labels share the
-// limit max_labels_count with "10+" and the oldest are removed)
+// the start of the line: one mark with a constant text at the window SHOW (a plot shape: no label limits)
 plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.gray, text = "MRI starts here\ncalibrated on 4032 windows of this chart", textcolor = chart.fg_color, size = size.tiny)
 plotshape(showMarks and more and Mraw >= thr, "Mark: more frequent than random", shape.circle, location.abovebar, colMore, size = size.tiny, force_overlay = true)
 plotshape(showMarks and less and Mraw >= thr, "Mark: less frequent than random", shape.circle, location.abovebar, colLess, size = size.tiny, force_overlay = true)
