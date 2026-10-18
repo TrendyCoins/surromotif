@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1WTrqWKjBz_QftTq7agaNHR7n5YnMw8HI
 """
 
-# -*- coding: utf-8 -*-
 """SuMo_Class_Bell — колокол линии M: сходится ли он с ростом числа баров и сколько баров брать (v1, 2026-10-18)
 
 ЗАЧЕМ. Линия M (MRI без калибровки по ассету, 'nocal' v2, линейка glob_e) — отношение двух колоколов в шкале z:

@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/16wkn1QZgvUPufXx4yjVknJedeuZJ0oa7
 """
 
-# -*- coding: utf-8 -*-
 """SuMo_Class_Live — живая часть линии M на графике с короткой историей: сколько окон брать и как (v1, 2026-10-18)
 
 ЗАЧЕМ. SuMo_Class_Bell: колокол к одной форме не сходится, лучшая память живой части — 16–26 недель (span 16128–52416
@@ -104,7 +103,7 @@ import matplotlib.pyplot as plt
 # =====================================================================
 # НАСТРОЙКИ
 # =====================================================================
-MODE = 'stand'          # по порядку: 'stand' (синтетика, данных не нужно) -> 'run' (данные Drive)
+MODE = 'run'          # по порядку: 'stand' (синтетика, данных не нужно) -> 'run' (данные Drive)
 
 project_path = '/content/drive/MyDrive/TrendyCoins/'
 TRAIN_PY = project_path + 'SMC/sumo_class_train.py'    # код обучения v6.3 (функции линии M и NOCAL)
