@@ -125,12 +125,12 @@ def main():
         meta[tag] = m
     os.makedirs(OUT_DIR, exist_ok=True)
     parts, cur, size = [], [], 0
-    for k, x in arrays.items():                   # cut by keys: raw bytes of a part <= 0.97 of the limit
-        if cur and size + x.nbytes > 0.97 * PART_MAX:
+    for k, x in arrays.items():                   # cut by keys: raw bytes + 1 KB of zip headers per key <= 0.97 of the limit
+        if cur and size + x.nbytes + 1024 > 0.97 * PART_MAX:
             parts.append(cur)
             cur, size = [], 0
         cur.append(k)
-        size += x.nbytes
+        size += x.nbytes + 1024
     parts.append(cur)
     man = {'what': 'window scores with the floor 0.2 from the SuMo_Class_Ceil v1 cache (VAL)', 'model': MODEL,
            'floor': FLOOR, 'ceil_ver': CEIL_VER, 'meta': meta, 'parts': []}
