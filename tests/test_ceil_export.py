@@ -39,7 +39,7 @@ def fake_cache(CE, project, assets, floor_meta=0.2, skip=None):
                 res[(a, 'val')] = d
                 old[(a, 'val')] = {k: v + 1 if k in ('sp', 'sn') else v for k, v in d.items()}
             CE.save_cache({'tag': tag}, res, old, {'tag': tag, 't_cut': '2026-09-26 09:15:00',
-                                                   'data_overlay': '/content/drive/MyDrive/x/SMC/data_fresh/'}, floors)
+                                                   'data_overlay': '/mnt/train_machine/data_fresh/'}, floors)
             truth[tag] = res
     finally:
         CE.OUT_DIR = keep
@@ -67,7 +67,7 @@ def test_export_roundtrip(tmp_path, monkeypatch):
     m.main()
     man = ceil_export.manifest(str(tmp_path / 'out'))
     assert len(man['parts']) > 1 and all(p['size'] <= 20_000 for p in man['parts'])
-    assert '/content/drive' not in open(tmp_path / 'out' / ceil_export.MANIFEST, encoding='utf-8').read()
+    assert 'train_machine' not in open(tmp_path / 'out' / ceil_export.MANIFEST, encoding='utf-8').read()
     ex = ceil_export.load_export(str(tmp_path / 'out'))
     for tag, res in truth.items():
         fields, extra = m.WHAT[tag]
