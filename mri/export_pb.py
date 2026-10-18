@@ -194,10 +194,10 @@ def build_export(seed=SEED):
             'display': {'colour': 'sign of log M: > 0 orange (more often than random), < 0 blue (less often), 0 — floor',
                         'number': 'M = exp(|log M|), floor 1.0',
                         'threshold': 'visual only: input >= 1, default 3 (bright above, pale below, dashed line, optional marks)',
-                        'ceiling': 'not above ceiling.value for both colours; above — drawn at the ceiling, label "10+" at the '
-                                   'start of each run above it',
+                        'ceiling': 'not above ceiling.value for both colours; above — drawn at the ceiling, no label '
+                                   '(decision of 2026-10-18)',
                         'start_mark': 'one mark with a constant text at the first shown window (window 4096)'},
-            'ceiling': {'value': float(ce['ceiling']), 'both_colours': True, 'label': f"{ce['ceiling']:g}+",
+            'ceiling': {'value': float(ce['ceiling']), 'both_colours': True, 'above': 'drawn at the ceiling, no label',
                         'rule': "R19 / SuMo_Class_Ceil (Ц): the first of 10, 8, 5, 3 that passed (Ц1)-(Ц3) on 'stop' C and "
                                 "(Ц1)-(Ц2) on 'refit' ALL; above it the line promises nothing more"}},
         'symbols': 'every symbol the same: one floor, one ruler, one ceiling (no constants of the symbol)',

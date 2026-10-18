@@ -13,11 +13,11 @@
 // The line starts at the window 4096 (bar 4360 of continuous data): before it the calibration set of this chart
 // is not full (4032 windows) and nothing is drawn. On a random market M stays near 1.
 // M is a frequency ratio of the window's shape, not a forecast.
-// Checked range: up to 10 on both sides; above it the line stays at 10, marked "10+".
+// Checked range: up to 10 on both sides; above it the line stays at 10.
 // One floor of the window divisor for every symbol (0.2 of the bar norm).
 // No repaint: the state changes only on confirmed bars; a window over a gap in the data is not drawn.
-// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 1e94030.
-indicator("Market Randomness Index", shorttitle = "MRI", overlay = false, precision = 2, max_labels_count = 500)
+// Passport: weights prod_PB_s64h24_d1_L64_a, data up to 2026-09-26 09:15:00 UTC, export of code 103b072.
+indicator("Market Randomness Index", shorttitle = "MRI", overlay = false, precision = 2)
 
 // ---------------------------------------------------------------- inputs
 float thr      = input.float(3.0, "Threshold M", minval = 1.0, step = 0.25, tooltip = "Visual only: above the threshold the line is bright, below it is pale; dashed line at the threshold; optional marks on the price chart at M >= threshold.")
@@ -25,12 +25,11 @@ int   paleT    = input.int(70, "Transparency below the threshold", minval = 0, m
 color colMore  = input.color(color.rgb(242, 140, 40), "More frequent than random", tooltip = "M > 1 on the more frequent side: windows of this shape are M times more frequent in real markets than in a random walk.")
 color colLess  = input.color(color.rgb(47, 128, 237), "Less frequent than random", tooltip = "M > 1 on the less frequent side: windows of this shape are M times less frequent in real markets than in a random walk.")
 bool  showMarks = input.bool(false, "Marks on the price chart at M >= threshold")
-bool  dbg      = input.bool(false, "Debug values (parity check)", group = "Advanced", tooltip = "Plots the internal values of each bar for checking against the Python reference (Export chart data).")
 int   calcBars = input.int(10000, "Compute only the last N bars (0 = all history)", minval = 0, group = "Advanced", tooltip = "The network and the live part run on the last N bars only (TradingView limits the script time on the whole history); the line starts 4096 windows after the first computed window.")
 
 // ---------------------------------------------------------------- one floor and one ceiling for every symbol
 const float FLOOR = 0.20000000298023224   // floor of the window divisor, in units of the bar norm (float32 of 0.2)
-const float CEIL  = 10.0                  // checked range of M on both sides; above it "10+"
+const float CEIL  = 10.0                  // checked range of M on both sides; above it the line stays at CEIL
 bool  tf5   = timeframe.period == "5"
 float GAPMS = 1.5 * timeframe.in_seconds() * 1000.0   // interval > 1.5 bars -> grid gap
 
@@ -168,7 +167,6 @@ var float prevD1 = na                              // (HL/2 - close) / norm of t
 var float prevD2 = na                              // (HLC/3 - close) / norm of the previous bar
 var int   okRun  = 0                               // consecutive valid bars
 var int   firstR = -1                              // bar_index of the first valid r
-var int   nConf  = 0                               // confirmed bars processed (debug: the state advanced)
 // live part of the line M: z of the last SHOW valid windows in a ring (index nW % SHOW), sums S1, S2 of z and z^2 over
 // the calibration set (windows nW - SHOW + 1 .. nW - LAG), window number nW
 var array<float> ZR = array.new<float>(SHOW, 0.0)
@@ -187,7 +185,6 @@ var matrix<float> DWM = matrix.new<float>(CH, 2, 0.0)   // depthwise outputs of 
 var matrix<float> ONES33 = matrix.new<float>(33, 1, 1.0 / 33.0)
 var matrix<float> FEAT   = matrix.new<float>(3 * CH + NS, 1, 0.0)
 var int hc = -1                                    // heavy-part bar counter (ring position)
-var array<float> DBG = array.new<float>(3 + NS, na)   // values of the last window: D, X_end, sign, side inputs (debug)
 
 slot(int cnt, int depth, int back) =>
     (cnt - back + depth * 64) % depth
@@ -248,9 +245,6 @@ computeLogit(int cnt, array<float> hst) =>
         xe += i * array.get(WR, i)
     xe /= L
     float sgn = xe < -EPS * D ? -1.0 : 1.0
-    array.set(DBG, 0, D)
-    array.set(DBG, 1, xe)
-    array.set(DBG, 2, sgn)
     matrix<float> M4 = sgn > 0 ? R4P : R4M
     matrix<float> mean4 = matrix.mult(M4, ONES33)
     int p4 = slot(cnt, 33, 0)
@@ -262,7 +256,6 @@ computeLogit(int cnt, array<float> hst) =>
     for j = 0 to NS - 3
         array.push(side, array.get(HSIGNED, j) > 0 ? array.get(hst, j) * sgn : array.get(hst, j))
     for j = 0 to NS - 1
-        array.set(DBG, 3 + j, array.get(side, j))
         matrix.set(FEAT, 3 * CH + j, 0, (array.get(side, j) - array.get(SIDE_MU, j)) / array.get(SIDE_SD, j))
     matrix<float> z = matrix.sum(matrix.mult(H0, FEAT), HB0)
     float acc = HB3
@@ -367,7 +360,6 @@ if barstate.isconfirmed
     prevD2 := goodN ? (hlc3 - close) / nrm : na
     prevC  := close
     okRun  := ok ? okRun + 1 : 0
-    nConf  += 1
     array.shift(WR)
     array.push(WR, ok ? r : 0.0)
     array.shift(WABS)
@@ -375,7 +367,6 @@ if barstate.isconfirmed
     if ok and firstR < 0
         firstR := bar_index
 
-array.fill(DBG, na)
 if barstate.isconfirmed and bar_index >= heavyFrom
     hc += 1
     convStep(hc, ok ? r / S_SD : 0.0, ok ? st1 / S_SD : 0.0, ok ? st2 / S_SD : 0.0, ok ? gg / LVL_SD : 0.0)
@@ -411,15 +402,7 @@ color baseC  = more ? colMore : less ? colLess : color.gray
 plot(Mshow, "M", color = Mraw >= thr ? baseC : color.new(baseC, paleT), linewidth = 2)
 hline(1.0, "Random (M = 1)", color = color.gray, linestyle = hline.style_solid)
 hline(thr, "Threshold", color = color.gray, linestyle = hline.style_dashed)
-// above the checked range: "10+" once at the start of each run
-bool atO = more and Mraw > CEIL
-bool atB = less and Mraw > CEIL
-if barstate.isconfirmed and atO and not atO[1]
-    label.new(bar_index, CEIL, "10+", style = label.style_none, textcolor = colMore, size = size.small)
-if barstate.isconfirmed and atB and not atB[1]
-    label.new(bar_index, CEIL, "10+", style = label.style_none, textcolor = colLess, size = size.small)
-// the start of the line: one mark with a constant text at the window SHOW (a plot shape, not a label: labels share the
-// limit max_labels_count with "10+" and the oldest are removed)
+// the start of the line: one mark with a constant text at the window SHOW (a plot shape: no label limits)
 plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.gray, text = "MRI starts here\ncalibrated on 4032 windows of this chart", textcolor = chart.fg_color, size = size.tiny)
 plotshape(showMarks and more and Mraw >= thr, "Mark: more frequent than random", shape.circle, location.abovebar, colMore, size = size.tiny, force_overlay = true)
 plotshape(showMarks and less and Mraw >= thr, "Mark: less frequent than random", shape.circle, location.abovebar, colLess, size = size.tiny, force_overlay = true)
@@ -436,40 +419,3 @@ if barstate.islast
         int firstEnd = math.max((firstR < 0 ? NN + 1 : math.max(firstR, NN + 1)) + L - 1, heavyFrom + L - 1)
         int left = nW >= 0 ? SHOW - nW : firstEnd - bar_index + SHOW
         table.cell(MSG, 0, row, "MRI warm-up: " + str.tostring(left) + " bars to the first value", text_size = size.small, text_color = chart.fg_color)
-
-// ---------------------------------------------------------------- debug values (parity with the Python reference, R10 addendum 4)
-display_dbg = dbg ? display.all : display.none
-plot(logit, "dbg logit", display = display_dbg, precision = 10)
-plot(zz, "dbg z", display = display_dbg, precision = 10)
-plot(mW, "dbg m_win", display = display_dbg, precision = 10)
-plot(sW, "dbg s_win", display = display_dbg, precision = 10)
-plot(kW, "dbg k", display = display_dbg, precision = 0)
-plot(logM, "dbg logM", display = display_dbg, precision = 10)
-plot(na(logit) ? na : nW, "dbg n", display = display_dbg, precision = 0)
-plot(nrm, "dbg norm", display = display_dbg, precision = 10)
-plot(r, "dbg r", display = display_dbg, precision = 10)
-plot(st1, "dbg step_hl2", display = display_dbg, precision = 10)
-plot(st2, "dbg step_hlc3", display = display_dbg, precision = 10)
-plot(gg, "dbg g", display = display_dbg, precision = 10)
-plot(array.get(DBG, 0), "dbg D", display = display_dbg, precision = 10)
-plot(array.get(DBG, 1), "dbg x_end", display = display_dbg, precision = 10)
-plot(array.get(DBG, 2), "dbg sgn", display = display_dbg, precision = 10)
-plot(array.get(DBG, 3), "dbg side_log_D", display = display_dbg, precision = 10)
-plot(array.get(DBG, 4), "dbg side_log_mean_abs_r", display = display_dbg, precision = 10)
-plot(array.get(DBG, 5), "dbg side_path_71", display = display_dbg, precision = 10)
-plot(array.get(DBG, 6), "dbg side_path_64", display = display_dbg, precision = 10)
-plot(array.get(DBG, 7), "dbg side_path_32", display = display_dbg, precision = 10)
-plot(array.get(DBG, 8), "dbg side_path_16", display = display_dbg, precision = 10)
-plot(array.get(DBG, 9), "dbg side_path_8", display = display_dbg, precision = 10)
-plot(array.get(DBG, 10), "dbg side_path_4", display = display_dbg, precision = 10)
-plot(array.get(DBG, 11), "dbg side_path_2a", display = display_dbg, precision = 10)
-plot(array.get(DBG, 12), "dbg side_path_2b", display = display_dbg, precision = 10)
-plot(array.get(DBG, 13), "dbg side_range_pos", display = display_dbg, precision = 10)
-plot(array.get(DBG, 14), "dbg side_range_width", display = display_dbg, precision = 10)
-plot(array.get(DBG, 15), "dbg side_close_dev", display = display_dbg, precision = 10)
-plot(array.get(DBG, 16), "dbg side_vol_16", display = display_dbg, precision = 10)
-plot(array.get(DBG, 17), "dbg side_vol_64", display = display_dbg, precision = 10)
-plot(array.get(DBG, 18), "dbg side_range_mean_med", display = display_dbg, precision = 10)
-plot(array.get(DBG, 19), "dbg side_body_med", display = display_dbg, precision = 10)
-plot(nConf, "dbg confirmed", display = display_dbg, precision = 0)
-plot(bar_index, "dbg bar_index", display = display_dbg, precision = 0)
