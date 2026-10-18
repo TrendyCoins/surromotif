@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/16wkn1QZgvUPufXx4yjVknJedeuZJ0oa7
 """
 
-"""SuMo_Class_Live — живая часть линии M на графике с короткой историей: сколько окон брать и как (v1, 2026-10-18)
+"""SuMo_Class_Live — живая часть линии M на графике с короткой историей: сколько окон брать и как (v1.1, 2026-10-18)
 
 ЗАЧЕМ. SuMo_Class_Bell: колокол к одной форме не сходится, лучшая память живой части — 16–26 недель (span 16128–52416
 окон), 8064 коротковат. Но на бесплатном плане TradingView (Basic, ~99% новых пользователей) у внутридневного графика
@@ -71,10 +71,26 @@ Original file is located at
 
 РЕЖИМЫ (MODE): 'stand' — синтетика, данных не нужно: «график 5000» 'nocal' кода обучения бит в бит, векторный счёт = прямому
   циклу, одно число у планов и после перезагрузки у фиксированного окна, пределы формул, EMA части A = Bell бит в бит,
-  монотонность, путь до файлов, оценка времени; 'run' — сверки -> части A и B на обоих источниках -> правила -> json, рисунок.
+  монотонность, путь до файлов, (v1.1) счёт «история против платного», оценка времени; 'run' — сверки -> части A и B на
+  обоих источниках -> правила -> json, рисунок; 'opt_b' (v1.1, после 'run') — проверка варианта Б, ниже.
 ЗАПУСК (Colab, CPU): рядом с кодом обучения (TRAIN_PY) положи sumo_class_bell.py (BELL_PY): данные, линейка, случайный
   график и сверка с 'nocal' берутся из него. Прогоны пула и json 'nocal' — как у Bell, json Bell — в SMC/runs/bell/.
-  Итог — SMC/runs/live/ (лог, json, рисунок). Стенд ~2 мин, 'run' ~10 мин.
+  Итог — SMC/runs/live/ (лог, json, рисунок). Стенд ~3 мин, 'run' ~8 мин, 'opt_b' ~3 мин (Colab).
+
+ПРОВЕРКА ВАРИАНТА Б (v1.1, MODE 'opt_b'; правила записаны до прогона, после 'run' 2026-10-18). 'run' по правилу выбрал
+  4032+144 с показом B3: на бесплатном графике линия только на последних 640 окнах из 4736 (13.5%), запас по воротам (в)
+  на краю — 4.91% при 5%. Вариант Б — продуктовая альтернатива, не выбор правила: формула 4032·k0.5 (F3, k 0.5) с показом
+  B2 (линия с половины окна) — линия на 56% бесплатного графика; цена на краю — BCE +6.1 ± 0.9 ×1e4, случайный график
+  2.89%. Проверка:
+  (Б1) сверка: на основном источнике часть B для 4032·k0.5 и «сейчас» после перезагрузки — те же числа, что в json 'run'
+       (строка b_matrix: отмечено и показано окон). Не сошлось — стоп.
+  (Б2) подтверждение: на 'refit' ALL у 4032·k0.5 способ B2 проходит ворота (а), (б), (в) по показанным окнам начала
+       бесплатного графика (часть A там пройдена в 'run'). Не прошёл — Б отпадает.
+  Справочно, без порога: одно ли число в истории — (i) вся история бесплатного графика против платного, кончающегося там
+  же, (ii) перезагрузка через сутки; доля окон, где число поменялось больше чем на 10% или поменялась отметка, — всего и
+  отдельно для окон с полным окном (позиция >= L + 64 на графике, начавшемся позже) и с неполным; весь бесплатный и
+  платный график; рядом — «сейчас», 4032+144·B3 (выбор правила), 4032+144·B1, 4032·k0.5·B3. Перед данными — стенд нового
+  счёта на синтетике: 'plan' = 'hist' на краю бит в бит; у B3 история = платному точно; у B2 — точно на полном окне.
 """
 
 import os
@@ -103,7 +119,7 @@ import matplotlib.pyplot as plt
 # =====================================================================
 # НАСТРОЙКИ
 # =====================================================================
-MODE = 'run'          # по порядку: 'stand' (синтетика, данных не нужно) -> 'run' (данные Drive)
+MODE = 'stand'          # по порядку: 'stand' (синтетика, данных не нужно) -> 'run' (данные Drive) -> 'opt_b' (вариант Б)
 
 project_path = '/content/drive/MyDrive/TrendyCoins/'
 TRAIN_PY = project_path + 'SMC/sumo_class_train.py'    # код обучения v6.3 (функции линии M и NOCAL)
@@ -144,7 +160,12 @@ LIVE = {
     'bell_check_spans': (8064, 16128),
 }
 
-LIVE_VER = 1
+# проверка варианта Б (v1.1, MODE 'opt_b'; правила — в шапке, записаны до прогона)
+OPT_B = {'formula': '4032·k0.5',  # F3, k 0.5, окно 4032
+         'show': 'B2',            # линия с половины окна
+         'rule': '4032+144'}      # выбор правила 'run' (показ B3) — для сравнения
+
+LIVE_VER = '1.1'
 MODE = os.environ.get('LIVE_MODE', MODE)                # для стенда вне Colab
 TRAIN_PY = os.environ.get('LIVE_TRAIN_PY', TRAIN_PY)
 BELL_PY = os.environ.get('LIVE_BELL_PY', BELL_PY)
@@ -454,8 +475,11 @@ def eval_set(T, recs, v, w0, NW, where, full=True, pos=False):
 
 def pair_logm(T, r, v, mode):
     """Одни и те же окна на двух графиках: 'reload' — бесплатный график и он же через сутки (начало сдвинуто на reload
-       окон); 'plan' — край бесплатного графика (edge окон) и платный (paid_windows окон), кончающийся там же. Возвращает
-       log M на обоих, показано ли там и там, реальных окон в живой части там и там."""
+       окон); 'plan' — край бесплатного графика (edge окон) и платный (paid_windows окон), кончающийся там же; 'hist'
+       (v1.1) — вся история бесплатного графика и тот же платный. Возвращает log M на обоих, показано ли там и там,
+       реальных окон в живой части там и там и позицию окна на графике, начавшемся позже (p, v1.1)."""
+    if mode not in ('reload', 'plan', 'hist'):
+        raise ValueError(f"🍆 АЙ, ОШИБКА! pair_logm: режим '{mode}' — есть 'reload', 'plan', 'hist'")
     if mode == 'reload':
         sh = LIVE['reload']
         tiles = [(t0, ln) for t0, ln in r['free'] if t0 + ln + sh <= r['n']]
@@ -465,26 +489,28 @@ def pair_logm(T, r, v, mode):
         a = chart_ms(T, r['zr'], tiles, v, r['aux'], p_from=sh)
         b = chart_ms(T, r['zr'], [(t0 + sh, ln) for t0, ln in tiles], v, r['aux'], p_to=W - sh)
     else:
-        WP, E = LIVE['paid_windows'], LIVE['edge']
+        WP = LIVE['paid_windows']
         tiles = [(t0, ln) for t0, ln in r['free'] if t0 + ln - WP >= 0]
         if not tiles:
             return None
         W = tiles[0][1]
+        E = W if mode == 'hist' else LIVE['edge']            # 'plan' — последние edge окон, 'hist' — все окна графика
         a = chart_ms(T, r['zr'], tiles, v, r['aux'], p_from=W - E)
         b = chart_ms(T, r['zr'], [(t0 + ln - WP, WP) for t0, ln in tiles], v, r['aux'], p_from=WP - E)
     if not np.array_equal(a['i'], b['i']):
         raise RuntimeError("🍆 АЙ, ОШИБКА! pair_logm: окна двух графиков не совпали")
     sa, sb = a['p'] >= v['show'], b['p'] >= v['show']
     return {'la': logm_at(T, r['zr'], a, sa), 'lb': logm_at(T, r['zr'], b, sb), 'both': sa & sb,
-            'na': a['n'], 'nb': b['n']}
+            'na': a['n'], 'nb': b['n'], 'p': np.minimum(a['p'], b['p'])}
 
 
-def eval_consistency(T, recs, v, mode):
+def eval_consistency(T, recs, v, mode, split=None):
     """Доля окон (показанных на обоих графиках), где число поменялось больше чем на change_tol или поменялась отметка
-       (оранжевая / синяя / нет по M >= 1.25 и <= 0.8), медиана и максимум |Δ log M|."""
+       (оранжевая / синяя / нет по M >= 1.25 и <= 0.8), медиана и максимум |Δ log M|. split (v1.1) — то же отдельно
+       ('parts') для окон, у которых позиция на графике, начавшемся позже, меньше split ('warm') и не меньше ('full')."""
     tol = math.log(1.0 + LIVE['change_tol'])
-    n_both = n_ch = n_fl = 0
-    dl = []
+    names = ('all',) if split is None else ('all', 'warm', 'full')
+    acc = {k: {'n': 0, 'ch': 0, 'fl': 0, 'dl': []} for k in names}
     for r in recs:
         q = pair_logm(T, r, v, mode)
         if q is None:
@@ -493,13 +519,22 @@ def eval_consistency(T, recs, v, mode):
         d = np.abs(la - lb)
         cls_a = np.where(la >= L125, 1, np.where(la <= -L125, -1, 0))
         cls_b = np.where(lb >= L125, 1, np.where(lb <= -L125, -1, 0))
-        n_both += len(d)
-        n_ch += int((d > tol).sum())
-        n_fl += int((cls_a != cls_b).sum())
-        dl.append(d.astype(np.float32))
-    dl = np.concatenate(dl) if dl else np.zeros(0, np.float32)
-    return {'n': n_both, 'change': n_ch / n_both if n_both else math.nan, 'flip': n_fl / n_both if n_both else math.nan,
-            'median': float(np.median(dl)) if len(dl) else math.nan, 'max': float(dl.max()) if len(dl) else math.nan}
+        ch, fl, p = d > tol, cls_a != cls_b, q['p'][q['both']]
+        for k in names:
+            m = np.ones(len(d), dtype=bool) if k == 'all' else ((p < split) if k == 'warm' else (p >= split))
+            acc[k]['n'] += int(m.sum())
+            acc[k]['ch'] += int(ch[m].sum())
+            acc[k]['fl'] += int(fl[m].sum())
+            acc[k]['dl'].append(d[m].astype(np.float32))
+
+    def summ(a_):
+        n, dl = a_['n'], (np.concatenate(a_['dl']) if a_['dl'] else np.zeros(0, np.float32))
+        return {'n': n, 'change': a_['ch'] / n if n else math.nan, 'flip': a_['fl'] / n if n else math.nan,
+                'median': float(np.median(dl)) if len(dl) else math.nan, 'max': float(dl.max()) if len(dl) else math.nan}
+    out = summ(acc['all'])
+    if split is not None:
+        out['parts'] = {k: summ(acc[k]) for k in ('warm', 'full')}
+    return out
 
 
 # =====================================================================
@@ -1001,6 +1036,236 @@ def mode_run():
 
 
 # =====================================================================
+# MODE 'opt_b' (v1.1): проверка варианта Б
+# =====================================================================
+def opt_b_rules_text():
+    f, s = OPT_B['formula'], OPT_B['show']
+    return (f"📜 ПРАВИЛА ПРОВЕРКИ Б (до прогона). Вариант Б — {f} с показом {s} «{B_NAME[s]}» (правило 'run' выбрало "
+            f"{OPT_B['rule']}·B3). (Б1) сверка с json 'run': часть B для {f} и «сейчас» после перезагрузки на основном "
+            f"источнике — те же числа, иначе стоп. (Б2) подтверждение: на 'refit' ALL {f}·{s} проходит ворота (а), (б), "
+            f"(в) по показанным окнам начала бесплатного графика, иначе Б отпадает. Справочно, без порога: одно ли число "
+            f"в истории (вся история бесплатного графика против платного; перезагрузка через сутки; всего / прогрев / "
+            f"полное окно), весь бесплатный и платный график")
+
+
+def stand_hist(T, recs, ok):
+    """Стенд счёта «история против платного» (v1.1): 'plan' — это 'hist' на последних edge окнах, бит в бит; у формулы Б
+       с показом с полного окна (B3) вся история = платному точно; с показом с половины окна (B2) — точно там, где окно
+       полное на обоих графиках (история и перезагрузка), на прогреве — нет."""
+    vb = {v['key']: v for v in variants_a()}[OPT_B['formula']]
+    P = vb['lag'] + int(vb['L'])
+    VB = {u['opt']: u for u in options_b(vb)}
+    same, n_cmp = True, 0
+    for v in (VB['B2'], refs_free()[0]):
+        for r in recs:
+            qh, qp = pair_logm(T, r, v, 'hist'), pair_logm(T, r, v, 'plan')
+            if qh is None or qp is None:
+                continue
+            m = qh['p'] >= W_FREE - LIVE['edge']
+            same &= all(np.array_equal(qh[x][m], qp[x]) for x in ('la', 'lb', 'both', 'p'))
+            n_cmp += int(m.sum())
+    ok("(С10) 'plan' = 'hist' на последних сутках бесплатного графика, бит в бит (B2 и EMA «сейчас»)",
+       same and n_cmp > 0, f"окон {n_cmp}")
+    c3 = eval_consistency(T, recs, VB['B3'], 'hist')
+    ok(f"(С10) {vb['key']}·B3: вся история бесплатного графика = платному, точно", c3['n'] > 0 and c3['max'] == 0.0,
+       f"окон {c3['n']}, max |Δ log M| {c3['max']:.1e}")
+    c2h = eval_consistency(T, recs, VB['B2'], 'hist', split=P)
+    c2r = eval_consistency(T, recs, VB['B2'], 'reload', split=P)
+    fh, wh, fr = c2h['parts']['full'], c2h['parts']['warm'], c2r['parts']['full']
+    ok(f"(С10) {vb['key']}·B2: на полном окне (там и там) история и перезагрузка — те же числа, на прогреве — другие",
+       fh['n'] > 0 and fh['max'] == 0.0 and fr['n'] > 0 and fr['max'] == 0.0 and wh['n'] > 0 and wh['max'] > 0.0,
+       f"история: полное {fh['n']} окон, max {fh['max']:.1e}, прогрев {wh['n']} окон, max {wh['max']:.3f}; "
+       f"перезагрузка: полное {fr['n']} окон, max {fr['max']:.1e}")
+
+
+def check_run_json(resB, c_now):
+    """(Б1) Часть B формулы Б (строка b_matrix) и «сейчас» после перезагрузки на основном источнике — те же числа, что в
+       последнем json 'run'."""
+    paths = sorted(glob.glob(OUT_DIR + 'live_2*.json'))
+    if not paths:
+        print(f"   ⚠️ нет json 'run' в {OUT_DIR} — сверка пропущена")
+        return {'ok': None, 'why': "нет json 'run'"}
+    with open(paths[-1], encoding='utf-8') as fh:
+        rj = json.load(fh)
+    f = OPT_B['formula']
+    ext = rj.get('main', {}).get('extra', {})
+    rows, ok, n_cmp = [], True, 0
+    row = next((x for x in ext.get('b_matrix', []) if x['a'] == f), None)
+    if row is None:
+        rows.append(f"в b_matrix нет {f} — часть B не сверена")
+    else:
+        k = f"{f}·{row['b']}"
+        same = row['gp_b'] == resB[k]['gp_col'] and row['n_shown_b'] == resB[k]['n_shown']
+        ok &= same
+        n_cmp += 1
+        rows.append(f"{k}: случ. {100 * resB[k]['gp_col']:.6f}% / {100 * row['gp_b']:.6f}%, показано {resB[k]['n_shown']} / "
+                    f"{row['n_shown_b']} {'=' if same else '≠'}")
+    ref = ext.get('consistency', {}).get('сейчас', {}).get('reload')
+    if ref is None:
+        rows.append("нет «сейчас» — перезагрузка не сверена")
+    else:
+        same = all(ref[x] == c_now[x] for x in ('n', 'change', 'flip', 'median', 'max'))
+        ok &= same
+        n_cmp += 1
+        rows.append(f"«сейчас», перезагрузка: {100 * c_now['change']:.6f}% / {100 * ref['change']:.6f}% окон, max "
+                    f"{c_now['max']:.6f} / {ref['max']:.6f} {'=' if same else '≠'}")
+    res = bool(ok) if n_cmp else None
+    print(f"   json {os.path.basename(paths[-1])}: " + ' | '.join(rows) + f" | {'✅' if res else ('⚠️' if res is None else '❌')}")
+    ga = rj.get('confirm', {}).get('a', {}).get('gates', {}).get(f)      # часть A формулы Б на 'refit' ALL ('run')
+    return {'ok': res, 'json': os.path.basename(paths[-1]), 'rows': rows, 'confirm_a_gates': ga}
+
+
+def ceil_short(r):
+    c = r['ceil']
+    return f"{_f(c['orange'], 'g', None, 'нет')}/{_f(c['blue'], 'g', None, 'нет')}"
+
+
+def cons_cell(x):
+    """Ячейка «одно ли число»: число поменялось > 10% / поменялась отметка."""
+    if not x or not x['n']:
+        return '—'
+    return f"{100 * x['change']:.1f}% / {100 * x['flip']:.1f}%"
+
+
+def mode_opt_b():
+    t0 = time.time()
+    T = BB.load_train()
+    f, s = OPT_B['formula'], OPT_B['show']
+    k_b, k_r = f"{f}·{s}", f"{OPT_B['rule']}·B3"
+    print(f"\n{'#' * 110}\n# SuMo_Class_Live v{LIVE_VER} | проверка варианта Б: {k_b} | модель {BB.BELL['model']}, сиды "
+          f"{' / '.join(BB.BELL['seeds'])}\n{'#' * 110}")
+    print(opt_b_rules_text())
+    checks = []
+
+    def ok(name, cond, note=''):
+        checks.append((name, bool(cond)))
+        print(f"   {'✅' if cond else '❌'} {name}{(' — ' + note) if note else ''}")
+
+    print("\n🧪 СТЕНД НОВОГО СЧЁТА (синтетика: 2 ассета × 2 сида, 30 недель оценки)")
+    wk_cut = pd.Timestamp(T.NOCAL['half_cut']).value // T.WEEK_NS
+    raw, _ = BB.synth_raw('S', 2, 60_000, 30_000, wk_cut - 30, seed=31)
+    stand_hist(T, prep_source(T, BB.build_source(T, 'syn_hist', raw, 'синтетика: стенд нового счёта')), ok)
+    if not all(c for _, c in checks):
+        print("🍆 АЙ, ОШИБКА! стенд нового счёта не прошёл — дальше не идём")
+        return
+
+    print("\n🔎 СВЕРКА 1: функции линии M кода обучения на npz 'refit' ALL воспроизводят json 'nocal' (Bell)")
+    chk, assets = BB.check_nocal(T)
+    if not chk['ok']:
+        print("🍆 АЙ, ОШИБКА! сверка с 'nocal' не прошла — данные или код не те; дальше не идём")
+        return
+    srcs = {}
+    for key in (BB.BELL['main'], BB.BELL['confirm']):
+        raw, tags = BB.read_source_raw(T, key, assets)
+        print(f"📦 {key}: {', '.join(f'{s_}: ' + ', '.join(v_) for s_, v_ in tags.items())}")
+        srcs[key] = BB.build_source(T, key, raw, BB.BELL['sources'][key]['about'])
+    main_key, conf_key = BB.BELL['main'], BB.BELL['confirm']
+
+    VA = {v['key']: v for v in variants_a()}
+    vb = VA[f]
+    P = vb['lag'] + int(vb['L'])                       # с этой позиции окно полное (показ B3)
+    recs = prep_source(T, srcs[main_key])
+    w0, NW = week_span(recs)
+    print(f"\n{'=' * 110}\n🧾 ОСНОВНОЙ ИСТОЧНИК {main_key}: {srcs[main_key]['about']}\n{'=' * 110}")
+    print(f"   рядов (сид × ассет) {len(recs)}; бесплатных графиков {sum(len(r['free']) for r in recs)} по {W_FREE} окон, "
+          f"платных {sum(len(r['paid']) for r in recs)} по {LIVE['paid_windows']}; недель оценки {NW}")
+    chB, resB, VB = part_b(T, recs, w0, NW, vb, f"ОСНОВНОЙ ИСТОЧНИК {main_key}")
+    rf = {v['key']: v for v in refs_free()}
+    print(f"\n🔎 СВЕРКА 2 (Б1): часть B для {f} и «сейчас» после перезагрузки — те же числа, что в json 'run'")
+    c_now = eval_consistency(T, recs, rf['сейчас'], 'reload', split=P)
+    cr = check_run_json(resB, c_now)
+    if cr['ok'] is False:
+        print("🍆 АЙ, ОШИБКА! числа 'run' не воспроизвелись — данные или код не те; дальше не идём")
+        return
+
+    t1 = time.time()
+    VBm = {u['key']: u for u in VB}
+    VR = {u['key']: u for u in options_b(VA[OPT_B['rule']])}
+    sel = [rf['сейчас'], rf['сейчас·64'], VR[k_r], VR[f"{OPT_B['rule']}·B1"], VBm[k_b], VBm[f"{f}·B3"]]
+    keys = [v['key'] for v in sel]
+    free = {v['key']: eval_set(T, recs, v, w0, NW, 'free', full=True, pos=True) for v in sel}
+    print(f"\n   ВЕСЬ БЕСПЛАТНЫЙ ГРАФИК ({W_FREE} окон): как сейчас, выбор правила, вариант Б")
+    show_table(T, free, keys, {'ref': 'сейчас·64', 'band': [], 'pick': None}, keys, "весь бесплатный график")
+    table_note(f"все окна бесплатного графика, {W_FREE}; Δ — к «сейчас·64»")
+    print()
+    show_positions(free, keys)
+    paid = {v['key']: eval_set(T, recs, v, w0, NW, 'paid', full=False) for v in sel}
+    cons = {}
+    for v in sel:
+        k = v['key']
+        rl = c_now if k == 'сейчас' else eval_consistency(T, recs, v, 'reload', split=P)
+        cons[k] = {'reload': rl, 'hist': eval_consistency(T, recs, v, 'hist', split=P)}
+    print(f"\n   ОДНО ЛИ ЧИСЛО: доля окон (показанных на обоих графиках), где число поменялось больше чем на "
+          f"{100 * LIVE['change_tol']:.0f}% / поменялась отметка (оранжевая / синяя / нет). «История» — вся история "
+          f"бесплатного графика против платного ({LIVE['paid_windows']} окон), кончающегося там же; «перезагрузка» — тот же "
+          f"график через сутки. «Полное» — окна с позиции {P} (L + 64) на графике, начавшемся позже; «прогрев» — до неё")
+    hd = f"{'всё':>15} {'прогрев':>15} {'полное':>15}"
+    print(f"   {'':>13} {'история против платного':^47} | {'перезагрузка через сутки':^47}")
+    print(f"   {'вариант':>13} {hd} | {hd}")
+    for k in keys:
+        h, rl = cons[k]['hist'], cons[k]['reload']
+        c = [cons_cell(x) for x in (h, h['parts']['warm'], h['parts']['full'], rl, rl['parts']['warm'], rl['parts']['full'])]
+        print(f"   {k:>13} {c[0]:>15} {c[1]:>15} {c[2]:>15} | {c[3]:>15} {c[4]:>15} {c[5]:>15}")
+    hb = cons[k_b]['hist']['parts']
+    print(f"   окон в истории у {k_b}: прогрев {hb['warm']['n']}, полное {hb['full']['n']}")
+    print(f"\n   ПЛАТНЫЙ ГРАФИК ({LIVE['paid_windows']} окон): Δ BCE к «сейчас·64» на тех же графиках, показано, случайный "
+          f"график")
+    for k in keys:
+        d, se = BB.paired(paid, k, 'сейчас·64')
+        print(f"   {k:>13} {_f(1e4 * d, '+.2f', 9)} ± {_f(1e4 * se, '.2f', 5)} ×1e4   показано "
+              f"{100 * paid[k]['shown_share']:5.1f}%   случ. {100 * paid[k]['gp_col']:5.2f}%")
+    print(f"   ⏱️ справочно: {(time.time() - t1) / 60:.1f} мин")
+
+    recs_c = prep_source(T, srcs[conf_key])
+    w0c, NWc = week_span(recs_c)
+    print(f"\n{'=' * 110}\n🧾 ПОДТВЕРЖДЕНИЕ {conf_key}: {srcs[conf_key]['about']}\n{'=' * 110}")
+    chB_c, resB_c, _ = part_b(T, recs_c, w0c, NWc, vb, f"ПОДТВЕРЖДЕНИЕ {conf_key}")
+    g = gates(T, resB_c[k_b])
+    ok_b2 = bool(g['all'])
+
+    print(f"\n{'=' * 110}\n🏁 ВЕРДИКТ ПРОВЕРКИ Б (правила записаны до прогона)\n{'=' * 110}")
+    cr_txt = {True: '✅ числа воспроизведены', False: '❌', None: '⚠️ пропущена'}[cr['ok']]
+    print(f"   (Б1) сверка с json 'run': {cr_txt}")
+    r_c, r_m = resB_c[k_b], resB[k_b]
+
+    def gtxt(g_):
+        return ' '.join(f"{nm}{'✓' if g_[x] else '✗'}" for x, nm in (('a', 'а'), ('b', 'б'), ('c', 'в')))
+    ga = cr.get('confirm_a_gates')
+    print(f"   справочно, 'refit' ALL, полное окно (часть A из json 'run'): {f} — "
+          + (f"ворота {gtxt(ga)}" if ga else "нет в json"))
+    print(f"   (Б2) 'refit' ALL, начало бесплатного графика: {k_b} — ворота {gtxt(g)} (R9 {ceil_short(r_c)}, R11 >= "
+          f"{T.NOCAL['ceil_asset']} у {100 * r_c['share']:.0f}% пар, случайный график {100 * r_c['gp_col']:.2f}% ± "
+          f"{100 * r_c['gp_se']:.2f}) -> {'✅ Б подтверждён' if ok_b2 else '❌ Б отпадает (остаётся выбор правила)'}")
+    print(f"   справочно, основной источник, начало графика: {k_b} — R9 {ceil_short(r_m)}, R11 >= {T.NOCAL['ceil_asset']} "
+          f"у {100 * r_m['share']:.0f}% пар, случайный график {100 * r_m['gp_col']:.2f}%")
+    fb, fr_, fn = free[k_b], free[k_r], free['сейчас']
+    print(f"   справочно, весь бесплатный график: линия — Б {100 * fb['shown_share']:.1f}%, правило {100 * fr_['shown_share']:.1f}%, "
+          f"сейчас {100 * fn['shown_share']:.1f}%; случайный график — {100 * fb['gp_col']:.2f}% / {100 * fr_['gp_col']:.2f}% / "
+          f"{100 * fn['gp_col']:.2f}%")
+    hb, hn = cons[k_b]['hist']['parts'], cons['сейчас']['hist']['parts']
+    print(f"   справочно, история против платного (число > 10% / отметка): Б — прогрев {cons_cell(hb['warm'])}, полное "
+          f"{cons_cell(hb['full'])}; сейчас — прогрев {cons_cell(hn['warm'])}, полное {cons_cell(hn['full'])}")
+
+    fields = ('bce', 'shown_share', 'n', 'n_shown', 'gp_col', 'gp_se', 'gp_strong', 'gp_col_r', 'ceil', 'share', 'cover',
+              'cover3', 'pos_bce', 'pos_gp')
+    stamp = time.strftime('%Y%m%d_%H%M%S')
+    os.makedirs(OUT_DIR, exist_ok=True)
+    out = {'ver': LIVE_VER, 'when': stamp, 'mode': 'opt_b', 'opt_b': OPT_B, 'rules': LIVE, 'w_free': W_FREE, 'split': P,
+           'stand': checks, 'check_nocal': chk, 'check_run': cr,
+           'main': {'about': srcs[main_key]['about'], 'b': dict(pack(resB, chB), formula=f),
+                    'free': {k: {x: r.get(x) for x in fields} for k, r in free.items()},
+                    'free_delta_to_now64': {k: list(BB.paired(free, k, 'сейчас·64')) for k in free},
+                    'paid': {k: {'bce': p['bce'], 'gp_col': p['gp_col'], 'shown_share': p['shown_share'],
+                                 'delta_to_now64': list(BB.paired(paid, k, 'сейчас·64'))} for k, p in paid.items()},
+                    'consistency': cons},
+           'confirm': {'about': srcs[conf_key]['about'], 'b': dict(pack(resB_c, chB_c), formula=f)},
+           'verdict': {'check_run': cr['ok'], 'b2_refit': {'gates': g, 'ok': ok_b2}}}
+    jp = OUT_DIR + f"live_optb_{stamp}.json"
+    save_json(jp, out)
+    print(f"\n💾 {jp} | всего {(time.time() - t0) / 60:.1f} мин")
+
+
+# =====================================================================
 # MODE 'stand': синтетика
 # =====================================================================
 def ms_loop(x, t0, ln, v, aux):
@@ -1219,6 +1484,10 @@ def mode_stand():
     plot(fp, T, resA_D, chA_D, free_D, chB_D['pick'] or f"{a_key}·B3", 'СТЕНД, мир D (синтетика)')
     ok("вердикт, json и рисунок пишутся", os.path.isfile(jp) and os.path.isfile(fp), jp)
 
+    # (С10) v1.1: история бесплатного графика против платного (MODE 'opt_b')
+    print("\n🧪 (С10) v1.1: история бесплатного графика против платного (мир S)")
+    stand_hist(T, recs, ok)
+
     # (С9) время прогона: основной ~ мир S со справочным, подтверждение ~ его половина без справочного; × 31 / 6
     est = tS * 1.5 * 31 / 6
     print(f"\n   ⏱️ стенд {(time.time() - t0) / 60:.1f} мин; оценка 'run' на 31 ассете: ~{est / 60:.0f} мин (CPU) + "
@@ -1237,7 +1506,7 @@ def main():
     log_path = OUT_DIR + f"logs/live_{MODE}_{time.strftime('%Y%m%d_%H%M%S')}.log"
     with BB.tee_to(log_path):
         print(f"🗒️ лог: {log_path}")
-        modes = {'stand': mode_stand, 'run': mode_run}
+        modes = {'stand': mode_stand, 'run': mode_run, 'opt_b': mode_opt_b}
         if MODE not in modes:
             print(f"🍆 АЙ, ОШИБКА! MODE '{MODE}' — есть {', '.join(modes)}")
         else:
