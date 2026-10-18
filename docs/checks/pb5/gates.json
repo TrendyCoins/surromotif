@@ -18,7 +18,7 @@
   "stand": {
    "passed": 18,
    "total": 18,
-   "minutes": 0.68,
+   "minutes": 0.67,
    "checks": [
     "✅ корзины NC_EDGES, min_n 1000: все строки равны — 20 строк",
     "✅ выбор — 10, все пары ок, незнакомые ок — выбор 10",
@@ -37,7 +37,7 @@
     "✅ кэш: оценки с полом 0.2 и со старым (float32), медиана и среднее |r|, недели, обученные полы — как записаны",
     "✅ пересчёт со старым полом — у основного источника и prod a",
     "✅ модели пересчёта: 'stop' C a / b, 'refit' ALL a / b, prod a — pool_C_PB_s64h24_d1_L64_a, pool_C_PB_s64h24_d1_L64_b, pool_ALL_PB_s64h24_d1_L64_a_refit, pool_ALL_PB_s64h24_d1_L64_b_refit, prod_PB_s64h24_d1_L64_a",
-    "✅ json и рисунок пишутся — /tmp/ceil_stand_p760y2jn/out_ceil/ceil_stand_20261018_165021.json",
+    "✅ json и рисунок пишутся — /tmp/ceil_stand_4ulnaxvg/out_ceil/ceil_stand_20261018_170245.json",
     "✅ СТЕНД: 18 из 18 проверок"
    ]
   }
@@ -76,6 +76,14 @@
     ]
    }
   }
+ },
+ "e": {
+  "n_affected_btc": {
+   "pool_ALL_PB_s64h24_d1_L64_a_refit": 834,
+   "pool_ALL_PB_s64h24_d1_L64_b_refit": 834,
+   "prod_PB_s64h24_d1_L64_a": 834
+  },
+  "parts": 6
  },
  "checks": [
   {
@@ -233,12 +241,37 @@
    "check": "options_b -> показ B3 = 4096 = show_from_window",
    "ok": true,
    "note": "B3 show 4096"
+  },
+  {
+   "gate": "д",
+   "check": "sha256 и размер частей — по manifest",
+   "ok": true,
+   "note": "6 частей"
+  },
+  {
+   "gate": "д",
+   "check": "meta каждого tag: tag, floor 0.2, ver 1",
+   "ok": true,
+   "note": "pool_ALL_PB_s64h24_d1_L64_a_refit: floor 0.2, ver 1; pool_ALL_PB_s64h24_d1_L64_b_refit: floor 0.2, ver 1; prod_PB_s64h24_d1_L64_a: floor 0.2, ver 1"
+  },
+  {
+   "gate": "д",
+   "check": "недели wk каждого ассета 'refit' ALL a / b и prod a = недели npz 'refit' ALL",
+   "ok": true,
+   "note": "3 tag × 31 ассетов × 2 npz"
+  },
+  {
+   "gate": "д",
+   "check": "у BTC VAL окон, где пол срабатывает, — 834 у каждого tag",
+   "ok": true,
+   "note": "{'pool_ALL_PB_s64h24_d1_L64_a_refit': 834, 'pool_ALL_PB_s64h24_d1_L64_b_refit': 834, 'prod_PB_s64h24_d1_L64_a': 834} (обученный пол BTC 0.17530229687690735)"
   }
  ],
  "ok": {
   "а": true,
   "б": true,
   "в": true,
-  "г": true
+  "г": true,
+  "д": true
  }
 }

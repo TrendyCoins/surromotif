@@ -15,6 +15,8 @@ Two ways:
 Thresholds: windows per bin (n_real, n_surr) exactly; fact, exp, ratio |d| <= 1e-9; statuses of pairs, over / nodata,
 g1 / g2 (g3) and the shares 'C+' (clamp) the same for C = 10, 8, 5, 3, 13, 21; formula A: BCE and cover3 <= 1e-12, ceil and
 share the same; the random chart (gp_col) — by way 1, for reference, with the difference. A mismatch — stop and report.
+Ruler of the export: np.quantile(sn of prod a, VAL of all 31 assets of the Colab export, knots) = export.ruler.glob_e.q of
+the json bit for bit (and the same number of surrogates).
 
     python scripts/pb5_ceil.py [--out docs/checks/pb5/ceil_repro.json] [--table docs/checks/pb5/ceil_table.md]
 """
@@ -307,8 +309,19 @@ def main():
         print(f"{cond}: rule way 1 {r['rule_way1']['ok']} (max |d| {r['rule_way1']['max_d_fact_exp_ratio']:.1e}), way 2 "
               f"{r['rule_way2']['ok']} ({r['rule_way2']['max_d_fact_exp_ratio']:.1e}); log M cells {r['logm_cells_max_d']:.1e}, "
               f"eval {r['logm_eval_max_d']:.1e}; formula A way 1 {r['fa_way1']}, way 2 {r['fa_way2']} | {r['minutes']} min")
+    ruler = None
+    if 'после' in sources:
+        from mri.ceil_export import TAGS, load_export
+        ex = load_export()
+        sn = np.concatenate([ex[TAGS['prod_a']][a_]['sn'].astype(np.float64) for a_ in assets])
+        q = np.quantile(sn, knots)
+        qj = np.asarray(cj['export']['ruler']['glob_e']['q'], dtype=np.float64)
+        ruler = {'n_null': int(len(sn)), 'n_null_json': cj['export']['ruler']['n_null'],
+                 'bit_exact': bool(np.array_equal(q, qj) and len(sn) == cj['export']['ruler']['n_null']),
+                 'max_abs_diff': float(np.max(np.abs(q - qj)))}
+        print('ruler of the export:', ruler)
     out = {'ceil_json': R5.CEIL_JSON, 'source': KEY, 'check_nocal': {k: chk[k] for k in ('ok', 'bit', 'same_rules')},
-           'assets': assets, 'conds': rep, 'choice_json': cj['choice'],
+           'assets': assets, 'conds': rep, 'choice_json': cj['choice'], 'ruler': ruler,
            'reproduced': bool(set(rep) == {'до', 'после'} and all(r['ok'] for r in rep.values())),
            'minutes': round((time.time() - t0) / 60, 1)}
     with open(os.path.join(ROOT, a.out), 'w', encoding='utf-8') as fh:
