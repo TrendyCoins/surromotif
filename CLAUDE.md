@@ -18,7 +18,8 @@
 
 ## Устройство репо
 - research/ — исследовательские скрипты Colab как есть: sumo_class_train.py (в логах — TrendyCoins_SMC_Train, v6.3), sumo_class_data.py, sumo_class_prices.py, sumo_class_range.py, sumo_class_profiles.py (в логах — TrendyCoins_SMC_Data / _Prices / _Range / _Profiles), sumo_class_bars.py (TrendyCoins_SMC_Bars), sumo_class_pack.py (TrendyCoins_SMC_Pack, v6.3), sumo_class_bell.py (SuMo_Class_Bell v1), sumo_class_live.py (SuMo_Class_Live v1.1), sumo_class_ceil.py (SuMo_Class_Ceil v1) — в логах так же, лог 'run' Live — «SuMo_Class_Live v1». Не править и не рефакторить. Нужное бери импортом, если файл импортируется без побочных эффектов; иначе копией в новый модуль со ссылкой на источник и тестом совпадения с оригиналом.
-- mri/ — Python-пакет индикатора (эталон инференса, калибровка, экспорт); tests/ — pytest, tests/golden/ — golden-файл; pine/ — индикатор (Pine Script v6); docs/ — заметки и progress.md.
+- mri/ — Python-пакет индикатора (эталон инференса, линия M, экспорт, генератор Pine); export/ — экспорт модели (JSON); pine/ — индикатор (Pine Script v6): боевой mri.pine и прототип proto_pb.pine с отладкой для паритета; scripts/ — проверки, паритет, Colab-выгрузки; tests/ — pytest, tests/golden/ — golden-файл; docs/ — progress.md, rules.md, pine_limits.md, результаты проверок (docs/checks/).
+- Наследие (F3_g, NT3_PRV_ch48, EMA-линия сессии 4) — в подпапках legacy/ этих папок, с тестами в tests/legacy/; текущий код из legacy/ ничего не импортирует. В каждой папке — короткий README.md.
 
 ## Правила проекта
 - Индикатор не обещает направление цены: никаких buy/sell, long/short, стрелок вверх/вниз в коде, подписях и описаниях. Цвета — без ассоциаций с направлением (не красный/зелёный).
