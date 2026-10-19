@@ -7,7 +7,7 @@ import math
 
 import numpy as np
 
-from mri.pine_nt3 import chunk_offsets
+from mri.pine_common import chunk_offsets
 
 L, NN, GAPMS, EPS = 64, 200, 450000.0, 0.0001
 SQ199 = math.sqrt(199.0)

@@ -1,17 +1,16 @@
-"""Rule R5 (docs/rules.md): how jumpy the line M is, without smoothing.
+"""Rule R5 (docs/rules.md, amendment of session 5): how jumpy the line M is, without smoothing (reference only).
 
-Series: fresh BTC (golden file: prod a + Platt, shown bars) and VAL of the 'refit' models (seeds a, b) per asset
-(consecutive windows in time order; the final Platt of R4 — in sample for the Platt, descriptive only).
+Log M of the line M of session 5 (colour = its sign, M = exp(|log M|) without the ceiling):
+    fresh BTC — the golden file (prod a, ruler R19, formula A from the start of the tail, shown windows from 4360);
+    VAL 'refit' on ALL (seeds a, b) per asset as the count (Ц) of SuMo_Class_Ceil: scores with the floor 0.2 (the Colab
+        export), cross ruler from the surrogates of the other half (П1 / П2 by 2026-01-01, without FIL, LINK, XLM),
+        formula A over the windows of the asset in a row, windows from position 4096, in time order;
+plus the share of windows above the ceiling 10. Metrics: median |d log M| bar to bar, colour changes per day (all and
+marked, M >= 1.25), mean run of marked bars, shares; 'jumpy' — mean run < 3 bars or > 24 marked colour changes a day.
 
-    python scripts/display_metrics.py [--out docs/checks/display.json]
-    python scripts/display_metrics.py --model NT3_PRV_ch48      # NT3 (R5 amendment of session 3): fresh BTC from the NT3
-        golden file with the Platt of BTC; VAL 'refit' on ALL (seeds a, b) per asset with the export Platt of that asset
-    python scripts/display_metrics.py --model PB_s64h24_d1      # PB, session 5 (R5 amendment of session 5): log M of
-        the line M (colour = its sign, M = exp(|log M|) without the ceiling); fresh BTC from the PB golden file (prod a,
-        ruler R19, formula A from the start of the tail, shown windows from 4360); VAL 'refit' on ALL (seeds a, b) per
-        asset as the count (Ц) of SuMo_Class_Ceil: scores with the floor 0.2 (the Colab export), cross ruler from the
-        surrogates of the other half (П1 / П2, without FIL, LINK, XLM), formula A over the windows of the asset in a row,
-        windows from position 4096, in time order; plus the share of windows above the ceiling 10 ('10+')
+    python scripts/display_metrics.py [--out docs/checks/pb5/display.json]
+
+The legacy models (F3_g, NT3_PRV_ch48): scripts/legacy/display_metrics_f3g_nt3.py.
 """
 import argparse
 import json
@@ -25,7 +24,10 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from mri import BARS_DAY, linem  # noqa: E402
-from mri.calibration import THR, load_part, load_val  # noqa: E402
+
+THR = 1.25                         # marked: M >= 1.25 (rule R5)
+HALF_CUT = '2026-01-01'            # VAL half-years П1 / П2 (research _nc_half)
+WEEK_NS = 7 * 86400 * 10 ** 9
 
 
 def segments(ll):
@@ -73,7 +75,6 @@ def val_line_pb():
        {(seed, asset): log M in time order}."""
     from mri.ceil_export import TAGS, load_export
     from mri.export_pb import nocal_path
-    from mri.linem_check import half1
     from mri.research5 import H
     with open(nocal_path(), encoding='utf-8') as fh:
         nc = json.load(fh)
@@ -81,7 +82,7 @@ def val_line_pb():
     ex = load_export()
     out = {}
     for s in ('a', 'b'):
-        D = {a: {'sp': d['sp'].astype(np.float64), 'sn': d['sn'].astype(np.float64), 'f': (~half1(d['wk'])).astype(int)}
+        D = {a: {'sp': d['sp'].astype(np.float64), 'sn': d['sn'].astype(np.float64), 'f': (d['wk'] >= pd.Timestamp(HALF_CUT).value // WEEK_NS).astype(int)}
              for a, d in ex[TAGS[f'refit_{s}']].items()}
         Q = {f: np.quantile(np.concatenate([d['sn'][d['f'] != f] for a, d in D.items() if a not in H]), knots)
              for f in (0, 1)}
@@ -134,50 +135,8 @@ def main_pb(out):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--model', default='F3_g', choices=['F3_g', 'NT3_PRV_ch48', 'PB_s64h24_d1'])
-    ap.add_argument('--out', default=None)
-    a = ap.parse_args()
-    if a.model == 'PB_s64h24_d1':
-        return main_pb(a.out or os.path.join(ROOT, 'docs/checks/pb5/display.json'))
-    nt = a.model != 'F3_g'
-    out = a.out or os.path.join(ROOT, 'docs/checks/nt3/display.json' if nt else 'docs/checks/display.json')
-    with open(os.path.join(ROOT, 'export/mri_model_nt3.json' if nt else 'export/mri_model.json'), encoding='utf-8') as fh:
-        ex = json.load(fh)
-    if nt:
-        platt = {k: (v['platt_a'], v['platt_b']) for k, v in ex['calibration']['per_symbol'].items()}
-    else:
-        platt = {None: (ex['calibration']['platt_a'], ex['calibration']['platt_b'])}
-    pa, pb = platt.get('BTCUSDT', platt.get(None))
-    g = pd.read_csv(os.path.join(ROOT, 'tests/golden/btc5m_fresh_nt3.csv.gz' if nt else 'tests/golden/btc5m_fresh.csv.gz'))
-    ll = np.where(g['shown'] > 0, pa * g['logit'] + pb, np.nan)
-    res = {'model': a.model, 'platt': {k or 'all': v for k, v in platt.items()}, 'btc_fresh_prod_a': metrics(ll),
-           'val_refit': {}}
-    print('BTC fresh (prod a):', json.dumps(res['btc_fresh_prod_a']))
-    if nt:                                    # reference (R11): share of shown bars of fresh BTC at the ceiling of BTC
-        c = ex['display']['ceiling']['by_symbol']['BTCUSDT']
-        lv = ll[np.isfinite(ll)]
-        res['btc_fresh_at_ceiling'] = {'ceiling': c, 'more': float(np.mean(lv >= np.log(c['more']))),
-                                       'less': float(np.mean(-lv >= np.log(c['less'])))}
-        print('BTC fresh at the ceiling:', res['btc_fresh_at_ceiling'])
-    rows = []
-    for s in ('a', 'b'):
-        val = (load_part(os.path.join(ROOT, 'artifacts/calib'), f'pool_ALL_{a.model}_L64_{s}_refit') if nt
-               else load_val(os.path.join(ROOT, 'artifacts/calib'), s))
-        for asset, (sp, _, _) in val.items():
-            pa, pb = platt.get(asset, platt.get(None))
-            m = metrics(pa * sp + pb)
-            res['val_refit'][f'{asset}_{s}'] = m
-            rows.append({'asset': asset, 'seed': s, **m})
-    df = pd.DataFrame(rows)
-    cols = ['median_abs_dlogM', 'color_flips_per_day', 'marked_color_flips_per_day', 'mean_run_marked_bars',
-            'share_marked', 'share_orange', 'share_blue']
-    res['val_refit_summary'] = {c: {'median': float(df[c].median()), 'min': float(df[c].min()), 'max': float(df[c].max())}
-                                for c in cols}
-    res['val_refit_jumpy'] = int(df['jumpy'].sum())
-    print(df.groupby('asset')[cols].mean().round(3).to_string())
-    print('summary', json.dumps(res['val_refit_summary']), '| jumpy cells', res['val_refit_jumpy'], 'of', len(df))
-    with open(out, 'w') as fh:
-        json.dump(res, fh, indent=1)
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/pb5/display.json'))
+    main_pb(ap.parse_args().out)
 
 
 if __name__ == '__main__':

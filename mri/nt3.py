@@ -2,7 +2,7 @@
 'nt_PRV' — the window divisor and the history of the 200 bars before the window, in bars (no EMA, no clock).
 
 Window: bars s .. s + 63, t = s + 63 is the current closed bar. Per-bar inputs (norm, r, steps, g), the window divisor D,
-the orientation sign (rule R1) and the conv streams are those of F3_g (mri.features, mri.batch, mri.stream).
+the orientation sign (rule R1) and the conv streams are those of F3_g (mri.features, mri.batch, mri.legacy.stream).
 Side inputs (research SIDE_COLS['nt_PRV'] = 28, 29, 37-44, 77, 78, 79, 86-89; research side_feats / tok_feats / nt_segment):
      0  log D
      1  log(max(mean |r| over the 64 bars of the window, floor))
@@ -202,7 +202,7 @@ def history_now(o, h, l, c):
 
 
 class StreamingNT3:
-    """Bar-by-bar NT3 inference with ring buffers (the computation of the Pine indicator, see mri.stream for F3_g)."""
+    """Bar-by-bar NT3 inference with ring buffers (the computation of the Pine indicator, see mri.legacy.stream for F3_g)."""
 
     def __init__(self, params, floor, eps=TIE_EPS, platt=None):
         self.p, self.floor, self.eps, self.platt = params, floor, eps, platt
