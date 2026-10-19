@@ -1,6 +1,6 @@
 # Прогресс: MRI (индикатор на SuMo classifier PB_s64h24_d1; сессия 3 — NT3_PRV_ch48, до неё — F3_g)
 
-Обновлено: 2026-10-18. Правила и пороги проверок — `docs/rules.md` (записаны и закоммичены до прогонов; сессия 5 —
+Обновлено: 2026-10-19. Правила и пороги проверок — `docs/rules.md` (записаны и закоммичены до прогонов; сессия 5 —
 запись «Записано 2026-10-18 (сессия 5), до расчётов»).
 
 ## Состояние (сессия 5, 2026-10-18)
@@ -30,6 +30,30 @@ Script» пропал, первый бар 4360); **паритет R10** на п
 
 Дальше: визуальная проверка боевого индикатора Фёдором (правки по виду); описание для TradingView — позже (заготовки
 фраз — ниже), потом публикация.
+
+## Чистка репо (2026-10-19): наследие — в подпапках legacy/
+
+Текущее (PB_s64h24_d1, линия сессии 5) лежит в корневых папках; наследие (F3_g, NT3_PRV_ch48 и EMA-линия сессии 4) — в
+подпапках `legacy/` вместе со своими тестами. В каждой папке — короткий README.md, в корне — README.md с картой репо.
+`research/` и `artifacts/` не трогались (решение Фёдора). Пути в `docs/rules.md` и в разделах сессий 1–4 ниже — до чистки:
+
+| было | стало |
+|---|---|
+| `mri/export.py`, `stream.py`, `pine_gen.py`, `calibration.py` (F3_g) | `mri/legacy/` |
+| `mri/export_nt3.py`, `pine_nt3.py` (NT3) | `mri/legacy/` |
+| `mri/linem_check.py`, EMA-часть `mri/linem.py` (`live`, `LiveM`, `line`, `SPAN`, `WARM`; сессия 4) | `mri/legacy/linem_check.py`, `mri/legacy/linem_s4.py` |
+| общие куски, которые текущий код брал из модулей наследия | `mri/pine_common.py` (плотные строки весов, литералы, сдвиги кусков пути), `mri/export_common.py` (`git_version`, `SIDE_SPEC`) |
+| `scripts/calib_curve.py`, `calibrate.py`, `ceilings.py`, `warmup.py`, `check_e2e.py`, `colab_export_floors.py`, `colab_nt3_val_logits.py`, `nt3_*.py`, `pb_gates.py`, `pb_nocal.py` | `scripts/legacy/` |
+| части F3_g / NT3 из `scripts/parity.py` и `scripts/display_metrics.py` | `scripts/legacy/parity_f3g_nt3.py`, `display_metrics_f3g_nt3.py` (сравнение и метрики — из текущих скриптов) |
+| тесты F3_g / NT3 (`test_golden.py`, `test_golden_nt3.py`, `test_parity.py`, `test_parity_nt3.py`, `test_pine_indicator.py`, `test_pine_nt3.py`, `test_reference.py`, `test_calibration.py`, `pine_sim.py`, `pine_sim_nt3.py`) и тесты EMA сессии 4 из `test_pb.py` | `tests/legacy/` (EMA — `tests/legacy/test_linem_s4.py`) |
+| `export/mri_model.json`, `mri_model_nt3.json` | `export/legacy/` |
+| `tests/golden/btc5m_fresh.csv.gz`, `btc5m_fresh_nt3.csv.gz` | `tests/golden/legacy/` |
+| `docs/checks/*.json` (F3_g), `docs/checks/nt3/`, `docs/checks/pb/` (сессия 4) | `docs/checks/legacy/f3g/`, `legacy/nt3/`, `legacy/pb/` |
+
+Регрессия (старый код против нового, в отдельной копии репо): все генераторы дают те же выходы — golden-файлы и библиотеки
+весов NT3 бит в бит, экспорты и Pine — всё, кроме строки паспорта (версия кода и время экспорта; закоммиченные файлы не
+перезаписывались); json скриптов проверок те же: паритет BTC / XLM, R5, воспроизведение Ceil и таблица (Ц), R3 и R2 с полом
+0.2, ворота сессий 3 и 4, воспроизведение 'nocal' сессии 4 (после выноса EMA в `linem_s4`). Тестов — 90, все зелёные.
 
 ## Сессия 5. Правила (до расчётов)
 
