@@ -227,6 +227,7 @@ __marimo__/
 
 # MRI: exceptions — small golden file, model export and the Pine weight libraries are committed on purpose
 !tests/golden/*.csv.gz
+!tests/golden/legacy/*.csv.gz
 !pine/lib/
 !pine/legacy/lib/
 
