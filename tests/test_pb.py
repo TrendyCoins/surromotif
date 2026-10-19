@@ -1,9 +1,9 @@
 """PB reference and the line M on synthetic data (thresholds — docs/rules.md, sessions 4 and 5):
     the separable layer by the stream == a direct convolution by its formula; bar-by-bar stream == vectorized (< 1e-10;
-    fine / coarse tick, grid gaps), the line of session 5 included (formula A: m_win, s_win, k, log M); line M ==
+    fine / coarse tick, grid gaps), the line of session 5 included (formula A: m_win, s_win, k, log M); ruler and log M ==
     research _nc_z / _nc_logm (<= 1e-12); m = 0, s = 1 -> M = 1; M does not decrease in z for any m >= 0, s; start of the
     line R18 (window numbers over valid windows, invalid windows do not move the state); first line bar 4360 on continuous
-    data. The EMA of session 4 (record, not exported): streaming EMA == pandas and research _nc_live (<= 1e-12)."""
+    data. The EMA line of session 4 — tests/legacy/test_linem_s4.py."""
 import math
 import os
 import sys
@@ -135,16 +135,6 @@ def test_ruler_scalar_equals_np_interp():
     assert np.array_equal(z1, linem.ruler_z(x, Q, ZK))
 
 
-def test_ema_stream_equals_pandas():
-    lv = linem.LiveM(Q, ZK, span=8064)
-    rows = [lv.update(x) for x in G.normal(-0.5, 1.5, 30000)]
-    zz = np.array([r['z'] for r in rows])
-    m = pd.Series(zz).ewm(span=8064, adjust=True).mean().to_numpy()
-    v = pd.Series(zz * zz).ewm(span=8064, adjust=True).mean().to_numpy()
-    assert np.abs(np.array([r['m_ema'] for r in rows]) - m).max() <= 1e-12
-    assert np.abs(np.array([r['s_ema'] for r in rows]) - np.sqrt(np.maximum(v - m * m, 0))).max() <= 1e-12
-
-
 def test_random_market_gives_one():
     z = np.linspace(-4, 4, 801)
     assert np.abs(linem.log_m(z, np.zeros_like(z), np.ones_like(z))).max() < 1e-15
@@ -168,53 +158,15 @@ def test_display_and_ceiling():
     assert np.allclose(v, [10.0, 10.0]) and list(cap) == [True, True]
 
 
-def test_line_matches_research(research):
+def test_ruler_and_log_m_match_research(research):
+    """z by the ruler and log M == research _nc_z / _nc_logm (<= 1e-12), vectorized and window by window."""
     T = research
-    zr = G.normal(0.5, 0.9, 20000)
-    m0, s0 = T._nc_live(zr, 8064)
-    m1, s1 = linem.live(zr, 8064)
-    assert np.abs(m0 - m1).max() <= 1e-12 and np.abs(s0 - s1).max() <= 1e-12
-    lv = linem.LiveM(Q, ZK)
-    for i, x in enumerate(zr[:3000]):                         # streaming recursion against the research EMA
-        lv.n1, lv.n2, lv.d = lv.k * lv.n1 + x, lv.k * lv.n2 + x * x, lv.k * lv.d + 1.0
-        mm = lv.n1 / lv.d
-        assert abs(mm - m0[i]) <= 1e-12 and abs(math.sqrt(max(lv.n2 / lv.d - mm * mm, 0)) - s0[i]) <= 1e-12
     x = G.normal(-1, 2, 20000)
-    c = {'q': Q}
-    assert np.abs(T._nc_z('glob_e', x, None, c, ZK) - linem.ruler_z(x, Q, ZK)).max() <= 1e-12
-    for m_, s_ in ((m0, s0), (G.normal(0.2, 0.5, 20000), np.abs(G.normal(0.9, 0.2, 20000)))):
+    assert np.abs(T._nc_z('glob_e', x, None, {'q': Q}, ZK) - linem.ruler_z(x, Q, ZK)).max() <= 1e-12
+    zr = G.normal(0.5, 0.9, 20000)
+    for m_, s_ in ((G.normal(0.4, 0.3, 20000), np.abs(G.normal(0.95, 0.1, 20000))),
+                   (G.normal(0.2, 0.5, 20000), np.abs(G.normal(0.9, 0.2, 20000)))):
         a = T._nc_logm(zr, m_, s_)
-        b = linem.log_m(zr, m_, s_)
-        assert np.abs(a - b).max() <= 1e-12
+        assert np.abs(a - linem.log_m(zr, m_, s_)).max() <= 1e-12
         assert np.abs(a - np.array([linem.log_m1(*v) for v in zip(zr, m_, s_)])).max() <= 1e-12
-    assert T.NOCAL['span'] == linem.SPAN and T.NOCAL['warm'] == linem.WARM and T.NOCAL['s_lo'] == linem.S_LO
-
-
-def test_check_functions_match_research(research):
-    """mri.linem_check (curve, ceilings, summary, rulers, cells) == research _nc_* on synthetic data of two seeds."""
-    from mri import linem_check as LC
-    T = research
-    g = np.random.default_rng(21)
-    wk0 = pd.Timestamp('2025-07-07').value // LC.WEEK_NS
-    D = {s: {a: {'sp': g.normal(0.3 + 0.1 * i, 1.3, 3000), 'sn': g.normal(-0.2, 1.0, 3000),
-                 'wk': np.sort(g.integers(wk0, wk0 + 50, 3000)).astype(np.int32)} for i, a in enumerate(('X1', 'X2', 'X3'))}
-         for s in ('a', 'b')}
-    Dr = {s: {a: {**d, 'st': np.arange(3000), 'zf': np.zeros((3000, 8)), 'zfn': np.zeros((3000, 8))} for a, d in D_.items()}
-          for s, D_ in D.items()}
-    knots = np.asarray(T.NOCAL['knots'])
-    from scipy.special import ndtri
-    zk = ndtri(knots)
-    Rr, Rm = T._nc_rulers(Dr, knots, skip=('X3',)), LC.rulers(D, knots, skip=('X3',))
-    assert all(np.array_equal(Rr[k]['q'], Rm[k]) for k in Rm)
-    for null in (False, True):
-        cr = T._nc_cells(Dr, 'glob_e', Rr, zk, 500, null_chart=null)
-        cm = LC.cells(D, Rm, zk, 500, linem.WARM, linem.S_LO, null_chart=null)
-        assert all(np.abs(x[2] - y[2]).max() <= 1e-12 and np.abs(x[3] - y[3]).max() <= 1e-12 for x, y in zip(cr, cm))
-        sr, sm = T._nc_summary(cr), LC.summary(cm)
-        assert sr['ceil'] == sm['ceil'] and sr['share'] == sm['share'] and sr['n'] == sm['n']
-        for a, b in zip(sr['rows'], sm['rows']):
-            assert (a['n_real'], a['n_surr'], a['sparse']) == (b['n_real'], b['n_surr'], b['sparse'])
-            assert (np.isnan(a['ratio']) and np.isnan(b['ratio'])) or abs(a['ratio'] - b['ratio']) <= 1e-12
-        assert all(sr['assets'][a][c] == sm['assets'][a][c] for a in sm['assets'] for c in ('orange', 'blue'))
-    assert LC.EDGES == T.NC_EDGES and LC.TOL == tuple(T.NOCAL['tol']) and LC.MIN_N == T.NOCAL['min_n']
-    assert LC.HALF_CUT == T.NOCAL['half_cut'] and LC.CEIL_ASSET == T.NOCAL['ceil_asset']
+    assert T.NOCAL['s_lo'] == linem.S_LO

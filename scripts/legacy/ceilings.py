@@ -2,7 +2,7 @@
 ceiling of R9; unknown symbol = the lowest of FIL, LINK, XLM. Reference: share of bars where the line hits the ceiling
 (fresh BTC golden file; VAL 'refit' per asset with the exported Platt).
 
-    python scripts/ceilings.py [--out docs/checks/ceilings.json]
+    python scripts/legacy/ceilings.py [--out docs/checks/legacy/f3g/ceilings.json]
 """
 import argparse
 import json
@@ -12,11 +12,11 @@ import sys
 import numpy as np
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+sys.path.insert(0, os.path.join(ROOT, 'scripts', 'legacy'))
 from calib_curve import EDGES, MIN_N, SEEDS, curve, oof_logs  # noqa: E402
-from mri.calibration import load_val  # noqa: E402
+from mri.legacy.calibration import load_val  # noqa: E402
 
 MIN_RATIO = 0.8
 H_ASSETS = ('FILUSDT', 'LINKUSDT', 'XLMUSDT')
@@ -34,11 +34,11 @@ def asset_ceiling(rows, color, pool_ceiling):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/ceilings.json'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/f3g/ceilings.json'))
     a = ap.parse_args()
-    with open(os.path.join(ROOT, 'docs/checks/calib_curve.json')) as fh:
+    with open(os.path.join(ROOT, 'docs/checks/legacy/f3g/calib_curve.json')) as fh:
         pool = json.load(fh)['ceiling_pool']
-    with open(os.path.join(ROOT, 'export/mri_model.json'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, 'export/legacy/mri_model.json'), encoding='utf-8') as fh:
         ex = json.load(fh)
     pa, pb = ex['calibration']['platt_a'], ex['calibration']['platt_b']
     val = {s: load_val(os.path.join(ROOT, 'artifacts/calib'), s) for s in SEEDS}
@@ -56,7 +56,7 @@ def main():
         ll = np.concatenate([pa * val[s][asset][0] + pb for s in SEEDS])
         c = table[asset]
         hits[asset] = {'more': float(np.mean(ll >= np.log(c['more']))), 'less': float(np.mean(-ll >= np.log(c['less'])))}
-    g = pd.read_csv(os.path.join(ROOT, 'tests/golden/btc5m_fresh.csv.gz'))
+    g = pd.read_csv(os.path.join(ROOT, 'tests/golden/legacy/btc5m_fresh.csv.gz'))
     ll = (pa * g['logit'] + pb)[g['shown'] > 0].to_numpy()
     c = table['BTCUSDT']
     btc = {'bars': int(len(ll)), 'more': float(np.mean(ll >= np.log(c['more']))),

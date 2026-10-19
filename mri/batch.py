@@ -1,4 +1,4 @@
-"""Vectorized inference over a whole bar series — the same arithmetic as the bar-by-bar stream (mri/stream.py),
+"""Vectorized inference over a whole bar series — the same arithmetic as the bar-by-bar stream (mri/legacy/stream.py),
 written over arrays for speed (validation sets, calibration, golden file cross-check).
 
 Why streaming is exact (research CNNBase, streamable): convolutions are 'valid', without bias, with ReLU, so the net

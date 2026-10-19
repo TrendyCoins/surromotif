@@ -1,7 +1,7 @@
 """Rule R4 (docs/rules.md): global Platt on the VAL of the 'refit' models (seeds a, b, all 31 assets) and its check by
 half-years (fit on one half, check on the other), per seed; K1 (pool), K2 (asset x half x seed cells), K3 (H assets).
 
-    python scripts/calibrate.py [--out docs/checks/calibration.json]
+    python scripts/legacy/calibrate.py [--out docs/checks/legacy/f3g/calibration.json]
 """
 import argparse
 import json
@@ -12,9 +12,9 @@ import sys
 import numpy as np
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-from mri.calibration import THR, WEEK_NS, calib_ratio, load_val, mark_lift, platt_fit, pooled  # noqa: E402
+from mri.legacy.calibration import THR, WEEK_NS, calib_ratio, load_val, mark_lift, platt_fit, pooled  # noqa: E402
 
 H_ASSETS = ('FILUSDT', 'LINKUSDT', 'XLMUSDT')
 SEEDS = ('a', 'b')
@@ -22,7 +22,7 @@ SEEDS = ('a', 'b')
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/calibration.json'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/f3g/calibration.json'))
     a = ap.parse_args()
     root = os.path.join(ROOT, 'artifacts/calib')
     val = {s: load_val(root, s) for s in SEEDS}

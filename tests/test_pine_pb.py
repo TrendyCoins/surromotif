@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pine_sim_pb  # noqa: E402
 import synth  # noqa: E402
 from mri import L, linem, nt3, pb  # noqa: E402
-from mri.pine_gen import ALPHA0, decode_dense  # noqa: E402
+from mri.pine_common import ALPHA0, decode_dense  # noqa: E402
 from mri.pine_pb import (CALC_BARS_DEFAULT, PRODUCTION, PROTO, SIZE_LIMIT_UTF8, flat_values, make_indicator,  # noqa: E402
                           make_script, sizes, strip_debug, weight_decls)
 

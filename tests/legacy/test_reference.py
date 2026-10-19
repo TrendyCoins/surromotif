@@ -6,7 +6,8 @@ import sys
 import numpy as np
 import pytest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))   # repo: mri
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # tests/: synth
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pine_sim  # noqa: E402
 import synth  # noqa: E402
@@ -14,8 +15,8 @@ from mri import L  # noqa: E402
 from mri.batch import infer  # noqa: E402
 from mri.features import bar_features  # noqa: E402
 from mri.params import random_params  # noqa: E402
-from mri.pine_gen import decode_dense, encode_dense, flat_values, flat_weights, fmt  # noqa: E402
-from mri.stream import run  # noqa: E402
+from mri.legacy.pine_gen import decode_dense, encode_dense, flat_values, flat_weights, fmt  # noqa: E402
+from mri.legacy.stream import run  # noqa: E402
 
 FLOOR = 0.2
 

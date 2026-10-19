@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from mri import nt3  # noqa: E402
-from mri.export_nt3 import EXPORT, FIRST_LINE_BAR, GOLDEN, load_export  # noqa: E402
+from mri.legacy.export_nt3 import EXPORT, FIRST_LINE_BAR, GOLDEN, load_export  # noqa: E402
 from mri.features import bar_features  # noqa: E402
 from mri.params import from_dict, load_npz  # noqa: E402
 

@@ -8,9 +8,9 @@ import tempfile
 import numpy as np
 import pytest
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-from mri import calibration as C  # noqa: E402
+from mri.legacy import calibration as C  # noqa: E402
 
 
 @pytest.fixture(scope='module')

@@ -5,7 +5,7 @@ Reference: the same windows computed on the whole file (>= 70 days of history be
 For a burn-in B (bars from the first valid r), windows with T - first_r in [B, B + 2016) are compared;
 B* = the smallest B where the 99th percentile of |dlogit| <= 0.01, for two EMA starts (adjust=False / True).
 
-    python scripts/warmup.py [--starts 24] [--out docs/checks/warmup.json]
+    python scripts/legacy/warmup.py [--starts 24] [--out docs/checks/legacy/f3g/warmup.json]
 """
 import argparse
 import json
@@ -14,7 +14,7 @@ import sys
 
 import numpy as np
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from mri import BARS_DAY, L  # noqa: E402
 from mri.batch import infer  # noqa: E402

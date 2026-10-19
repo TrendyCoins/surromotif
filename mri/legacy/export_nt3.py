@@ -15,28 +15,19 @@ import os
 import numpy as np
 import pandas as pd
 
-from . import GAP_MS, L, N_NORM, TIE_EPS
-from .export import FRESH, POOL_ALL, git_version
-from .features import read_bars
-from .nt3 import (MODEL_ID, NT_BODY_FLOOR, NT_CLIP_LOG, NT_CLIP_Z, NT_GEO, NT_HIST, NT_SHORT, SIDE_COLS, SIDE_NAMES,
+from .. import GAP_MS, L, N_NORM, TIE_EPS
+from ..export_common import SIDE_SPEC, _num, _nums, git_version  # noqa: F401 (SIDE_SPEC: the text is shared with PB)
+from ..features import read_bars
+from ..nt3 import (MODEL_ID, NT_BODY_FLOOR, NT_GEO, NT_HIST, NT_SHORT, SIDE_COLS, SIDE_NAMES,
                   SIDE_SIGNED, run)
-from .params import from_dict, load_npz
-from .pine_gen import fmt
+from ..params import from_dict, load_npz
+from .export import FRESH, POOL_ALL
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SEED = 'a'                                   # rule R12: one seed, chosen in advance
-EXPORT = 'export/mri_model_nt3.json'
-GOLDEN = 'tests/golden/btc5m_fresh_nt3.csv.gz'
+EXPORT = 'export/legacy/mri_model_nt3.json'
+GOLDEN = 'tests/golden/legacy/btc5m_fresh_nt3.csv.gz'
 FIRST_LINE_BAR = 264                         # rule R13 (continuous data), confirmed by the reference
-
-
-def _num(x):
-    return float(fmt(x))
-
-
-def _nums(a):
-    a = np.asarray(a)
-    return [_nums(v) for v in a] if a.ndim > 1 else [_num(v) for v in a]
 
 
 def _load(rel):
@@ -44,30 +35,13 @@ def _load(rel):
         return json.load(fh)
 
 
-SIDE_SPEC = [
-    'log_D = log(D), D = max(median |r| over the 64 bars of the window, floor of the symbol)',
-    'log_mean_abs_r = log(max(mean |r| over the 64 bars of the window, floor of the symbol))',
-] + [f'path_{n}{"ab"[k - 6] if n == 2 else ""}: chunk {k + 1}/8 of the path before the window ({n} bars; chunks of '
-     f'{", ".join(map(str, NT_GEO))} bars over bars s-200 .. s-2, oldest first): (close of its last bar - open of its first '
-     f'bar) / sqrt({n}) / rmed, clipped to +-{NT_CLIP_Z:g}, times the orientation sign' for k, n in enumerate(NT_GEO)] + [
-    'range_pos = 2 * (close[s-2] - lmin) / (hmax - lmin) - 1 (0 if hmax = lmin), hmax / lmin = max high / min low over '
-    'bars s-200 .. s-2 (199 bars), times the orientation sign',
-    f'range_width = log(max(hmax - lmin, 1e-12) / (sqrt(199) * rmed)), clipped to +-{NT_CLIP_LOG:g}, no sign',
-    f'close_dev = (close[s-2] - mean close over bars s-200 .. s-2) / (sqrt(199) * rmed), clipped to +-{NT_CLIP_Z:g}, times '
-    'the orientation sign',
-    f'vol_16 = log(max(mean(high - low) over bars s-16 .. s-1 / rmean, 0.001)), clipped to +-{NT_CLIP_LOG:g}, no sign',
-    f'vol_64 = log(max(mean(high - low) over bars s-64 .. s-1 / rmean, 0.001)), clipped to +-{NT_CLIP_LOG:g}, no sign',
-    f'range_mean_med = log(max(rmean / rmed, 0.001)), clipped to +-{NT_CLIP_LOG:g}, no sign',
-    f'body_med = log(max(bmed / rmed, 0.001)), clipped to +-{NT_CLIP_LOG:g}, no sign']
-
-
 def build_export(seed=SEED):
     p, _ = load_npz(os.path.join(ROOT, f'artifacts/weights/prod_{MODEL_ID}_L64_{seed}_slim.npz'))
     prod = _load(f'artifacts/weights/prod_{MODEL_ID}_L64_{seed}.json')
     fl_dir = _load('artifacts/pack/floors_by_folder.json')
-    cal = _load('docs/checks/nt3/calibration.json')
-    curve = _load('docs/checks/nt3/calib_curve.json')
-    ceil = _load('docs/checks/nt3/ceilings.json')
+    cal = _load('docs/checks/legacy/nt3/calibration.json')
+    curve = _load('docs/checks/legacy/nt3/calib_curve.json')
+    ceil = _load('docs/checks/legacy/nt3/ceilings.json')
     if p.lvl_mu != 0.0:
         raise ValueError('lvl_mu must be 0 (streaming)')
     # rule R6: the folder the prod model trained on — fresh for BTC / ETH, research for the rest (gate (c): same data end)

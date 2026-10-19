@@ -102,7 +102,7 @@ def from_dict(d):
 
 
 def load_export(path):
-    """Export JSON (mri/export.py) -> (Params, full export dict)."""
+    """Export JSON (mri/export_pb.py and the legacy exports) -> (Params, full export dict)."""
     with open(path, encoding='utf-8') as fh:
         ex = json.load(fh)
     return from_dict(ex['model']), ex

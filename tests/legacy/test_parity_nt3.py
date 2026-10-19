@@ -9,13 +9,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, 'scripts', 'legacy'))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # tests/: synth
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import parity  # noqa: E402
+import parity_f3g_nt3 as parity  # noqa: E402
 import synth  # noqa: E402
-from mri.export_nt3 import EXPORT, load_export  # noqa: E402
+from mri.legacy.export_nt3 import EXPORT, load_export  # noqa: E402
 
 
 @pytest.fixture(scope='module')

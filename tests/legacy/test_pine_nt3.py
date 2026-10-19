@@ -9,14 +9,15 @@ import sys
 import numpy as np
 import pytest
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # tests/: synth
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pine_sim_nt3  # noqa: E402
 import synth  # noqa: E402
 from mri import L, nt3  # noqa: E402
-from mri.pine_gen import ALPHA0, decode_dense  # noqa: E402
-from mri.pine_nt3 import (ASCII_ALPHA, LIB_ALIASES, LIB_NAMES, chunk_offsets, decode_ascii, encode_ascii,  # noqa: E402
+from mri.legacy.pine_gen import ALPHA0, decode_dense  # noqa: E402
+from mri.legacy.pine_nt3 import (ASCII_ALPHA, LIB_ALIASES, LIB_NAMES, chunk_offsets, decode_ascii, encode_ascii,  # noqa: E402
                            flat_values, make_script)
 
 FLOOR = 0.2
@@ -140,9 +141,9 @@ def test_wording_colors_literals(proto):
 
 
 def test_production_indicator_is_generated_from_export():
-    from mri.export_nt3 import EXPORT, load_export
+    from mri.legacy.export_nt3 import EXPORT, load_export
     from mri.params import from_dict
-    from mri.pine_nt3 import make_indicator
+    from mri.legacy.pine_nt3 import make_indicator
     ex = load_export(os.path.join(ROOT, EXPORT))
     script, libs = make_indicator(ex)
     with open(os.path.join(ROOT, 'pine/legacy/mri_nt3.pine'), encoding='utf-8') as fh:

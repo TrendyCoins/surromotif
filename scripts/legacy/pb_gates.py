@@ -14,7 +14,7 @@
     (е) nocal json: model, ver, src, seeds, winner / pine.ruler; rules = research NOCAL, edges = NC_EDGES, knots, zk =
         ndtri(knots); prod a / b / c = prod json; 37 strictly increasing quantiles in every ruler
 
-    python scripts/pb_gates.py [--out docs/checks/pb/gates.json]
+    python scripts/legacy/pb_gates.py [--out docs/checks/legacy/pb/gates.json]
 
 Paths of the training machine (Drive) are never written to the output: overlays are reduced to their folder name.
 """
@@ -29,7 +29,7 @@ import tempfile
 
 import numpy as np
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MODEL = 'PB_s64h24_d1'
 BASE = 'PB_s64h24'
 D1_OVER = {'cnn_cdrop': 0.1, 'dropout': 0.1}
@@ -291,7 +291,7 @@ def gate_f(T):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/pb/gates.json'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/pb/gates.json'))
     a = ap.parse_args()
     man = load_json('artifacts/pack/pb_manifest.json')
     T = research_module()

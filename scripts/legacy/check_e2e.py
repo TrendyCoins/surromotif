@@ -10,13 +10,13 @@ NT3 (rules R3 amendment, session 3): the history inputs run over consecutive CSV
 research nt_segment / SeriesData._nt_arrays), not clipped at the part start, and there is no EMA: the reference computes
 on the continuous bars of the tail without exclusions.
 
-    python scripts/check_e2e.py [--seed a] [--model NT3_PRV_ch48 --set ALL] [--logits artifacts/calib/nt3_btc_val_logits.npz]
-    python scripts/check_e2e.py --model PB_s64h24_d1 --set ALL --seed a [--logits artifacts/calib/pb_btc_val_logits.npz]
+    python scripts/legacy/check_e2e.py [--seed a] [--model NT3_PRV_ch48 --set ALL] [--logits artifacts/calib/nt3_btc_val_logits.npz]
+    python scripts/legacy/check_e2e.py --model PB_s64h24_d1 --set ALL --seed a [--logits artifacts/calib/pb_btc_val_logits.npz]
 
 PB_s64h24_d1 (R3 amendment, session 4): NT3 semantics (separable layers from the weights); the gate is the TF32-off
 research logits of the Colab recomputation, the stored logits — reference only.
 
---logits: the research logits of the same windows recomputed in Colab with TF32 off / on (scripts/colab_nt3_val_logits.py,
+--logits: the research logits of the same windows recomputed in Colab with TF32 off / on (scripts/legacy/colab_nt3_val_logits.py,
 after the R3 failure of session 3): the reference is compared with the TF32-off logits as well (the rule's threshold), and
 the TF32-on logits with the stored ones.
 """
@@ -28,7 +28,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from mri import L, nt3  # noqa: E402
 from mri.batch import infer  # noqa: E402
@@ -43,7 +43,7 @@ def main():
     ap.add_argument('--seed', default='a')
     ap.add_argument('--model', default='F3_g', choices=['F3_g', nt3.MODEL_ID, nt3.PB_MODEL_ID])
     ap.add_argument('--set', default='C', choices=['C', 'ALL'], help="training set of the 'refit' model")
-    ap.add_argument('--logits', default=None, help='npz of scripts/colab_nt3_val_logits.py')
+    ap.add_argument('--logits', default=None, help='npz of scripts/legacy/colab_nt3_val_logits.py')
     ap.add_argument('--floor', type=float, default=None)
     ap.add_argument('--out', default=None)
     a = ap.parse_args()

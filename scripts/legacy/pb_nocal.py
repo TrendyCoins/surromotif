@@ -2,14 +2,14 @@
 before the export, two ways:
     research — the research v6.3 functions _nc_rulers / _nc_cells / _nc_summary (identity of the data: the npz the Colab
                run saw); cond_e is not used, so its inputs (zf, zfn) are zeros
-    repo     — mri.linem / mri.linem_check (the implementation that goes into the export and Pine)
+    repo     — mri.linem, mri.legacy.linem_s4 / linem_check (the implementation that goes into the export and Pine)
 Both against the json: windows per bin (n_real, n_surr) exactly, ratio |d| <= 1e-9, ceilings and the share of pairs >= 5
 the same; random chart — covers within 1e-12. Parts: the pool (variants.glob_e: 'refit' on ALL, seeds a + b, rulers of
 the other half-year), the unseen symbol ('refit' on C, rulers without H, only H), 'in sample' (one ruler per seed from the
 TUNE surrogates of 'refit' on ALL), the random chart (live part on the surrogates).
-Then the ceilings table (31 assets + 3 unseen + the unseen symbol) — docs/checks/pb/ceilings.{json,md}.
+Then the ceilings table (31 assets + 3 unseen + the unseen symbol) — docs/checks/legacy/pb/ceilings.{json,md}.
 
-    python scripts/pb_nocal.py [--out docs/checks/pb/nocal_repro.json]
+    python scripts/legacy/pb_nocal.py [--out docs/checks/legacy/pb/nocal_repro.json]
 """
 import argparse
 import glob
@@ -22,9 +22,10 @@ import time
 
 import numpy as np
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-from mri import linem, linem_check as LC  # noqa: E402
+from mri import linem  # noqa: E402
+from mri.legacy import linem_check as LC, linem_s4  # noqa: E402
 
 MODEL = 'PB_s64h24_d1'
 NOCAL = sorted(glob.glob(os.path.join(ROOT, f'artifacts/calib/nocal_{MODEL}_*.json')))[-1]
@@ -136,14 +137,14 @@ def table(S, U, ceil_unseen):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/pb/nocal_repro.json'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/pb/nocal_repro.json'))
     a = ap.parse_args()
     with open(NOCAL, encoding='utf-8') as fh:
         nc = json.load(fh)
     assets = list(nc['variants']['glob_e']['assets'])          # research pool_assets() order (json keeps it)
     knots, zk = np.asarray(nc['knots'], dtype=np.float64), np.asarray(nc['zk'], dtype=np.float64)
     span, warm, s_lo = nc['rules']['span'], nc['rules']['warm'], nc['rules']['s_lo']
-    assert (span, warm, s_lo) == (linem.SPAN, linem.WARM, linem.S_LO)
+    assert (span, warm, s_lo) == (linem_s4.SPAN, linem_s4.WARM, linem.S_LO)
     D, TU, DU = {}, {}, {}
     for s in nc['seeds']:
         D[s], TU[s] = load_run(f'pool_ALL_{MODEL}_L64_{s}_refit', assets)
@@ -174,14 +175,14 @@ def main():
                         nc['unseen'], res)
     run_part('insample', lambda: T._nc_summary(T._nc_cells(Dr, 'glob_e', T._nc_rulers(Dr, knots, fit_from=TUr), zk, span)),
              lambda: LC.summary(LC.cells(D, LC.rulers(D, knots, fit_from=TU), zk, span, warm, s_lo)), nc['insample'], res)
-    # the streaming live part (as the Pine indicator: mri.linem.LiveM) on real windows: BTC, seed a, both half-year rulers
+    # the streaming live part (as the session-4 Pine indicator: linem_s4.LiveM) on real windows: BTC, seed a, both half-year rulers
     d, worst = D['a']['BTCUSDT'], 0.0
     for h in (True, False):
-        lv = linem.LiveM(R_m[('a', h)], zk, span, warm, s_lo)
+        lv = linem_s4.LiveM(R_m[('a', h)], zk, span, warm, s_lo)
         st = [lv.update(x) for x in d['sp']]
         lm_s = np.array([r['log_m'] for r in st])
         zr = linem.ruler_z(d['sp'], R_m[('a', h)], zk)
-        m, sd = linem.live(zr, span)
+        m, sd = linem_s4.live(zr, span)
         worst = max(worst, float(np.max(np.abs(lm_s - linem.log_m(zr, m, sd, s_lo)))))
     res['stream_btc_a'] = {'windows': int(len(d['sp'])), 'max_d_log_m': worst, 'ok': worst <= 1e-10}
     print(f"   stream (LiveM) = vectorized on BTC VAL, seed a: max |d log M| {worst:.1e}")

@@ -1,5 +1,6 @@
 """Pine Script v6 generator: the streaming F3_g computation with weights inside the script (legacy model since session 3:
-python -m mri.pine_gen writes pine/legacy/mri_f3g.pine; the NT3 indicator pine/mri.pine — mri/pine_nt3.py).
+python -m mri.legacy.pine_gen writes pine/legacy/mri_f3g.pine from export/legacy/mri_model.json; the dense strings and
+literals are in mri/pine_common.py).
 
 Limits met so far (TradingView compiler):
     - a local block (if / function body) has a size limit: 'The if statement is too long', 'The body of the ... function
@@ -19,19 +20,12 @@ head0 W row-major (64, 112); head0 b (64); head3 W (64); head3 b (1).
 The compute: per confirmed bar, inputs of two streams (+ / -) go into interleaved ring matrices (column 2s = stream +,
 2s + 1 = stream -, s = ring slot); each conv layer = 3 matrix.mult of (32 x c_in) by (c_in x 2) + ReLU loop; layer 4
 outputs go to two matrices (32 x 33) for pooling; the heavy part runs in functions (convStep, computeLogit).
-tests/pine_sim.py transliterates this template line by line; tests/test_reference.py checks it against mri/stream.py.
+tests/legacy/pine_sim.py transliterates this template line by line; tests/legacy/test_reference.py checks it against
+mri/legacy/stream.py.
 """
 import numpy as np
 
-
-ALPHA0, ALPHA_N = 0x4E00, 2048               # alphabet of the dense weight strings: 2048 CJK ideographs
-
-
-def fmt(x):
-    """Exact positional decimal of the float32 value (as float64): no exponent, safe as a Pine literal, parses back to
-       exactly the float32 value."""
-    s = np.format_float_positional(np.float64(np.float32(x)), unique=True, trim='-')
-    return s if '.' in s else s + '.0'          # always a float literal
+from ..pine_common import ALPHA0, ALPHA_N, decode_dense, encode_dense, float_list, fmt  # noqa: F401 (re-exported)
 
 
 def flat_values(p):
@@ -42,27 +36,6 @@ def flat_values(p):
     for a in (p.head0_w, p.head0_b, p.head3_w, p.head3_b):
         out.extend(np.ravel(a))
     return np.array(out, dtype=np.float32)
-
-
-def encode_dense(vals):
-    """float32 -> 3 characters each: bits = d0 * 2^22 + d1 * 2^11 + d2, character = chr(ALPHA0 + d)."""
-    bits = np.asarray(vals, dtype=np.float32).view(np.uint32).astype(np.int64)
-    d = np.stack([bits >> 22, (bits >> 11) & 2047, bits & 2047], axis=1)
-    return ''.join(chr(ALPHA0 + int(x)) for x in d.ravel())
-
-
-def decode_dense(s):
-    """Python mirror of the Pine decoder (arithmetic on doubles, powers of two): exact float32 values."""
-    out = []
-    for k in range(len(s) // 3):
-        b = (ord(s[3 * k]) - ALPHA0) * 4194304.0 + (ord(s[3 * k + 1]) - ALPHA0) * 2048.0 + (ord(s[3 * k + 2]) - ALPHA0)
-        sg = -1.0 if b >= 2147483648.0 else 1.0
-        u = b - 2147483648.0 if b >= 2147483648.0 else b
-        e = float(np.floor(u / 8388608.0))
-        m = u - e * 8388608.0
-        v = m * 2.0 ** -149 if e == 0 else (1.0 + m / 8388608.0) * 2.0 ** (e - 127)
-        out.append(sg * v)
-    return out
 
 
 def flat_weights(p):
@@ -109,10 +82,6 @@ def weights_block(vals32, str_max=3999):
             'var array<float> WT = array.new<float>(0)\n')
     body = '\n'.join(f'var bool WOK{j:02d} = decodeInto(WT, ALPHA, "{x}")' for j, x in enumerate(strs))
     return head + body, len(strs), len(enc)
-
-
-def float_list(xs):
-    return ', '.join(fmt(x) for x in xs)
 
 
 CONSTS = r'''// ---------------------------------------------------------------- constants
@@ -411,7 +380,7 @@ plot(bar_index, "dbg bar_index", display = display_dbg, precision = 0)
 
 def make_indicator(ex):
     """pine/mri.pine from the export dict (export/mri_model.json)."""
-    from .params import SIDE_NAMES, from_dict
+    from ..params import SIDE_NAMES, from_dict
     p = from_dict(ex['model'])
     vals = flat_values(p)
     assert len(vals) == p.n_params == ex['model']['n_params']
@@ -447,8 +416,8 @@ def make_indicator(ex):
 def main():
     import json
     import os
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    with open(os.path.join(root, 'export/mri_model.json'), encoding='utf-8') as fh:
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    with open(os.path.join(root, 'export/legacy/mri_model.json'), encoding='utf-8') as fh:
         ex = json.load(fh)
     s = make_indicator(ex)
     path = os.path.join(root, 'pine/legacy/mri_f3g.pine')          # F3_g: legacy since session 3 (pine/mri.pine is NT3)

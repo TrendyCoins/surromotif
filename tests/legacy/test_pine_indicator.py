@@ -9,15 +9,15 @@ import sys
 import numpy as np
 import pytest
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from mri.params import from_dict  # noqa: E402
-from mri.pine_gen import ALPHA0, decode_dense, flat_values, make_indicator  # noqa: E402
+from mri.legacy.pine_gen import ALPHA0, decode_dense, flat_values, make_indicator  # noqa: E402
 
 
 @pytest.fixture(scope='module')
 def ex():
-    with open(os.path.join(ROOT, 'export/mri_model.json'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, 'export/legacy/mri_model.json'), encoding='utf-8') as fh:
         return json.load(fh)
 
 

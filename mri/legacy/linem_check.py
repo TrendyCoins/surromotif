@@ -1,4 +1,4 @@
-"""Checks of the line M promise (rule R15, as research v6.3 'nocal'; written here from the rule text, the research
+"""Session 4 (record). Checks of the line M promise (rule R15, as research v6.3 'nocal'; written here from the rule text, the research
 functions are only compared with): rulers by half-years, the live part of an asset's VAL in time order, the R9 curve by
 M bins of each colour, ceilings (pool two-sided, asset one-sided) and their summary.
 
@@ -10,7 +10,8 @@ import math
 import numpy as np
 import pandas as pd
 
-from . import linem
+from .. import linem
+from . import linem_s4
 
 EDGES = (1.0, 1.25, 1.5, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, math.inf)   # M bins of each colour (R9)
 TOL = (0.8, 1.25)
@@ -40,7 +41,7 @@ def rulers(D_all, knots, skip=(), fit_from=None):
     return R
 
 
-def cells(D_all, R, zk, span=linem.SPAN, warm=linem.WARM, s_lo=linem.S_LO, only=None, null_chart=False):
+def cells(D_all, R, zk, span=linem_s4.SPAN, warm=linem_s4.WARM, s_lo=linem.S_LO, only=None, null_chart=False):
     """[(seed, asset, log M of real windows, log M of surrogates)] after the warm-up: for each half-year h the z of ALL
        windows of the asset by the ruler (seed, h), the live part over the real windows (null_chart: over the
        surrogates), windows of h with the number >= warm from the start of the asset's VAL."""
@@ -56,7 +57,7 @@ def cells(D_all, R, zk, span=linem.SPAN, warm=linem.WARM, s_lo=linem.S_LO, only=
                 if not (h1 == h).any():
                     continue
                 zr, zn = linem.ruler_z(sp, R[(s, h)], zk), linem.ruler_z(sn, R[(s, h)], zk)
-                m, sd = linem.live(zn if null_chart else zr, span)
+                m, sd = linem_s4.live(zn if null_chart else zr, span)
                 ok = (h1 == h) & (num >= warm)
                 out.append((s, a, linem.log_m(zr[ok], m[ok], sd[ok], s_lo), linem.log_m(zn[ok], m[ok], sd[ok], s_lo)))
     return out

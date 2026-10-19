@@ -8,7 +8,7 @@
         research SIDE_COLS printed from research when torch is installed), side_mu / side_sd of 17, 36 961 parameters
     (д) 'refit' on ALL: train_assets = prod set, same epochs; section (5з) ALL − C at BTC and panel (|Δ| > 2 SE — report)
 
-    python scripts/nt3_gates.py [--out docs/checks/nt3/gates.json]
+    python scripts/legacy/nt3_gates.py [--out docs/checks/legacy/nt3/gates.json]
 
 Paths of the training machine (Drive) are never written to the output: overlays are reduced to their folder name.
 """
@@ -23,7 +23,7 @@ import tempfile
 
 import numpy as np
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MODEL = 'NT3_PRV_ch48'
 F3G_T_CUT = '2026-09-26 09:15:00'
 N_PARAMS = 36961
@@ -209,7 +209,7 @@ def gate_e():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/nt3/gates.json'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/nt3/gates.json'))
     a = ap.parse_args()
     man = load_json(os.path.join(ROOT, 'artifacts/pack/nt_manifest.json'))
     res = {'model': MODEL, 'manifest_created': man['created']}

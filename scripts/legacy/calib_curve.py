@@ -1,7 +1,7 @@
 """Rule R9 (docs/rules.md): calibration curve of the line M on the VAL of the 'refit' models, out-of-fold Platt by
 half-years; bins by M per color; factual / expected multiple; ceiling per color (pool of 31 assets).
 
-    python scripts/calib_curve.py [--out docs/checks/calib_curve.json]
+    python scripts/legacy/calib_curve.py [--out docs/checks/legacy/f3g/calib_curve.json]
 """
 import argparse
 import json
@@ -11,9 +11,9 @@ import sys
 import numpy as np
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-from mri.calibration import WEEK_NS, load_val, platt_fit, pooled  # noqa: E402
+from mri.legacy.calibration import WEEK_NS, load_val, platt_fit, pooled  # noqa: E402
 
 EDGES = [1.0, 1.25, 1.5, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, np.inf]
 TOL = (0.8, 1.25)
@@ -108,7 +108,7 @@ def show(title, rows):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/calib_curve.json'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/f3g/calib_curve.json'))
     ap.add_argument('--boot', type=int, default=200)
     a = ap.parse_args()
     val = {s: load_val(os.path.join(ROOT, 'artifacts/calib'), s) for s in SEEDS}

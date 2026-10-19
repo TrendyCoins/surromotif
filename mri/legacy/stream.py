@@ -14,8 +14,8 @@ from collections import deque
 
 import numpy as np
 
-from . import BARS_DAY, CTX_BLOCK, CTX_NBLK, GAP_MS, L, N_NORM, SPAN_CTX, SPAN_SIDE, TIE_EPS
-from .params import DILATIONS
+from .. import BARS_DAY, CTX_BLOCK, CTX_NBLK, GAP_MS, L, N_NORM, SPAN_CTX, SPAN_SIDE, TIE_EPS
+from ..params import DILATIONS
 
 DEPTH = (3, 5, 9, 17, 33)     # ring depth of the input of layer 1, outputs of layers 1, 2, 3 and of layer 4 (pooling)
 HIST = L + 1 + 7 * BARS_DAY   # bars of cs / ema1 history needed for the moves before the window

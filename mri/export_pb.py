@@ -12,8 +12,8 @@ The JSON is self-contained: weights (separable layers 2..4), buffers, the 17 sid
 NaN), tie rule, floor, the line M (ruler, live part, limits, start of the line, ceiling), passport. Weights are exact
 decimals of their float32 values (Pine decodes the same bits from dense strings); the ruler is float64 as in the Ceil json.
 The golden file lets any platform check bar by bar from the first bar of the slice (the start of the line marked).
-The NT3_PRV_ch48 (export/mri_model_nt3.json) and F3_g (export/mri_model.json) exports stay as legacy models; the session-4
-PB export (EMA line, symbol tables) is in the git history.
+The NT3_PRV_ch48 and F3_g exports are legacy (export/legacy/, mri/legacy/); the session-4 PB export (EMA line, symbol
+tables) is in the git history.
 """
 import datetime as dt
 import glob
@@ -25,8 +25,7 @@ import numpy as np
 import pandas as pd
 
 from . import GAP_MS, L, N_NORM, TIE_EPS, linem
-from .export import git_version
-from .export_nt3 import SIDE_SPEC, _num, _nums
+from .export_common import SIDE_SPEC, _num, _nums, git_version
 from .features import read_bars
 from .nt3 import NT_BODY_FLOOR, NT_GEO, NT_HIST, NT_SHORT, SIDE_COLS, SIDE_NAMES, SIDE_SIGNED
 from .params import from_dict, load_npz

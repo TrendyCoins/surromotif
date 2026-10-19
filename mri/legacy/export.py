@@ -1,6 +1,8 @@
 """Neutral export of the indicator model (JSON) and the golden file (bar-by-bar reference on BTC 5M).
 
-    python -m mri.export            # writes export/mri_model.json and tests/golden/btc5m_fresh.csv.gz
+    python -m mri.legacy.export     # writes export/legacy/mri_model.json and tests/golden/legacy/btc5m_fresh.csv.gz
+
+Legacy: F3_g, the indicator model of sessions 1-2.
 
 The JSON is self-contained: weights, buffers, floors, rules (tie, unknown symbol, warm-up), Platt, thresholds,
 passport. Any platform (Pine, MQL, web) computes the same numbers from it; the golden file lets it check bar by bar
@@ -10,19 +12,20 @@ Weights are written as exact decimals of their float32 values (Pine decodes the 
 import datetime as dt
 import json
 import os
-import subprocess
 
 import numpy as np
 import pandas as pd
 
-from . import BARS_DAY, CTX_BLOCK, CTX_NBLK, GAP_MS, L, N_NORM, SPAN_CTX, SPAN_SIDE, TIE_EPS
-from .features import read_bars
-from .params import SIDE_NAMES, from_dict, load_npz
-from .pine_gen import fmt
+from .. import BARS_DAY, CTX_BLOCK, CTX_NBLK, GAP_MS, L, N_NORM, SPAN_CTX, SPAN_SIDE, TIE_EPS
+from ..export_common import _num, _nums, git_version  # noqa: F401 (re-exported to the legacy exports)
+from ..features import read_bars
+from ..params import SIDE_NAMES, from_dict, load_npz
 from .stream import run
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SEED = 'a'                                    # rule R4: one seed, chosen in advance
+EXPORT = 'export/legacy/mri_model.json'
+GOLDEN = 'tests/golden/legacy/btc5m_fresh.csv.gz'
 BURN = 2981                                   # rule R7: docs/checks/warmup.json, EMA 'adjust'
 POOL_ALL = ['BTCUSDT', 'ETHUSDT', 'DOGEUSDT', 'SOLUSDT', 'ADAUSDT', 'BNBUSDT', 'BCHUSDT', 'DOTUSDT', 'UNIUSDT',
             'XRPUSDT', 'LTCUSDT', 'DASHUSDT', 'ZECUSDT', 'SPELLUSDT', 'ICPUSDT', 'NEARUSDT', 'ZENUSDT', 'AVAXUSDT',
@@ -31,35 +34,17 @@ POOL_ALL = ['BTCUSDT', 'ETHUSDT', 'DOGEUSDT', 'SOLUSDT', 'ADAUSDT', 'BNBUSDT', '
 FRESH = ('BTCUSDT', 'ETHUSDT')                # prod model: these two from the fresh data folder
 
 
-def _num(x):
-    return float(fmt(x))
-
-
-def _nums(a):
-    a = np.asarray(a)
-    return [_nums(v) for v in a] if a.ndim > 1 else [_num(v) for v in a]
-
-
-def git_version():
-    try:
-        h = subprocess.run(['git', '-C', ROOT, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
-        dirty = subprocess.run(['git', '-C', ROOT, 'status', '--porcelain', 'mri'], capture_output=True, text=True).stdout
-        return h + ('+dirty' if dirty.strip() else '')
-    except OSError:
-        return 'unknown'
-
-
 def build_export(seed=SEED):
     p, _ = load_npz(os.path.join(ROOT, f'artifacts/weights/prod_F3_g_L64_{seed}_slim.npz'))
     with open(os.path.join(ROOT, f'artifacts/weights/prod_F3_g_L64_{seed}.json'), encoding='utf-8') as fh:
         prod = json.load(fh)
     with open(os.path.join(ROOT, 'artifacts/pack/floors_by_folder.json'), encoding='utf-8') as fh:
         fl_dir = json.load(fh)
-    with open(os.path.join(ROOT, 'docs/checks/calibration.json'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, 'docs/checks/legacy/f3g/calibration.json'), encoding='utf-8') as fh:
         cal = json.load(fh)
-    with open(os.path.join(ROOT, 'docs/checks/calib_curve.json'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, 'docs/checks/legacy/f3g/calib_curve.json'), encoding='utf-8') as fh:
         curve = json.load(fh)
-    with open(os.path.join(ROOT, 'docs/checks/ceilings.json'), encoding='utf-8') as fh:
+    with open(os.path.join(ROOT, 'docs/checks/legacy/f3g/ceilings.json'), encoding='utf-8') as fh:
         ceil = json.load(fh)
     # rule R6: the folder the prod model trained on — fresh for BTC / ETH, research for the rest
     floors = {a: _num(fl_dir['SMC/data_fresh/' if a in FRESH else 'SMC/data/'][a]['floor_L64']) for a in POOL_ALL}
@@ -156,14 +141,14 @@ def golden(ex, bars_path, floor):
 
 def main():
     ex = build_export()
-    os.makedirs(os.path.join(ROOT, 'export'), exist_ok=True)
-    path = os.path.join(ROOT, 'export/mri_model.json')
+    os.makedirs(os.path.join(ROOT, 'export/legacy'), exist_ok=True)
+    path = os.path.join(ROOT, EXPORT)
     with open(path, 'w', encoding='utf-8') as fh:
         json.dump(ex, fh, ensure_ascii=False, separators=(',', ':'))
     print('export', path, os.path.getsize(path) // 1024, 'KB')
     g = golden(ex, os.path.join(ROOT, 'artifacts/bars/btc_fresh_tail.csv.gz'), ex['floors']['floor_L64']['BTCUSDT'])
-    os.makedirs(os.path.join(ROOT, 'tests/golden'), exist_ok=True)
-    gp = os.path.join(ROOT, 'tests/golden/btc5m_fresh.csv.gz')
+    os.makedirs(os.path.join(ROOT, 'tests/golden/legacy'), exist_ok=True)
+    gp = os.path.join(ROOT, GOLDEN)
     g.to_csv(gp, index=False, float_format='%.12g', compression={'method': 'gzip', 'mtime': 0})
     print('golden', gp, os.path.getsize(gp) // 1024, 'KB', '| bars', len(g), '| shown', int(g['shown'].sum()),
           '| first shown bar', int(np.argmax(g['shown'].to_numpy() > 0)))

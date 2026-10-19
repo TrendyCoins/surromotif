@@ -29,10 +29,12 @@ import os
 
 import numpy as np
 
-from .nt3 import NT_GEO, SIDE_NAMES, SIDE_SIGNED
-from .pine_gen import ALPHA0, ALPHA_N, encode_dense, fmt, weights_block
+from ..nt3 import SIDE_NAMES, SIDE_SIGNED
+from ..pine_common import (ALPHA0, ALPHA_N, ALPHA_BLOCK, DECODE_FLOAT, STR_MAX, chunk_offsets, encode_dense,  # noqa: F401
+                           float_list, fmt, fmt_d)
+from .pine_gen import weights_block
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 L = 64
 LEGACY = 'pine/legacy/mri_nt3.pine'
 
@@ -59,22 +61,6 @@ def matrix_offsets(ch, hidden, n_feat):
     out.append(('HB0', hidden, 1, off))
     off += hidden
     return out, off
-
-
-def chunk_offsets():
-    """(n, offset of the chunk's last bar, offset of its first bar) from the window's last bar, oldest chunk first.
-       Bar s-1 is at offset L, s-2 at L + 1; chunks run over bars s-200 .. s-2."""
-    res, end = [], L + 1
-    for n in NT_GEO[::-1]:
-        start = end + n - 1
-        res.append((n, end, start))
-        end = start + 1
-    assert end == L + 200
-    return res[::-1]
-
-
-def float_list(xs):
-    return ', '.join(fmt(x) for x in xs)
 
 
 CONSTS = r'''// ---------------------------------------------------------------- constants
@@ -386,7 +372,6 @@ TABLE_FIELDS = [('buildFloors', 'floor'), ('buildPlattA', 'platt_a'), ('buildPla
 LIB_NAMES = ('MRIWeightsNT3a', 'MRIWeightsNT3b', 'MRIWeightsNT3c')
 LIB_ALIASES = ('WA', 'WB', 'WC')
 TV_USER = 'TrendyCoins'         # TradingView user name the libraries are published under (import path)
-STR_MAX = 3999                  # characters per weight string
 ASCII_ALPHA = ''.join(chr(c) for c in range(33, 127) if chr(c) not in '"\\/')     # 91 printable characters
 ASCII_N = len(ASCII_ALPHA)      # 91 ** 5 > 2 ** 32: 5 characters per float32
 
@@ -424,17 +409,6 @@ def decode_ascii(s):
         m = u - e * 8388608.0
         out.append(sg * (m * 2.0 ** -149 if e == 0 else (1.0 + m / 8388608.0) * 2.0 ** (e - 127)))
     return out
-
-
-ALPHA_BLOCK = 'buildAlpha() =>\n    map<string, int> m = map.new<string, int>()\n' \
-              '    array<string> cs = str.split("{alpha}", "")\n    for [i, c] in cs\n        map.put(m, c, i)\n    m\n'
-
-DECODE_FLOAT = r"""        float sg = b >= 2147483648.0 ? -1.0 : 1.0
-        float u = b >= 2147483648.0 ? b - 2147483648.0 : b
-        float e = math.floor(u / 8388608.0)
-        float m = u - e * 8388608.0
-        float v = e == 0 ? m * math.pow(2.0, -149) : (1.0 + m / 8388608.0) * math.pow(2.0, e - 127)
-"""
 
 
 def weights_ascii(vals, str_max=STR_MAX):
@@ -565,19 +539,13 @@ def make_script(p, table, unknown, passport, title='Market Randomness Index', sh
     return head + consts + core + foot, libs
 
 
-def fmt_d(x):
-    """Positional decimal of a float64 (no exponent)."""
-    s = np.format_float_positional(np.float64(x), unique=True, trim='-')
-    return s if '.' in s else s + '.0'
-
-
 CALC_BARS_DEFAULT = 0          # 'Compute only the last N bars': set from the Pine Profiler measurement
 
 
 def make_indicator(ex, calc_bars=CALC_BARS_DEFAULT, weights='libs', tv_user=TV_USER, **kw):
     """pine/legacy/mri_nt3.pine (and its libraries) from the NT3 export dict (export/mri_model_nt3.json): (script,
        {name: text})."""
-    from .params import from_dict
+    from ..params import from_dict
     p = from_dict(ex['model'])
     if ex['tie_rule']['eps'] != 1e-4 or ex['model']['id'] != 'NT3_PRV_ch48' or len(p.side_mu) != len(SIDE_NAMES):
         raise ValueError('the template has EPS = 0.0001 and the 17 side inputs of NT3_PRV_ch48')
@@ -605,7 +573,7 @@ def main():
     ap.add_argument('--ascii-test', action='store_true', help='also pine/legacy/test/mri_ascii_single.pine')
     ap.add_argument('--tv-user', default=TV_USER, help='TradingView user name of the weight libraries')
     a = ap.parse_args()
-    ex = load_export(os.path.join(ROOT, 'export/mri_model_nt3.json'))
+    ex = load_export()
     script, libs = make_indicator(ex, tv_user=a.tv_user)
     outs = {LEGACY: script, **{f'pine/legacy/lib/{name}.pine': t for name, t in libs.items()}}
     if a.ascii_test:

@@ -8,14 +8,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from mri.batch import infer  # noqa: E402
 from mri.features import bar_features  # noqa: E402
 from mri.params import from_dict, load_npz  # noqa: E402
 
-EXPORT = os.path.join(ROOT, 'export/mri_model.json')
-GOLDEN = os.path.join(ROOT, 'tests/golden/btc5m_fresh.csv.gz')
+EXPORT = os.path.join(ROOT, 'export/legacy/mri_model.json')
+GOLDEN = os.path.join(ROOT, 'tests/golden/legacy/btc5m_fresh.csv.gz')
 
 
 @pytest.fixture(scope='module')

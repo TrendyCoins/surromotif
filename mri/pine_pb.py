@@ -5,7 +5,7 @@
     python -m mri.pine_pb --production  # pine/mri.pine (after the TradingView measurements: default N of
                                         # "Compute only the last N bars"; no debug mode — decision of 2026-10-18)
 
-Weights: the dense float32 strings of mri/pine_gen.py (3 CJK characters per float32, bit for bit), 18 697 numbers =
+Weights: the dense float32 strings of mri/pine_common.py (3 CJK characters per float32, bit for bit), 18 697 numbers =
 56 091 characters in strings of <= 3 999; every string sits in its own function wNN() that decodes it into WT at run time,
 the global scope holds only the calls (session 3 probe: this passes the request size and the global-scope limit; tokens
 ~1 per string character). Flat order: layer 1 taps 0..2 W[:, :, tap] row-major (64, 4); layers 2..4: depthwise taps 0..2
@@ -15,7 +15,7 @@ Compute per confirmed bar (the same as mri.pb.StreamingPB; tests/pine_sim_pb.py 
     conv streams + / - in interleaved ring matrices (CH rows); layer 1 — 3 matrix.mult (64 x 4) by (4 x 2); layers 2..4 —
     per channel 3 taps with the dilation from the ring of the previous layer (elementwise), then one matrix.mult (64 x 64)
     by (64 x 2), then ReLU; layer 4 into two (CH x 33) matrices; pooled mean / max / last over 33 positions, / D; head
-    209 -> 24 -> 1. History inputs — as NT3 (mri/pine_nt3.py: per-bar scale series read back with [63] / [65],
+    209 -> 24 -> 1. History inputs — as NT3 (mri/legacy/pine_nt3.py: per-bar scale series read back with [63] / [65],
     ta.highest / ta.lowest / ta.sma over 199 bars, path chunks at fixed offsets). Line M (session 5, rules R17-R19): one
     floor FLOOR for every symbol, z by the ruler (37 knots), the live part — formula A: `var` ring of 4096 z (index
     n % 4096), running S1, S2 and the window number nW — changes only on barstate.isconfirmed and only on a valid window
@@ -27,8 +27,8 @@ import re
 import numpy as np
 
 from .nt3 import SIDE_NAMES, SIDE_SIGNED
-from .pine_gen import ALPHA0, ALPHA_N, encode_dense, fmt
-from .pine_nt3 import ALPHA_BLOCK, DECODE_FLOAT, STR_MAX, chunk_offsets, float_list, fmt_d
+from .pine_common import (ALPHA0, ALPHA_N, ALPHA_BLOCK, DECODE_FLOAT, STR_MAX, chunk_offsets, encode_dense, float_list,
+                          fmt, fmt_d)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 L = 64

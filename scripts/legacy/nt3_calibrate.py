@@ -1,6 +1,6 @@
 """Rule R12 (docs/rules.md, session 3): per-asset Platt calibration of NT3_PRV_ch48 and its checks.
 
-    python scripts/nt3_calibrate.py [--boot 200] [--out docs/checks/nt3]
+    python scripts/legacy/nt3_calibrate.py [--boot 200] [--out docs/checks/legacy/nt3]
 
 Writes into --out:
     calibration.json  per-asset Platt (whole VAL and by half-year) of the 'refit' models on ALL (seeds a + b together) —
@@ -21,12 +21,12 @@ import sys
 import numpy as np
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
-sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+sys.path.insert(0, os.path.join(ROOT, 'scripts', 'legacy'))
 from calib_curve import EDGES, MIN_N, TOL, ceilings, curve, show  # noqa: E402
 from ceilings import MIN_RATIO  # noqa: E402
-from mri.calibration import WEEK_NS, calib_ratio, load_part, platt_fit  # noqa: E402
+from mri.legacy.calibration import WEEK_NS, calib_ratio, load_part, platt_fit  # noqa: E402
 
 MODEL = 'NT3_PRV_ch48'
 SEEDS = ('a', 'b')
@@ -151,7 +151,7 @@ def jdump(path, obj):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--boot', type=int, default=200)
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/nt3'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/nt3'))
     a = ap.parse_args()
     root = os.path.join(ROOT, 'artifacts/calib')
     all_ = {s: load_part(root, run_name('ALL', s, 'refit')) for s in SEEDS}

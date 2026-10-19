@@ -7,7 +7,7 @@ logits of the NT3 'refit' models come from?
        mantissa, round to nearest or truncation) — the size and the structure (lag correlation over consecutive windows)
        of the TF32 noise, compared with the observed difference.
 
-    python scripts/nt3_r3_probe.py [--npz artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part*.npz]
+    python scripts/legacy/nt3_r3_probe.py [--npz artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part*.npz]
 """
 import argparse
 import json
@@ -17,7 +17,7 @@ import tempfile
 
 import numpy as np
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 from check_torch import research_model, research_module  # noqa: E402
@@ -51,7 +51,7 @@ def main():
     import torch
     ap = argparse.ArgumentParser()
     ap.add_argument('--npz', default=os.path.join(ROOT, 'artifacts/calib/pool_ALL_NT3_PRV_ch48_L64_a_refit_part*.npz'))
-    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/nt3/r3_probe.json'))
+    ap.add_argument('--out', default=os.path.join(ROOT, 'docs/checks/legacy/nt3/r3_probe.json'))
     a = ap.parse_args()
     with open(os.path.join(ROOT, 'artifacts/pack/floors.json')) as fh:
         floor = json.load(fh)['smc_series_BTCUSDT_5M_N200.npz']['floor_L64']
