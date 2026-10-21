@@ -296,6 +296,15 @@ v6.5 (исправленный штраф скачков; волна SP; эта�
 контроль C0_null_sp), вердикт — sp_verdict в MODE 'sm_sum' (те же пороги). SM_WIN = 'SM_sym', SM_D1 = True — на пуле считается
 только SM_sym_d1 (SMS1 / SMS2); в этапе 2 — правило (2б) «точнее и не грубее» (записано до прогона) и шаг (3): победитель SP
 против SM_sym_d1 (SPS1 / SPS2). Без новых опций обучение и проверка не менялись (стенд: v6.4 → v6.5 бит в бит, включая SM_l2).
+v6.5.1 (только сводка, до вердикта волны SP): в волне SP при равной гладкости (полоса 1 SE) побеждает самый точный — наибольшая
+Δ AUC TUNE, а не самый слабый штраф: у её вариантов одна цена при инференсе, и для модели сайта важна точность, а не простота.
+
+v6.6 (F1 для сайта — рецепт и боевое): итог этапа 2 гладкости — F1_FINAL = SP_l025_d1 (зеркально-симметричная сеть, штраф скачков
+λ 0.25, dropout 0.1 / 0.1; SP_WIN = 'SP_l025' — решение Фёдора без сида c). Она — в POOL['recalc'] и POOL['prod_models']['site'];
+задания F1G1 / F1G2 ('refit' на C, сиды a / b), F1R1 / F1R2 ('refit' на ALL), F1P1 / F1P2 / F1P3 ('prod' на ALL, сиды a / b / c):
+эпохи — правило v4.9 из 'stop' на C, рецепт — MODE 'pool_sum' (Δ панели VAL 'refit' − 'stop' >= −1 SE), боевое — только при
+подтверждённом рецепте (_prod_gate); MODE 'nocal' — на F1_FINAL (NOCAL['model']). Обучение и проверки не менялись: новые только
+задания, место модели в пересчёте и модель линии M по умолчанию.
 """
 
 import gc
@@ -5890,8 +5899,9 @@ def _smooth_verdict(by, data, L, w):
            покраски на 100 баров;
        (2) «глаже» — R / R эталона на TUNE <= SM_MIN_GAIN и верх 2 SE отношения < 1; «по карману» — Δ AUC TUNE >= −SM_BUDGET;
        (3) победитель — среди «глаже» и «по карману» самый гладкий по R на TUNE; в полосе 1 SE от него (log-отношение) — самый
-           простой по w['simple']; VAL подтверждает, если у победителя R / R эталона на VAL <= SM_MIN_GAIN и Δ AUC VAL >= −SM_BUDGET
-           (иначе ❗ — решение за Фёдором);
+           простой по w['simple'] (волна SM) или, v6.5.1, самый точный — наибольшая Δ AUC TUNE (w['tie'] = 'auc', волна SP: цена при
+           инференсе у её вариантов одна); VAL подтверждает, если у победителя R / R эталона на VAL <= SM_MIN_GAIN и Δ AUC VAL >=
+           −SM_BUDGET (иначе ❗ — решение за Фёдором);
        (4) ни одного — эталон остаётся.
        v6.5: варианты со штрафом в режиме v6.4 ('eval' — ошибка Claude, см. smooth_penalty) помечены ⚠️ и в победители не идут.
        Возвращает имя победителя или None."""
@@ -5966,10 +5976,12 @@ def _smooth_verdict(by, data, L, w):
         return None
     best = min(ok, key=lambda n_: res[n_]['rt'])
     band = [n_ for n_ in ok if res[n_]['rt'] <= res[best]['rt'] + res[best]['srt']]
-    win = min(band, key=w['simple'].index)
+    by_auc = w.get('tie') == 'auc'            # v6.5.1: при равной гладкости — самый точный (Δ AUC TUNE), а не самый простой
+    win = max(band, key=lambda n_: res[n_]['dt']) if by_auc else min(band, key=w['simple'].index)
     v = res[win]
     ok_v = math.exp(v['rv']) <= SM_MIN_GAIN and v['dv'] >= -SM_BUDGET
-    print(f"\n   🏆 (3) победитель — {win} (самый гладкий из прошедших — {best}; в полосе 1 SE: {', '.join(band)}) | TUNE: R/эт. "
+    print(f"\n   🏆 (3) победитель — {win} (самый гладкий из прошедших — {best}; в полосе 1 SE: {', '.join(band)}"
+          + ("; из них самый точный по Δ AUC TUNE" if by_auc and len(band) > 1 else "") + ") | TUNE: R/эт. "
           f"{math.exp(v['rt']):.3f} ± {v['srt']:.3f}, Δ AUC {v['dt']:+.4f} ± {v['st']:.4f} | VAL: R/эт. {math.exp(v['rv']):.3f}, "
           f"Δ AUC {v['dv']:+.4f} — " + ("✅ подтверждает" if ok_v else "❗ не подтверждает — решение за Фёдором"))
     print(f"   Дальше {w['next_txt'].format(win=win)}")
@@ -5994,7 +6006,7 @@ def sp_verdict(by, data, L=64):
        Возвращает победителя или None."""
     return _smooth_verdict(by, data, L, {
         'title': "〰️ (1б) v6.5: ИСПРАВЛЕННЫЙ ШТРАФ СКАЧКОВ ПОВЕРХ SM_sym — ВОЛНА SP", 'ref': SP_REF, 'order': SP_ORDER,
-        'simple': SP_SIMPLE,
+        'simple': SP_SIMPLE, 'tie': 'auc',     # v6.5.1: в полосе 1 SE — самый точный (у вариантов SP одна цена при инференсе)
         'what': {'SP_l1': 'штраф λ 1', 'SP_gh4': 'штраф λ 4 на «призрачных» парах', 'SP_l4': 'штраф λ 4', 'SP_l025': 'штраф λ 0.25'},
         'control': 'C0_null_sp', 'control_txt': 'симметричная сеть + исправленный штраф', 'control_job': 'SPa',
         'ref_jobs': 'волна SM: задания SMa / SMb / SMc',
@@ -6176,6 +6188,8 @@ def sm_summary():
         print("\n   ⏳ прогонов волны SP ещё нет (MODE 'train', JOB 'SPa' / 'SPb' / 'SPc')")
     elif sp is not None and sp != SP_WIN:
         print(f"\n   ❗ победитель волны SP — {sp}: впиши SP_WIN = '{sp}' (задания пула SPS1 / SPS2)")
+    elif sp is None and SP_WIN:                # v6.6: решение Фёдора поверх правила (2026-10-20)
+        print(f"\n   · SP_WIN = '{SP_WIN}' — решение Фёдора 2026-10-20 (без сида c: промах бюджета в пределах шума), не правило")
     sm_pool_verdict()
     return by
 
@@ -7318,7 +7332,7 @@ def core_summary(results, info, groups):
 # v4.8: ПУЛ АССЕТОВ — тест границы ядра (MODE 'pool' — обучение, 'pool_sum' — сводка)
 # =====================================================================
 POOL_VER = 1               # версия: прогоны пула (RUN_DIR/pool/) другой версии пересчитываются
-POOL_REL = '6.5'           # выпуск кода пула (для заголовков логов)
+POOL_REL = '6.6'           # выпуск кода пула (для заголовков логов)
 
 
 class SubStore(EvalStore):
@@ -9748,9 +9762,12 @@ for _nm, _over in SP_SWEEP.items():
     RUNS[_nm + PB_D1] = {**RUNS[_nm], **PB_D1_OVER}
 RUNS['C0_null_sp'] = {**RUNS['SP_l4'], 'control': 'null'}       # суррогат против суррогата на новом пути штрафа: AUC = 0.5
 SP_ORDER = list(SP_SWEEP)
-SP_SIMPLE = ['SP_l025', 'SP_l1', 'SP_l4', 'SP_gh4']   # простота: слабее штраф — ближе к эталону; «призрачный» — особое правило отбора
+SP_SIMPLE = ['SP_l025', 'SP_l1', 'SP_l4', 'SP_gh4']   # справочно (v6.5.1: в полосе 1 SE побеждает самый точный, не самый простой)
 assert sorted(SP_SIMPLE) == sorted(SP_ORDER), "SP_SIMPLE и SP_SWEEP разошлись"
-SP_WIN = None          # победитель волны SP — впиши после MODE 'sm_sum'; задания пула SPS1 / SPS2 (против SM_WIN с dropout SM_D1)
+SP_WIN = 'SP_l025'     # победитель волны SP — решение Фёдора 2026-10-20 (без сида c; против SM_sym R ×0.726, Δ AUC TUNE −0.0055);
+                       # задания пула SPS1 / SPS2 (против SM_WIN с dropout SM_D1)
+F1_FINAL = 'SP_l025_d1'   # v6.6: F1 для сайта — итог этапа 2 (sm_sum 2026-10-20, шаг (3): против SM_sym_d1 R линии по панели
+                          # ×0.638, Δ AUC TUNE −0.0019, VAL +0.0006 ✅); рецепт и боевое — задания F1G* / F1R* / F1P* (None — нет)
 
 # ПРОТОКОЛ (правила — в STATUS до прогона):
 #   0. TrendyCoins_SMC_Data (пол сверен с FINAL / R1), здесь MODE 'check' — сверка torch с numpy.
@@ -10145,6 +10162,11 @@ POOL['models'].update({n_: n_ for n_ in PB_SWEEP})                  # v6.3: Pine
 POOL['models'].update({n_: n_ for m_ in PB_POOL for n_ in (m_, m_ + PB_D1)})   # v6.3: этап 2 — кандидаты и их варианты _d1
 POOL['models'].update({n_: n_ for m_ in ['NT1_PRV'] + SM_ORDER + SP_ORDER for n_ in (m_, m_ + PB_D1)})   # v6.4-6.5: гладкость F1
 POOL['rule_sm_d1'] = 1.0   # v6.4 (до прогона): NT1_PRV_d1 вместо NT1_PRV, если Δ панели TUNE >= +1 SE и Δ панели VAL > 0 (как у PB)
+if F1_FINAL:               # v6.6: новая F1 для сайта — в пересчёт (рецепт 'refit' против 'stop', калибровка, эпохи по правилу v4.9)
+    if F1_FINAL not in POOL['models']:
+        raise ValueError(f"🍆 АЙ, ОШИБКА! F1_FINAL = '{F1_FINAL}' — нет в POOL['models']")
+    POOL['recalc'] = POOL['recalc'] + [F1_FINAL]
+    POOL['prod_models']['site'] = F1_FINAL
 POOL['sets']['A'] = list(POOL['panel'])                                              # ядро по правилам v4.7 (9)
 POOL['sets']['B'] = POOL['sets']['A'] + ['XRPUSDT', 'LTCUSDT', 'DASHUSDT', 'ZECUSDT', 'SPELLUSDT', 'ICPUSDT',
                                          'NEARUSDT']                                 # + USDT-резерв (16)
@@ -10246,11 +10268,26 @@ for _i in range(3):
 if SP_WIN:
     for _i, _s in enumerate(('a', 'b')):
         POOL_JOBS[f'SPS{_i + 1}'] = [('C', _s, SP_WIN + x_, 'stop') for x_ in _sfx]
+# v6.6: F1 для сайта (F1_FINAL) — рецепт и боевое по правилам v4.9 / v5.0, как у F3 (v6.1) и Pine-модели (v6.3). 'refit' на C
+# (F1G1 / F1G2, сиды a / b; эпохи — правило v4.9 из 'stop' на C) -> MODE 'pool_sum' (рецепт: Δ панели VAL 'refit' − 'stop' >=
+# −1 SE; калибровка; эпохи) -> боевое 'prod' на ALL (F1P1 / F1P2 / F1P3, сиды a / b / c, свежие данные POOL['prod_data']; без
+# подтверждённого рецепта не стартует). 'refit' на ALL (F1R1 / F1R2) — источник линейки линии M (MODE 'nocal') и проверки
+# незнакомого символа; от рецепта не зависит, можно параллельно с F1G
+if F1_FINAL:
+    for _i, _s in enumerate(('a', 'b'), 1):
+        POOL_JOBS[f'F1G{_i}'] = [('C', _s, F1_FINAL, 'refit')]
+        POOL_JOBS[f'F1R{_i}'] = [('ALL', _s, F1_FINAL, 'refit')]
+    POOL_JOBS['F1G'] = POOL_JOBS['F1G1'] + POOL_JOBS['F1G2']
+    POOL_JOBS['F1R'] = POOL_JOBS['F1R1'] + POOL_JOBS['F1R2']
+    POOL_JOBS['F1P'] = [('ALL', s_, F1_FINAL, 'prod') for s_ in ('a', 'b', 'c')]
+    for _i, _s in enumerate('abc', 1):
+        POOL_JOBS[f'F1P{_i}'] = [('ALL', _s, F1_FINAL, 'prod')]
 
 # ---- v6.3: линия M без калибровки по ассету (MODE 'nocal'). Правила — до прогона; задним числом не двигаются.
 NOCAL_VER = 2
 NOCAL = {
-    'model': None,                 # None — итог этапа 2 Pine-модели (если выбран сводкой пула), иначе POOL['prod_models']['pine']
+    'model': F1_FINAL,             # v6.6: F1 сайта (F1_FINAL); None — итог этапа 2 Pine-модели (если выбран сводкой пула), иначе
+                                   # POOL['prod_models']['pine'] (так считалась линия M индикатора)
     'src_set': 'ALL', 'src_mode': 'refit', 'seeds': ('a', 'b'),   # источник: 'refit' на ALL — VAL вне выборки у всех 31 ассета
     'prod_seeds': ('a', 'b', 'c'), # боевые модели: линейки — по суррогатам их VAL (в выборке; см. раздел (3) «в выборке»)
     'unseen': ('C', 'refit'),      # справочно, незнакомый символ: 'refit' на C (H невиданные); линейка — по ассетам без H
@@ -10276,7 +10313,7 @@ NOCAL = {
     'f16': True,                   # справочно: AUC и logit модели с весами, округлёнными до float16 (2 веса на 3 знака CJK)
 }
 
-MODE = 'train'          # 'check' | 'train' | 'one' | 'sum' | 'figs' (дорисовать extremes.png старым прогонам) | 'core' (v4.7)
+MODE = 'nocal'          # 'check' | 'train' | 'one' | 'sum' | 'figs' (дорисовать extremes.png старым прогонам) | 'core' (v4.7)
                         # | 'pool' (v4.8 / v4.9: обучение на пуле, JOB из POOL_JOBS) | 'pool_sum' (сводка пула)
                         # | 'pyr_sum' (v5.4: вердикт пирамиды доходностей) | 'tok_sum' (v5.5: вердикт признаков токена)
                         # | 'rg_sum' (v5.6: вердикт диапазона бара)
@@ -10285,12 +10322,13 @@ MODE = 'train'          # 'check' | 'train' | 'one' | 'sum' | 'figs' (дорис
                         # | 'nt_sum' (v6.0: вердикт моделей без времени и сравнение со старыми F1 / F3)
                         # | 'pb_sum' (v6.3: вердикт Pine-модели в бюджет одного скрипта) | 'nocal' (v6.3: линия M без калибровки по ассету)
                         # | 'sm_sum' (v6.4-6.5: гладкость линии — разбор готовых моделей, вердикты волн SM / SP и этапа 2 на пуле)
-JOB = 'SPa'             # для 'train' / 'night' / 'pool' — имя задания (v6.0: 'NTa' / 'NTb' / 'NTc' — по консоли на сид;
+JOB = 'F1P1'            # для 'train' / 'night' / 'pool' — имя задания (v6.0: 'NTa' / 'NTb' / 'NTc' — по консоли на сид;
                         # v6.1: 'NS1' / 'NS2' — 'stop' F3 без времени на пуле; v6.2: 'NR' — 'refit' на ALL, или 'NR1' / 'NR2';
                         # v6.3: 'PBa' / 'PBb' / 'PBc' — Pine-модель в бюджет одного скрипта, по консоли на сид;
                         # волна 2 — 'PB2a' / 'PB2b' / 'PB2c'; v6.4: гладкость линии F1 — 'SMa' / 'SMb' / 'SMc', этап 2 на пуле —
                         # 'SMS1' / 'SMS2' / 'SMS3'; v6.5: исправленный штраф поверх SM_sym — 'SPa' / 'SPb' / 'SPc', его этап 2 —
-                        # 'SPS1' / 'SPS2')
+                        # 'SPS1' / 'SPS2'; v6.6: F1 для сайта — 'F1G1' / 'F1G2' ('refit' на C), 'F1R1' / 'F1R2' ('refit' на
+                        # ALL), после 'pool_sum' — 'F1P1' / 'F1P2' / 'F1P3' (боевое))
 # v5.8, MODE 'chain': шаги по порядку в одной консоли. v6.1: F3 без времени — 'stop' a / b (уже посчитанные в других консолях
 # пропускаются, если эта консоль их видит) -> сводка -> 'refit' a / b (эпохи — по правилу из 'stop') -> сводка (рецепт,
 # калибровка) -> боевое a / b / c (только при подтверждённом рецепте)
@@ -10311,7 +10349,12 @@ JOB = 'SPa'             # для 'train' / 'night' / 'pool' — имя зада�
 # v6.5: SM_sym_d1 на пуле (сиды a / b) — задания SMS1 / SMS2 (в v6.4 запущены как SMX — те же прогоны, не дублировать); волна SP —
 # MODE 'train', JOB 'SPa' / 'SPb' / 'SPc' (по консоли на сид; консоли с пулом — после него). Потом MODE 'sm_sum': этап 2 для
 # SM_sym_d1 и вердикт SP; при победителе SP_WIN — MODE 'pool', JOB 'SPS1' / 'SPS2' и снова 'sm_sum'
-CHAIN = ['train:SPa']
+# (посчитано 2026-10-20: SP — MODE 'train', JOB 'SPa' / 'SPb'; SM_sym_d1 и SP_l025_d1 на пуле — SMX / SPS1 / SPS2)
+# v6.6, F1 для сайта: 1) три консоли MODE 'pool' — JOB 'F1G1', 'F1G2', 'F1R1' (F1R2 — на консоли, что освободится первой);
+# 2) когда F1G1 и F1G2 досчитаны — MODE 'pool_sum' в свежей консоли (рецепт F1_FINAL, эпохи, калибровка; сводка пишет, видит ли
+# все прогоны); 3) рецепт ✅ — MODE 'pool', JOB 'F1P1' / 'F1P2' / 'F1P3' (три консоли); 4) MODE 'nocal' с NOCAL['model'] = F1_FINAL
+# — линейка линии M (после F1R и F1P; NOCAL['model'] = F1_FINAL уже вписан)
+CHAIN = ['pool:F1G1']
 ONE = ('A1_base', {'L': 32}, 'a')   # для 'one'
 FORCE = False           # False — уже посчитанные прогоны (есть json этой версии) пропускаются
 MODE = os.environ.get('SMC_MODE', MODE)     # переопределение для стенда вне Colab
