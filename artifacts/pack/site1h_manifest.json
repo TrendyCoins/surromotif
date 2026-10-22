@@ -1,0 +1,140 @@
+{
+ "what": "вход бэкенда сайта на 1H: итог SuMo_Class_TF v2.1 'line21' — линия M F1 SP_l025_d1 prod a",
+ "line21": "20261022_063520",
+ "prod": "prod_SP_l025_d1_L64_a",
+ "export": {
+  "tf": "1H",
+  "rules": "v2.1",
+  "floor": 0.2,
+  "ceiling": 8,
+  "marks": {
+   "orange": 1.25,
+   "blue": 0.8
+  }
+ },
+ "live": "4032·k0.5",
+ "golden": {
+  "asset": "BTCUSDT",
+  "tf": "1H",
+  "n": 11216,
+  "from": "2025-07-11 23:00:00",
+  "to": "2026-10-22 06:00:00"
+ },
+ "files": [
+  {
+   "path": "artifacts/weights/prod_SP_l025_d1_L64_a.json",
+   "bytes": 112704,
+   "sha256": "7245459310e0c5fd9a3ae56097f9187a1307fea7443dfc4084bcada165935d9a",
+   "from": "SMC/runs/prod/prod_SP_l025_d1_L64_a.json"
+  },
+  {
+   "path": "artifacts/weights/prod_SP_l025_d1_L64_a_slim.npz",
+   "bytes": 341223,
+   "sha256": "4b311f07bf67ac5aa035d2f9a958462492d5b960181e742fe6dc0ed91d973cdf",
+   "from": "SMC/runs/prod/prod_SP_l025_d1_L64_a.npz (только sd_*)"
+  },
+  {
+   "path": "artifacts/calib/tfline21_20261022_063520.json",
+   "bytes": 382055,
+   "sha256": "aa9bceb1a1ddafd650812da0459a71ff7ddd6927e35e8cc5e32aadad04bb1764",
+   "from": "SMC/runs/tf/tfline21_20261022_063520.json"
+  },
+  {
+   "path": "artifacts/calib/tfline21_golden_20261022_063520.npz",
+   "bytes": 469705,
+   "sha256": "7ca42e82371d9d76c880502194bcbde533e4de47e8ebe3c49473b402297ac7d0",
+   "from": "SMC/runs/tf/tfline21_golden_20261022_063520.npz"
+  },
+  {
+   "path": "artifacts/calib/tf_20261021_190330.json",
+   "bytes": 17761,
+   "sha256": "6ca9aa8e4d04137a7910d05873299e29c2f5e6a588b3bdf09ef9a73bbd52107d",
+   "from": "SMC/runs/tf/tf_20261021_190330.json"
+  },
+  {
+   "path": "artifacts/calib/tfline_20261022_043958.json",
+   "bytes": 101309,
+   "sha256": "4da9a081cc507ff2f2c9d932327b3f9e636d79671bdd02fdb4f59c1cdc3cc28b",
+   "from": "SMC/runs/tf/tfline_20261022_043958.json"
+  },
+  {
+   "path": "artifacts/calib/tfdiag_20261022_054130.json",
+   "bytes": 734671,
+   "sha256": "81a846959ca21f9eec999c72d7172af48c40d4de59bc6b5535e4cf122ceba2f3",
+   "from": "SMC/runs/tf/tfdiag_20261022_054130.json"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_stand_20261021_190005.log",
+   "bytes": 12051,
+   "sha256": "1bff6082590394eae3f2fec9e91b944896ac7ec39e52e92ab594b94084ae4011",
+   "from": "SMC/runs/tf/logs/tf_stand_20261021_190005.log"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_run_20261021_190148.log",
+   "bytes": 11294,
+   "sha256": "02a0283be4c21487d2396e25cb1422626db9fc919c843f6156cbd9953edcd526",
+   "from": "SMC/runs/tf/logs/tf_run_20261021_190148.log"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_line_stand_20261022_043600.log",
+   "bytes": 15737,
+   "sha256": "de5513795ab813fbc3a5188774740785ab8f52093c28e2704c60ed103f10390b",
+   "from": "SMC/runs/tf/logs/tf_line_stand_20261022_043600.log"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_line_20261022_043938.log",
+   "bytes": 28909,
+   "sha256": "c7280a9c150128a5bf968722015087d68d3be303195ecc9bcaceb420facf0497",
+   "from": "SMC/runs/tf/logs/tf_line_20261022_043938.log"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_line_stand_20261022_053747.log",
+   "bytes": 36707,
+   "sha256": "8059752fb8a4ac800f610b55c535e0a917796d974691684e972eb67d1384123a",
+   "from": "SMC/runs/tf/logs/tf_line_stand_20261022_053747.log"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_line_diag_20261022_054124.log",
+   "bytes": 52958,
+   "sha256": "fdbb274b68d25047f89451e8b421788f217f582e822c1ccadc683820f1a501ef",
+   "from": "SMC/runs/tf/logs/tf_line_diag_20261022_054124.log"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_line_stand_20261022_063028.log",
+   "bytes": 38333,
+   "sha256": "9c27b036c628dee25115e0676052219644cab6db0a91e6ace2f619fb148c4610",
+   "from": "SMC/runs/tf/logs/tf_line_stand_20261022_063028.log"
+  },
+  {
+   "path": "artifacts/logs/tf/tf_line21_20261022_063515.log",
+   "bytes": 30510,
+   "sha256": "aaf8a583a8c8591c01028db6ba04ede0c14e665d0985d390bc14e42c45a92446",
+   "from": "SMC/runs/tf/logs/tf_line21_20261022_063515.log"
+  },
+  {
+   "path": "artifacts/bars/smc_series_BTCUSDT_1H_N200.npz",
+   "bytes": 1064666,
+   "sha256": "37ef74d73456280b44580da6a7ae2b880533558db8de12a0ac05d8a2ccb77b9a",
+   "from": "SMC/data_1h/smc_series_BTCUSDT_1H_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_prices_BTCUSDT_1H_N200.npz",
+   "bytes": 1145291,
+   "sha256": "dac902d4915e20c6de1f18f60e859aa6bc258de55920acf532c76019a028586a",
+   "from": "SMC/data_1h/smc_prices_BTCUSDT_1H_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_range_BTCUSDT_1H_N200.npz",
+   "bytes": 272119,
+   "sha256": "7195ad81de02cf6df6948a862edc52e88d6fb7fc8886f309f5eb3c33694b79f9",
+   "from": "SMC/data_1h/smc_range_BTCUSDT_1H_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_bars_BTCUSDT_1H_N200.npz",
+   "bytes": 1060597,
+   "sha256": "3c42a60a9c8fc72e37f415d73713db4291248e060abe814a9441c2deea3e3870",
+   "from": "SMC/data_1h/smc_bars_BTCUSDT_1H_N200.npz"
+  }
+ ],
+ "created": "2026-10-22 07:26:14"
+}
