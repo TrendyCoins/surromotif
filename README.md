@@ -34,9 +34,10 @@ Earlier models are kept in `legacy/` subfolders with their tests.
 
 ## Notes
 
-- **Data.** `tests/golden/` and `artifacts/bars/` hold Binance spot candles of BTCUSDT 5M; `artifacts/parity/` holds
-  TradingView chart exports (BINANCE:BTCUSDT and XLMUSDT 5M) with the indicator's debug values. The market data belongs
-  to its sources and is here only for the tests and the parity checks.
+- **Data.** `tests/golden/` and `artifacts/bars/` hold Binance spot candles of BTCUSDT 5M (`artifacts/bars/` also has
+  BTCUSDT 1H: the 5M candles resampled to hours, in the research file format); `artifacts/parity/` holds TradingView
+  chart exports (BINANCE:BTCUSDT and XLMUSDT 5M) with the indicator's debug values. The market data belongs to its
+  sources and is here only for the tests and the parity checks.
 - **SMC** in `research/` and the logs means SuMo classifier, not Smart Money Concepts.
 - **Language.** Code and READMEs are in English; `docs/` and the comments in `research/` are in Russian.
 - **Tests:** `python -m pytest -q`.
