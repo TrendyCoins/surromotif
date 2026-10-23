@@ -23,8 +23,9 @@ promises.
 |---|---|
 | `pine/` | the indicator `mri.pine` and its test prototype |
 | `mri/` | Python reference of the indicator: model, line M, export, Pine generator |
-| `export/` | the model as JSON: weights, rules, constants |
-| `tests/` | pytest and the golden file (bar-by-bar values on BTCUSDT 5M) |
+| `f1h/` | the SuMo classifier F1 on 1H candles: numpy reference of the logit and the line M (CPU, numpy only) |
+| `export/` | the models as JSON: weights, rules, constants |
+| `tests/` | pytest and the golden files (bar-by-bar values on BTCUSDT 5M and 1H) |
 | `scripts/` | checks against research code, parity with TradingView, Colab exports |
 | `docs/` | progress, rules of the checks, Pine limits, check results |
 | `research/` | research scripts as they ran in Colab (their Drive paths and Colab links are private): data, training, surrogate tests |
@@ -34,8 +35,8 @@ Earlier models are kept in `legacy/` subfolders with their tests.
 
 ## Notes
 
-- **Data.** `tests/golden/` and `artifacts/bars/` hold Binance spot candles of BTCUSDT 5M (`artifacts/bars/` also has
-  BTCUSDT 1H: the 5M candles resampled to hours, in the research file format); `artifacts/parity/` holds TradingView
+- **Data.** `tests/golden/` and `artifacts/bars/` hold Binance spot candles of BTCUSDT 5M and BTCUSDT 1H (the 5M
+  candles resampled to hours; in `artifacts/bars/` in the research file format); `artifacts/parity/` holds TradingView
   chart exports (BINANCE:BTCUSDT and XLMUSDT 5M) with the indicator's debug values. The market data belongs to its
   sources and is here only for the tests and the parity checks.
 - **SMC** in `research/` and the logs means SuMo classifier, not Smart Money Concepts.
