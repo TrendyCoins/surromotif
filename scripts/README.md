@@ -13,6 +13,6 @@
 | `f1h_parity.py` | F1 on 1H against research and the research golden tfline21 (rules R22, R23; torch) |
 | `f1h_research.py` | F1 on 1H: the research side (training code imported, prod a, floor 0.2) for the parity and tests |
 | `f1h_bench.py` | F1 on 1H: time and memory of the full recompute (rule R26) |
-| `futures_klines.py` | run locally, not in Colab: 5M candles of Binance USDT-M perpetual futures, with the taker volume split by side, for `research/sumo_class_flow.py` (CSV → Drive `Raw Datasets/futures/`, not in git) |
+| `futures_klines.py` | run locally, not in Colab: 5M candles of Binance USDT-M perpetual futures, with the taker volume split by side, for `research/sumo_class_flow.py` and `research/sumo_class_eff.py` (CSV → Drive `Raw Datasets/futures/`, not in git) |
 
 Results go to `docs/checks/pb5/` (F1 on 1H — `docs/checks/f1h/`). `legacy/` — scripts of the earlier models and of session 4.
