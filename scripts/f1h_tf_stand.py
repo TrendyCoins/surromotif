@@ -5,7 +5,7 @@
 
 Every stand runs in its own process (fresh modules) with the research .py files of research/ and a temporary project folder;
 the stand folder is kept (SMCTF_KEEP) for the comparison and removed afterwards. Results — docs/checks/f1h_tf/: stand logs
-(the temporary paths replaced by <PROJECT> / <STAND>) and stand_regress_1h.json, stand_15m.json, stand_30m.json.
+(the temporary paths and the repo replaced by <PROJECT> / <STAND> / <REPO>) and stand_regress_1h.json, stand_15m.json, stand_30m.json.
 Needs torch, scikit-learn, matplotlib, pandas.
 
 Regression (R27): the list of checks with their numbers and the stand log are the same after replacing the stand folder, the
@@ -158,7 +158,7 @@ def files_of(stand):
 def save_log(text, stand, proj, name):
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, name), 'w', encoding='utf-8') as fh:
-        fh.write(text.replace(stand, '<STAND>/').replace(proj, '<PROJECT>/'))
+        fh.write(text.replace(stand, '<STAND>/').replace(proj, '<PROJECT>/').replace(ROOT + '/', '<REPO>/'))
 
 
 def env_info():
