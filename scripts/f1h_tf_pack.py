@@ -1,65 +1,81 @@
 # -*- coding: utf-8 -*-
-"""Colab: one zip with the inputs of f1h on 5M, 15M and 30M for part 2 (export, golden, parity; docs/rules.md R28–R31) — to
-be unpacked into the root of the repo, as commit e035bc2 did for 1H.
+"""F1h_TF_Pack — один zip со входом f1h на 5M, 15M и 30M для части 2 (экспорт, golden, паритет; docs/rules.md R28–R31):
+распаковать в корень репо, как коммит e035bc2 у 1H (2026-10-25)
 
-Per TF:
-  15M / 30M — the result of scripts/f1h_tf_line21.py 'line21' (SMC/runs/tf15m/, tf30m/): the tfline21 json (section export)
-      and its golden npz, the research files BTC of the TF on which the golden was computed (SMC/data_15m/, data_30m/), all
-      logs of the folder. A TF whose json has no export (the line did not pass, 'stop' in the json) is not packed.
-  5M — the json and the golden of a 'run' of SuMo_Class_Site v1.1 with the section export (CONFIG['site_stamp']; without it
-      the script lists the candidates and stops), the json 'live' it took the formula from, the logs of both, the research
-      files BTC 5M of the golden (looked up in CONFIG['research_5m']).
-  artifacts/pack/site<tf>_manifest.json — path, bytes, sha256, from (as site1h_manifest.json).
-The prod a weights are in the repo already (artifacts/weights/, sha256 in site1h_manifest.json): not packed; the Drive json of
-prod a must have their sha256 (the same model).
+ЧТО КЛАДЁТ. По каждому ТФ:
+  15M / 30M — итог 'line21' блокнота f1h_tf_line21 (SMC/runs/tf15m/, tf30m/): json tfline21 (раздел export) и его golden npz,
+      файлы research BTC этого ТФ, на которых считался golden (SMC/data_15m/, data_30m/), все логи папки. ТФ, у которого в json
+      нет раздела export (линия не прошла, в json — 'stop'), не пакуется.
+  5M — json и golden 'run' SuMo_Class_Site v1.1 с разделом export (штамп — SITE_STAMP; без него блокнот показывает кандидатов
+      и останавливается), json 'live', из которого взята формула, логи обоих, файлы research BTC 5M golden (ищутся в
+      RESEARCH_5M).
+  artifacts/pack/site<tf>_manifest.json — path, bytes, sha256, from (как site1h_manifest.json).
+Веса prod a уже в репо (artifacts/weights/, sha256 — в site1h_manifest.json): не пакуются; json prod a на Drive обязан иметь их
+sha256 (та же модель).
 
-Research files: whole or compact (CONFIG['compact']; default — compact for 5M: whole they are ~40 MB). Compact (R29): VAL
-whole and the last CONFIG['tail_rows'] rows of TRAINING with the 200 rows before them; the values are slices of the whole
-files bit for bit, VAL — all arrays as they are; meta gets the new part sizes and checksums and a field 'compact'.
+ФАЙЛЫ RESEARCH — целиком или компактно (COMPACT; по умолчанию компактно только 5M: целиком у него ~40 MB). Компактно (R29):
+VAL целиком и последние TAIL_ROWS строк TRAINING с 200 строками перед ними; значения — срезы полных файлов бит в бит, у VAL —
+все массивы как есть; в meta — новые длины частей, контрольные суммы и поле 'compact'.
 
-Checks (any fails — stop, no zip):
-  (1) the prod a json on Drive = the one in the repo (sha256);
-  (2) the source json: 15M / 30M — mode 'line21', tf and export['tf'] = TF, golden written and read back bit for bit; 5M —
-      SuMo_Class_Site v1.1 'run', one seed prod a, floor 0.2, golden with the window times;
-  (3) the research files are those of the golden: 15M / 30M — checksums of r = the json; every window of the golden ends
-      at the time t_end on these files (positions of BTC in the pool = in its own series);
-  (4) research on these files = the golden: logit of prod a (training code v6.6, floor 0.2, CPU) on CONFIG['n_sample']
-      windows of the golden evenly spread — |Δlogit| <= 1e-4 to logit_a (as R22 (б));
-  (5) compact files (R29): read by the training code; window inputs = those of the whole files (r and channels bit for bit,
-      history features: VAL bit for bit, the TRAINING tail within 1 ulp float32); windows of VAL the same, of the tail — the
-      windows of the whole files that start in it; (4) is repeated on the compact files.
+ПРОВЕРКИ (не сошлось — стоп, zip не пишется):
+  (1) json prod a на Drive = тот, что в репо (sha256);
+  (2) json источника: 15M / 30M — mode 'line21', tf и export['tf'] = ТФ, golden записан и прочитан бит в бит; 5M — Site v1.1
+      'run', один сид prod a, пол 0.2, golden со временем окон;
+  (3) файлы research — те, на которых считался golden: 15M / 30M — контрольные суммы r = json; каждое окно golden кончается в
+      момент t_end на этих файлах (позиции BTC в пуле = в его ряде);
+  (4) research на этих файлах = golden: logit prod a (код обучения v6.6, пол 0.2) на N_SAMPLE окнах golden, равномерно —
+      |Δlogit| <= 1e-4 к logit_a (как R22 (б));
+  (5) компактные файлы (R29 и поправка к нему): код обучения их читает; входы окон = у полных файлов (r и каналы бит в бит,
+      признаки истории: VAL бит в бит, хвост TRAINING — не больше 1 ulp float32); окна VAL те же, хвоста — окна полных файлов,
+      начинающиеся в нём; (4) повторяется на компактных файлах.
 
-HOW TO RUN (Colab; CPU is enough, ~10 min with 5M): put this file into SMC/ next to f1h_tf_line21.py, sumo_class_train.py
-(v6.6) and sumo_class_ceil.py; first run with site_stamp None — it prints the candidate 'run' json of Site; put the stamp
-into CONFIG and run again:  %run /content/drive/MyDrive/TrendyCoins/SMC/f1h_tf_pack.py
-The zip — SMC/runs/pack/f1h_tf_pack_<stamp>.zip (and a download in the browser); unpack it into the repo root.
+ЗАПУСК (Colab). Этот файл — блокнот: открой scripts/f1h_tf_pack.ipynb (Файл -> Загрузить блокнот) или вставь файл целиком в
+одну ячейку нового блокнота. Нужны SMC/sumo_class_train.py (v6.6) и SMC/sumo_class_ceil.py (они уже на Drive), прогоны
+f1h_tf_line21 (15M, 30M) и Site v1.1 'run'. Среда — CPU (~5–10 мин). Первый запуск с SITE_STAMP = None печатает json Site —
+впиши штамп последнего v1.1 'run' с разделом export и запусти ячейку снова. Итог — SMC/runs/pack/f1h_tf_pack_<штамп>.zip (и
+скачивание в браузере), лог — SMC/runs/pack/logs/; zip распаковать в корень репо.
 """
-import glob
-import hashlib
-import importlib.util
-import json
+
 import os
 import re
-import shutil
 import sys
+import glob
+import json
 import time
-import zipfile
 import zlib
-
+import shutil
+import hashlib
+import zipfile
+import contextlib
+import importlib.util
 import numpy as np
 
-CONFIG = {
-    'project_path': '/content/drive/MyDrive/TrendyCoins/',
-    'code_dir': 'SMC/',                     # f1h_tf_line21.py, sumo_class_train.py (v6.6), sumo_class_ceil.py
-    'tfs': ('5M', '15M', '30M'),
-    'site_stamp': None,                     # 5M: stamp of SMC/runs/site/site_<stamp>.json ('run' Site v1.1 with export)
-    'line21_stamp': {'15M': None, '30M': None},   # None — the last tfline21_*.json of the folder
-    'research_5m': ('SMC/data/', 'SMC/data_fresh/'),   # where the research files BTC 5M of the golden Site may be
-    'compact': {'5M': True, '15M': False, '30M': False},
-    'tail_rows': 8640,                      # compact: rows of TRAINING kept (30 days of 5M)
-    'n_sample': 2048,                       # check (4): windows of the golden
-    'out_dir': 'SMC/runs/pack/',
-}
+try:
+    from google.colab import drive
+    drive.mount('/content/drive')
+    IN_COLAB = True
+except ImportError:
+    IN_COLAB = False
+
+
+# =====================================================================
+# НАСТРОЙКИ
+# =====================================================================
+PACK_TFS = ('5M', '15M', '30M')                        # что пакуем
+SITE_STAMP = None                                      # 5M: штамп SMC/runs/site/site_<штамп>.json ('run' Site v1.1 с export)
+LINE21_STAMP = {'15M': None, '30M': None}              # None — последний tfline21_*.json папки ТФ
+COMPACT = {'5M': True, '15M': False, '30M': False}     # файлы research: компактно (VAL + хвост TRAINING) или целиком
+TAIL_ROWS = 8640                                       # компактно: строк TRAINING (30 суток 5M)
+N_SAMPLE = 2048                                        # проверка (4): окон golden
+
+project_path = '/content/drive/MyDrive/TrendyCoins/'
+CODE_DIR = project_path + 'SMC/'                       # sumo_class_train.py (v6.6), sumo_class_ceil.py
+RESEARCH_5M = ('SMC/data/', 'SMC/data_fresh/')         # где могут лежать файлы research BTC 5M golden Site
+OUT_DIR = project_path + 'SMC/runs/pack/'
+# Папки 15M / 30M — как TFS в блокноте f1h_tf_line21 ('data' — файлы research, 'out' — итоги 'line21'; тест сверяет).
+FOLDERS = {'15M': {'data': 'SMC/data_15m/', 'out': 'SMC/runs/tf15m/'},
+           '30M': {'data': 'SMC/data_30m/', 'out': 'SMC/runs/tf30m/'}}
+
 ASSET, N, L, MODEL, SEED = 'BTCUSDT', 200, 64, 'SP_l025_d1', 'a'
 PROD_TAG = 'prod_SP_l025_d1_L64_a'
 PROD_JSON_SHA256 = '7245459310e0c5fd9a3ae56097f9187a1307fea7443dfc4084bcada165935d9a'   # artifacts/pack/site1h_manifest.json
@@ -67,13 +83,15 @@ FLOOR = 0.2
 TOL_LOGIT = 1e-4
 KINDS = ('series', 'prices', 'range', 'bars')
 STAMP = re.compile(r"(\d{8}_\d{6})")
-_ENV = 'F1HTF_PACK_'
-
-try:
-    from google.colab import drive
-    IN_COLAB = True
-except ImportError:
-    IN_COLAB = False
+_ENV = 'F1HTF_PACK_'                                   # переменные окружения — для теста вне Colab
+if os.environ.get(_ENV + 'TFS'):
+    PACK_TFS = tuple(os.environ[_ENV + 'TFS'].split(','))
+SITE_STAMP = os.environ.get(_ENV + 'SITE_STAMP', SITE_STAMP)
+TAIL_ROWS = int(os.environ.get(_ENV + 'TAIL_ROWS', TAIL_ROWS))
+N_SAMPLE = int(os.environ.get(_ENV + 'N_SAMPLE', N_SAMPLE))
+project_path = os.environ.get(_ENV + 'PROJECT', project_path)
+CODE_DIR = os.environ.get(_ENV + 'CODE_DIR', project_path + 'SMC/')
+OUT_DIR = os.environ.get(_ENV + 'OUT_DIR', project_path + 'SMC/runs/pack/')
 
 
 class Stop(Exception):
@@ -85,17 +103,10 @@ def stop(msg):
 
 
 def config():
-    """CONFIG with env overrides for runs out of Colab (F1HTF_PACK_PROJECT, _CODE_DIR, _SITE_STAMP, _OUT_DIR, _TFS, _TAIL_ROWS,
-       _N_SAMPLE)."""
-    c = dict(CONFIG)
-    for k, e in (('project_path', 'PROJECT'), ('code_dir', 'CODE_DIR'), ('site_stamp', 'SITE_STAMP'), ('out_dir', 'OUT_DIR')):
-        c[k] = os.environ.get(_ENV + e, c[k])
-    if os.environ.get(_ENV + 'TFS'):
-        c['tfs'] = tuple(os.environ[_ENV + 'TFS'].split(','))
-    for k, e in (('tail_rows', 'TAIL_ROWS'), ('n_sample', 'N_SAMPLE')):
-        if os.environ.get(_ENV + e):
-            c[k] = int(os.environ[_ENV + e])
-    return c
+    """Настройки одним словарём (их читают функции ниже)."""
+    return {'project_path': project_path, 'code_dir': CODE_DIR, 'tfs': tuple(PACK_TFS), 'site_stamp': SITE_STAMP,
+            'line21_stamp': dict(LINE21_STAMP), 'research_5m': tuple(RESEARCH_5M), 'compact': dict(COMPACT),
+            'tail_rows': int(TAIL_ROWS), 'n_sample': int(N_SAMPLE), 'out_dir': OUT_DIR}
 
 
 def absp(c, p):
@@ -121,20 +132,44 @@ def _import(path, name):
 
 
 def modules(c):
-    """(training code v6.6, Ceil, wrapper) — the training code reads data from the folders set per call."""
-    code = absp(c, c['code_dir'])
+    """Код обучения v6.6 и Ceil (floor_override) из CODE_DIR; данные код обучения читает из папок, заданных при вызове."""
     os.environ.setdefault('SMC_MODE', 'none')
     os.environ.setdefault('CEIL_MODE', 'none')
     os.environ.setdefault('SMC_PROJECT_PATH', c['project_path'])
-    T = _import(code + 'sumo_class_train.py', 'sumo_class_train')
-    CL = _import(code + 'sumo_class_ceil.py', 'sumo_class_ceil')
-    W = _import(code + 'f1h_tf_line21.py', 'f1h_tf_line21')
+    T = _import(c['code_dir'] + 'sumo_class_train.py', 'sumo_class_train')
+    CL = _import(c['code_dir'] + 'sumo_class_ceil.py', 'sumo_class_ceil')
     T.RUN_DIR = c['project_path'] + 'SMC/runs/'
-    return T, CL, W
+    return T, CL
+
+
+@contextlib.contextmanager
+def _tee(path):
+    """Лог в файл и на экран (как у research)."""
+    class Tee:
+        def __init__(self, fh, keep):
+            self.fh, self.keep = fh, keep
+
+        def write(self, s):
+            self.keep.write(s)
+            self.fh.write(s)
+
+        def flush(self):
+            self.keep.flush()
+            self.fh.flush()
+
+        def __getattr__(self, name):
+            return getattr(self.keep, name)
+    keep = sys.stdout
+    with open(path, 'w', encoding='utf-8') as fh:
+        sys.stdout = Tee(fh, keep)
+        try:
+            yield
+        finally:
+            sys.stdout = keep
 
 
 # =====================================================================
-# research files: read, window times, compact copy
+# ФАЙЛЫ RESEARCH: чтение, время окон, компактная копия
 # =====================================================================
 def files_of(d, tf):
     return {k: f"{d}smc_{k}_{ASSET}_{tf}_N{N}.npz" for k in KINDS}
@@ -146,8 +181,8 @@ def load_npz(p):
 
 
 def window_end_times(T, ser, st):
-    """Time of the last bar of windows starting at positions st of the series of one asset (as SeriesData: TRAINING, PAD,
-       VALIDATION). Positions outside the parts -> -1."""
+    """Время последнего бара окон, начинающихся на позициях st ряда одного ассета (как SeriesData: TRAINING, PAD,
+       VALIDATION). Позиции вне частей -> −1."""
     n_tr = len(ser['r_tr'])
     t = np.concatenate([ser['t_tr'], np.full(T.SeriesData.PAD, -1, np.int64), ser['t_va']]).astype(np.int64)
     e = np.asarray(st, np.int64) + L - 1
@@ -162,14 +197,14 @@ def crc_of(ser):
 
 
 def compact(src, dst, tf, tail):
-    """Compact research files of one asset: VAL whole, TRAINING — its last `tail` rows (with the N rows before them for the
-       bars). Values — slices of the whole files; meta — new sizes, checksums, 'compact'. Returns the row of the cut."""
+    """Компактные файлы research одного ассета: VAL целиком, TRAINING — последние tail строк (у smc_bars — с N строками перед
+       ними). Значения — срезы полных файлов; в meta — новые длины, контрольные суммы, 'compact'. Возвращает строку среза."""
     F = {k: load_npz(p) for k, p in files_of(src, tf).items()}
     n_tr = len(F['series']['r_tr'])
     lo = max(n_tr - tail, 0)
     ser = {}
     for k, v in F['series'].items():
-        if k.startswith(('probe_', 'bank_')):                  # SMC_Data extras of TRAINING positions (not F1 inputs)
+        if k.startswith(('probe_', 'bank_')):                  # дополнения SMC_Data по позициям TRAINING (не входы F1)
             continue
         ser[k] = v[lo:] if k in ('r_tr', 't_tr', 'close_tr') else v
     ser['fin_tr'] = np.where(np.isfinite(ser['r_tr']))[0].astype(F['series']['fin_tr'].dtype)
@@ -216,7 +251,7 @@ def compact(src, dst, tf, tail):
 
 
 def series(T, d, tf):
-    """SeriesData of BTC from folder d with the history columns of F1 (as SuMo_Class_TF series_data)."""
+    """SeriesData BTC из папки d со столбцами истории F1 (как series_data SuMo_Class_TF)."""
     T.DATA_DIR, T.DATA_OVERLAY = d, None
     T.NT_KEEP = tuple(sorted(set(T._pool_nt_cols(MODEL))))
     try:
@@ -226,7 +261,7 @@ def series(T, d, tf):
 
 
 def check_compact(T, F, comp, tf, lo):
-    """(5) of the docstring: positions of the compact series -> positions of the whole one F; inputs and windows equal."""
+    """Проверка (5): позиции компактного ряда -> позиции полного F; входы и окна равны."""
     C = series(T, comp, tf)
     sf, sc = F.series[0], C.series[0]
     pos_c = np.concatenate([sc['off']['tr'] + np.arange(sc['n']['tr']), sc['off']['va'] + np.arange(sc['n']['va'])])
@@ -259,7 +294,7 @@ def check_compact(T, F, comp, tf, lo):
 
 
 def research_logits(T, CL, model, data, st):
-    """Logit of prod a with the floor 0.2 on windows starting at st (as scripts/f1h_research.logits)."""
+    """Logit prod a с полом 0.2 на окнах с началами st (как scripts/f1h_research.logits в репо)."""
     import torch
     out = []
     with CL.floor_override(data, L, FLOOR) as wf, torch.no_grad():
@@ -272,7 +307,7 @@ def research_logits(T, CL, model, data, st):
 
 
 def sample_check(T, CL, model, data, st, logit_a, n):
-    """(4): research logit on n windows of the golden evenly spread against logit_a (float32 of the golden)."""
+    """Проверка (4): logit research на n окнах golden, равномерно, против logit_a (float32 golden)."""
     idx = np.unique(np.linspace(0, len(st) - 1, min(n, len(st))).astype(np.int64))
     lg = research_logits(T, CL, model, data, st[idx])
     d = np.abs(lg - np.asarray(logit_a, np.float64)[idx])
@@ -280,17 +315,17 @@ def sample_check(T, CL, model, data, st, logit_a, n):
 
 
 # =====================================================================
-# sources per TF
+# ИСТОЧНИКИ ПО ТФ
 # =====================================================================
 def stamp_of(p):
     m = STAMP.search(os.path.basename(p))
     return m.group(1) if m else ''
 
 
-def line21_source(c, W, tf):
-    """15M / 30M: (json path, json) of the wrapper folder — CONFIG stamp or the last tfline21_*.json; (None, why) — not
-       packed."""
-    out = c['project_path'] + W.TFS[tf]['out']
+def line21_source(c, tf):
+    """15M / 30M: (путь json, json) из папки 'line21' ТФ — штамп LINE21_STAMP или последний tfline21_*.json; (None, почему)
+       — не пакуется."""
+    out = c['project_path'] + FOLDERS[tf]['out']
     cands = sorted(p for p in glob.glob(out + 'tfline21_*.json') if re.fullmatch(r"tfline21_\d{8}_\d{6}\.json",
                                                                                    os.path.basename(p)))
     print(f"\n📂 {tf}: {out} — json 'line21': {len(cands)}")
@@ -334,14 +369,14 @@ def site_candidates(c):
 
 
 # =====================================================================
-# pack
+# УПАКОВКА
 # =====================================================================
 class Pack:
     def __init__(self, c, stage):
         self.c, self.stage, self.by_tf = c, stage, {}
 
     def add(self, tf, src, rel, how=None):
-        """Copy (or take an already written) file into stage/rel; the manifest row of the TF."""
+        """Файл — в stage/rel (копией или уже записанный); строка описи ТФ."""
         dst = self.stage + rel
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         if src != dst:
@@ -367,7 +402,7 @@ def golden_of(p):
 
 
 def research_dir_check(T, d, tf, g, n_va_want=None):
-    """(3): every window of the golden g ends at t_end on the research files of folder d. (ok, info)."""
+    """Проверка (3): каждое окно golden g кончается в момент t_end на файлах research папки d. (ok, сводка)."""
     ps = files_of(d, tf)
     if not all(os.path.isfile(p) for p in ps.values()):
         return False, {'dir': d, 'why': 'нет файлов'}
@@ -378,8 +413,8 @@ def research_dir_check(T, d, tf, g, n_va_want=None):
                 'same_t_end': ok, 'crc': crc_of(ser)}
 
 
-def pack_tf(c, T, CL, W, model, P, tf, tmp):
-    """One TF into the pack. Returns the manifest head or None (not packed: why printed)."""
+def pack_tf(c, T, CL, model, P, tf, tmp):
+    """Один ТФ в упаковку. Возвращает шапку описи или None (не пакуется — причина в логе)."""
     tl = tf.lower()
     research = {}
     if tf == '5M':
@@ -387,7 +422,7 @@ def pack_tf(c, T, CL, W, model, P, tf, tmp):
         want = c['site_stamp']
         pick = [(p, j) for p, j in rows if stamp_of(p) == want]
         if not want or not pick:
-            stop("5M: впиши в CONFIG['site_stamp'] штамп json Site v1.1 'run' с разделом export (список выше) и запусти снова")
+            stop("5M: впиши в НАСТРОЙКАХ SITE_STAMP = '<штамп>' — json Site v1.1 'run' с разделом export (список выше) — и запусти ячейку снова")
         jp, j = pick[0]
         ex = j.get('export') or {}
         gi = j.get('golden') or {}
@@ -408,7 +443,7 @@ def pack_tf(c, T, CL, W, model, P, tf, tmp):
             if ok:
                 found.append(info)
         if not found:
-            stop("5M: файлов research BTC 5M golden Site нет ни в одной папке CONFIG['research_5m']")
+            stop("5M: файлов research BTC 5M golden Site нет ни в одной папке RESEARCH_5M")
         research = found[0]
         src_dir = research['dir']
         P.add(tf, jp, f"artifacts/calib/{os.path.basename(jp)}")
@@ -433,7 +468,7 @@ def pack_tf(c, T, CL, W, model, P, tf, tmp):
                            'marks': ex.get('marks'), 'live': (ex.get('live') or {}).get('key')},
                 'live': (ex.get('live') or {}).get('key')}
     else:
-        jp, j = line21_source(c, W, tf)
+        jp, j = line21_source(c, tf)
         if jp is None:
             print(f"   ⏭️ {tf}: {j}")
             return None
@@ -447,7 +482,7 @@ def pack_tf(c, T, CL, W, model, P, tf, tmp):
         g = golden_of(gp)
         if g['meta_d'].get('tf') != tf:
             stop(f"{tf}: golden {gi['path']} — ТФ {g['meta_d'].get('tf')}")
-        src_dir = c['project_path'] + W.TFS[tf]['data']
+        src_dir = c['project_path'] + FOLDERS[tf]['data']
         ok, research = research_dir_check(T, src_dir, tf, g)
         crc_json = {k: int(v) for k, v in ((j.get('data') or {}).get(ASSET) or {}).get('crc', {}).items()}
         if not ok or research.get('crc') != crc_json:
@@ -491,7 +526,7 @@ def pack_tf(c, T, CL, W, model, P, tf, tmp):
               f"{chk['nt_tail_max_ulp']:.0f} ulp ({chk['nt_tail_n_diff']} отличий), окна те же {chk['windows_same']}; "
               f"research = golden {sc2['max']:.1e} -> {'✅' if chk['ok'] and sc2['ok'] else '❌'}")
         if not (chk['ok'] and sc2['ok']):
-            stop(f"{tf}: компактные файлы не дают research тех же входов — CONFIG['compact']['{tf}'] = False (целиком)")
+            stop(f"{tf}: компактные файлы не дают research тех же входов — в НАСТРОЙКАХ COMPACT['{tf}'] = False (целиком)")
         del C, data
         for kind, p in files_of(cdir, tf).items():
             P.add(tf, p, f"artifacts/bars/btc{tl}_compact/{os.path.basename(p)}",
@@ -507,12 +542,12 @@ def pack_tf(c, T, CL, W, model, P, tf, tmp):
     return head
 
 
-def main():
-    c = config()
-    if IN_COLAB:
-        drive.mount('/content/drive')
+# =====================================================================
+# ЗАПУСК
+# =====================================================================
+def run(c, stamp):
+    """Проверки и zip. Путь к zip или None (стоп — причина в логе)."""
     t0 = time.time()
-    stamp = time.strftime('%Y%m%d_%H%M%S')
     tmp = f"/tmp/f1h_tf_pack_{stamp}/"
     stage = tmp + 'stage/'
     out_dir = absp(c, c['out_dir'])
@@ -521,13 +556,13 @@ def main():
         prod = c['project_path'] + f"SMC/runs/prod/{PROD_TAG}.json"
         if not os.path.isfile(prod) or sha256(prod) != PROD_JSON_SHA256:
             stop(f"(1) {prod} — не тот prod a, что в репо (sha256 site1h_manifest.json)")
-        print(f"   (1) prod a на Drive = в репо (sha256) ✅")
-        T, CL, W = modules(c)
+        print("   (1) prod a на Drive = в репо (sha256) ✅")
+        T, CL = modules(c)
         model, _ = T.load_pool_model('ALL', SEED, MODEL, mode='prod')
         P = Pack(c, stage)
         heads = {}
         for tf in c['tfs']:
-            h = pack_tf(c, T, CL, W, model, P, tf, tmp)
+            h = pack_tf(c, T, CL, model, P, tf, tmp)
             if h is not None:
                 heads[tf] = P.manifest(tf, h)
         if not heads:
@@ -544,19 +579,35 @@ def main():
         for tf, rows in P.by_tf.items():
             print(f"   {tf}: " + ', '.join(f"{r['path']} ({r['bytes'] / 2 ** 20:.2f} MB)" for r in rows))
         print(f"💾 {zp} — распакуй в корень репо")
-        if IN_COLAB:
-            try:
-                from google.colab import files
-                files.download(zp)
-            except Exception as e:
-                print(f"⚠️ скачивание не началось ({type(e).__name__}: {e}) — возьми zip с Drive")
-            drive.flush_and_unmount()
         return zp
     except Stop as e:
         print(f"\n🍆 СТОП: {e}")
         return None
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def main():
+    c = config()
+    stamp = time.strftime('%Y%m%d_%H%M%S')
+    os.makedirs(c['out_dir'] + 'logs/', exist_ok=True)
+    log_path = c['out_dir'] + f"logs/pack_{stamp}.log"
+    with _tee(log_path):
+        print(f"🗒️ лог: {log_path}")
+        zp = run(c, stamp)
+    if IN_COLAB:
+        if zp:
+            try:
+                from google.colab import files
+                files.download(zp)
+            except Exception as e:
+                print(f"⚠️ скачивание не началось ({type(e).__name__}: {e}) — возьми zip с Drive")
+        try:                                       # всё записанное этой консолью — на Drive до закрытия runtime
+            drive.flush_and_unmount()
+            print("☁️ Drive: записи выгружены; следующий запуск — запусти ячейку заново (Drive подключится сам)")
+        except Exception as e:
+            print(f"⚠️ Drive: flush_and_unmount не прошёл ({type(e).__name__}: {e}) — проверь файлы на Drive")
+    return zp
 
 
 if __name__ == '__main__':
