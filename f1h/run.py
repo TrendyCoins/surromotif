@@ -9,8 +9,9 @@ FIELDS = ('time', 'window', 'n', 'logit', 'z', 'm', 's', 'n_live', 'line', 'log_
 
 
 def compute(model, time, open_, high, low, close):
-    """Closed 1H candles of one symbol, oldest first: open time (ms UTC, a multiple of the hour) and OHLC. Missing hours
-       stay missing. Returns a dict of arrays, one value per candle (the window that ends on it):
+    """Closed candles of one symbol on the timeframe of the model (model.bar_ms), oldest first: open time (ms UTC, a
+       multiple of the bar) and OHLC. Missing bars stay missing. Returns a dict of arrays, one value per candle (the window
+       that ends on it):
            time       open time of the candle (int64 ms)
            window     a window ends here (bool); n — its number from the first window of the input (-1: no window)
            logit      logit of the window (NaN: no window)
@@ -43,9 +44,9 @@ def compute(model, time, open_, high, low, close):
 
 
 def bars_needed(model, k=1):
-    """Candles needed for the line on the last k candles when the candles are continuous (no missing hours): the first
-       window ends on the candle first_window_bar (from 0), the line starts show_from windows later. A missing hour costs
-       the window more: the candle after it and the windows over that candle do not exist."""
+    """Candles needed for the line on the last k candles when the candles are continuous (no missing bars): the first
+       window ends on the candle first_window_bar (from 0), the line starts show_from windows later. A missing bar costs
+       more: the candle after it and the windows over that candle do not exist."""
     if k < 1:
         raise ValueError("k >= 1")
     return model.first_line_bar + k
