@@ -1,92 +1,95 @@
 # -*- coding: utf-8 -*-
-"""Colab: line M of the site F1 (SP_l025_d1) on 15M / 30M — modes 'line_stand' and 'line21' of research/sumo_class_tf.py v2.1
-with the timeframe and the folders swapped (docs/rules.md R27).
+"""F1h_TF_Line21 — линия M модели сайта F1 (SP_l025_d1) на 15M и 30M: режимы 'line_stand' и 'line21' SuMo_Class_TF v2.1
+(research/sumo_class_tf.py) с подменой ТФ и папок (2026-10-25; правила — docs/rules.md R27, записаны до прогона)
 
-The research file is imported as a module (its main() runs only under __main__); it is not edited and not copied whole. The
-wrapper swaps only:
+ЗАЧЕМ. На графике сайта — выбор ТФ 5M, 15M, 30M, 1H и Auto (решение Фёдора 2026-10-25). На сайт идут только ТФ с проверенной
+линией M. 1H проверен 'line21' v2.1 (2026-10-22), 15M и 30M — нет: на них нужна своя линейка и пройденные ворота. Правила —
+v2.1 из шапки sumo_class_tf.py без изменений; вердикт у каждого ТФ свой; не прошедший ТФ не экспортируется и на сайт не идёт.
+
+ЧТО ДЕЛАЕТ. sumo_class_tf.py v2.1 подгружается модулем (его main() — под __main__, сам он не запускается) и не правится.
+Подменяется только:
     TFL['tf']        '15M' / '30M'
-    TFL['csv_ref']   BTCUSDT-15M.csv / BTCUSDT-30M.csv — Binance candles of the TF for the check (2) of the resample
-    DATA_1H          SMC/data_15m/ / SMC/data_30m/      — research files of the TF (rebuilt by every 'line21')
-    OUT_DIR          SMC/runs/tf15m/ / SMC/runs/tf30m/  — cache, json, golden, figure, logs; 1H (SMC/runs/tf/) is not touched
-Everything else — rules v2.1, models, sources, dates, candidates, thresholds — is the research file as is.
+    TFL['csv_ref']   BTCUSDT-15M.csv / BTCUSDT-30M.csv — свечи Binance ТФ для сверки (2) ресемпла
+    DATA_1H          SMC/data_15m/ / SMC/data_30m/      — файлы research ТФ (пересобираются при каждом 'line21')
+    OUT_DIR          SMC/runs/tf15m/ / SMC/runs/tf30m/  — кэш, json, golden, рисунок, логи; папки 1H (SMC/runs/tf/) не трогаются
+Всё остальное — правила v2.1, модели, источники, даты, кандидаты, пороги — из файла как есть. Первая строка лога после пути —
+настоящий ТФ; «1H» в текстах research ниже по логу — это он.
 
-1H in the logic (read 2026-10-25, R27). The 'line21' chain takes the TF from TFL['tf'] and the folders from DATA_1H / OUT_DIR
-at call time: minutes of the TF and 5M bars per bar (build_1h, ohlc_check), the cache (cache_1h_path: under OUT_DIR, meta
-checked against TFL['tf']), golden, history days, figure; the windows of the live part, the ruler, the weeks and П1 / П2 are
-in windows and time, not in hours; no defaults bound to 1H at definition. "1H" stays only in texts: the log and the text field
-export['bars'] of the json (the TF is in 'tf' and export['tf']). The wrapper prints the real TF first in the log.
-The stand 'line_stand' has 1H in its logic (resample to 60 min, 12 bars 5M per hour, a 3 h gap = 3 bars, the burn of FIL):
-it is copied here as mode_line_stand_tf — source: research/sumo_class_tf.py mode_line_stand (v2.1), changes: STAND_EDITS
-(tests/test_f1h_tf.py checks that the copy is the original with exactly these edits). The copy runs in the namespace of the
-research module, as the original does; with TF '1H' it gives the same as the research file bit for bit (scripts/f1h_tf_stand.py
-regress).
+1H В ЛОГИКЕ (прочитано 2026-10-25, R27). Цепочка 'line21' берёт ТФ из TFL['tf'] и папки из DATA_1H / OUT_DIR в момент вызова:
+минуты ТФ и баров 5M в баре (build_1h, ohlc_check), кэш (cache_1h_path — под OUT_DIR, ТФ сверяется по meta), golden, дни
+истории, рисунок; живая часть, линейка, недели и П1 / П2 — в окнах и во времени, не в часах; значений по умолчанию, связанных
+с 1H при определении функций, нет. «1H» остаётся только в текстах лога и в текстовом поле export['bars'] json (ТФ — в полях
+'tf' и export['tf']). Стенд 'line_stand' 1H в логике имеет (ресемпл на 60 мин, 12 баров 5M в часе, дыра 3 ч = 3 бара, разгон
+FIL) — он скопирован ниже (mode_line_stand_tf; источник — mode_line_stand sumo_class_tf.py v2.1, правки — STAND_EDITS) и
+исполняется в пространстве имён модуля research, как оригинал. С TF '1H' копия даёт то же, что исходный файл, бит в бит
+(проверено в репо: scripts/f1h_tf_stand.py regress); копия = оригинал ровно с этими правками (tests/test_f1h_tf.py).
 
-HOW TO RUN (Colab), in this order:
-    1) put this file into SMC/ next to sumo_class_tf.py (v2.1), sumo_class_train.py (v6.6), sumo_class_bell.py,
-       sumo_class_live.py (v1.1), sumo_class_ceil.py and sumo_class_site.py (v1.1) — the same files as for 'line21' on 1H;
-       Raw Datasets/ — CSV 5M of the 31 assets (as for 1H) and BTCUSDT-15M.csv / BTCUSDT-30M.csv (Binance candles of the TF);
-    2) CONFIG below: MODE 'line_stand', TF '15M' -> run (CPU is enough); all checks ✅;
-    3) MODE 'line21', TF '15M' -> run on A100 High-RAM; then TF '30M';
-    4) results — SMC/runs/tf15m/, SMC/runs/tf30m/ (tfline21_*.json, golden npz, figure, logs/); then scripts/f1h_tf_pack.py.
-    In a cell:  %run /content/drive/MyDrive/TrendyCoins/SMC/f1h_tf_line21.py
-Out of Colab (tests, stand here): env F1HTF_MODE, F1HTF_TF, F1HTF_PROJECT, F1HTF_CODE_DIR override CONFIG.
+ЗАПУСК (Colab). Этот файл — блокнот: открой scripts/f1h_tf_line21.ipynb (Файл -> Загрузить блокнот) или вставь файл целиком
+в одну ячейку нового блокнота. Рядом в SMC/ должны лежать файлы research, с которыми считался 1H: sumo_class_tf.py (v2.1),
+sumo_class_train.py (v6.6), sumo_class_bell.py, sumo_class_live.py (v1.1), sumo_class_ceil.py, sumo_class_site.py (v1.1);
+в Raw Datasets/ — CSV 5M 31 ассета (как у 'line21' 1H) и BTCUSDT-15M.csv / BTCUSDT-30M.csv. Сам этот файл на Drive не нужен.
+Порядок: MODE = 'line_stand', TF = '15M' (CPU, ~5–8 мин; итог — «🏁 СТЕНД v2: 47 / 47») -> MODE = 'line21', TF = '15M'
+(A100 High-RAM, ~15 мин) -> TF = '30M' (~10 мин). Каждый запуск — заново вся ячейка (Drive подключится сам). Итог — SMC/runs/tf15m/,
+SMC/runs/tf30m/ (tfline21_*.json, golden npz, рисунок, logs/); дальше — блокнот f1h_tf_pack.
 """
-import importlib.util
+
 import os
 import sys
 import time
 import types
-
+import importlib.util
 import pandas as pd
 
-CONFIG = {
-    'MODE': 'line_stand',     # 'line_stand' (synthetic, CPU) -> 'line21' (Drive data; GPU, A100 High-RAM)
-    'TF': '15M',              # '15M' | '30M'; '1H' — only 'line_stand' (regression against the research file)
-    'project_path': '/content/drive/MyDrive/TrendyCoins/',
-    'code_dir': 'SMC/',       # research .py files — relative to project_path, or an absolute folder
-}
-# Per TF: Binance candles for the check (2), folder of the research files, folder of the results; stand: the gap of FIL in П1
-# (R27: its burn shorter than 4032 + 64 windows, as the 4 h gap gives on 1H, and its VAL longer than 5000 windows).
+try:
+    from google.colab import drive
+    drive.mount('/content/drive')
+    IN_COLAB = True
+except ImportError:
+    IN_COLAB = False
+
+
+# =====================================================================
+# НАСТРОЙКИ
+# =====================================================================
+MODE = 'line_stand'     # 'line_stand' (синтетика, CPU, ~5–8 мин) -> 'line21' (данные Drive; A100 High-RAM: 15M ~15 мин, 30M ~10)
+TF = '15M'              # '15M' | '30M'; '1H' — только 'line_stand' (регрессия с исходным файлом)
+
+project_path = '/content/drive/MyDrive/TrendyCoins/'
+CODE_DIR = project_path + 'SMC/'                       # файлы research: sumo_class_tf.py v2.1 и всё, что он подгружает
+
+# По ТФ: свечи Binance для сверки (2), папка файлов research, папка итогов; для стенда — дыра FIL в П1 (R27: разгон FIL короче
+# 4032 + 64 окон, как от дыры 4 ч на 1H, а VAL у FIL длиннее 5000 окон) и ряды проверки «длинные окна на подтверждении — стоп».
 TFS = {
     '15M': {'csv_ref': 'BTCUSDT-15M.csv', 'data': 'SMC/data_15m/', 'out': 'SMC/runs/tf15m/',
             'fil_gap': ('2025-07-15 00:00', '2025-12-15 00:00'), 'long_conf': 'all'},
     '30M': {'csv_ref': 'BTCUSDT-30M.csv', 'data': 'SMC/data_30m/', 'out': 'SMC/runs/tf30m/',
             'fil_gap': ('2025-08-01 00:00', '2025-11-20 00:00'), 'long_conf': 'all'},
     '1H': {'csv_ref': 'BTCUSDT-1H.csv', 'data': 'SMC/data_1h/', 'out': 'SMC/runs/tf/', 'fil_gap': None,
-           'long_conf': 'part_a'},    # paths of v2.1; fil_gap None — LSTAND['fil_gap'] of the file
+           'long_conf': 'part_a'},    # пути v2.1; fil_gap None — LSTAND['fil_gap'] файла (4 ч)
 }
 MODES = ('line_stand', 'line21')
-_ENV = 'F1HTF_'
-
-try:
-    from google.colab import drive
-    IN_COLAB = True
-except ImportError:
-    IN_COLAB = False
+_ENV = 'F1HTF_'                                        # переменные окружения — для стенда вне Colab (scripts/f1h_tf_stand.py)
+MODE = os.environ.get(_ENV + 'MODE', MODE)
+TF = os.environ.get(_ENV + 'TF', TF)
+project_path = os.environ.get(_ENV + 'PROJECT', project_path)
+CODE_DIR = os.environ.get(_ENV + 'CODE_DIR', project_path + 'SMC/')
 
 
-def config():
-    """CONFIG with the env overrides (F1HTF_MODE, F1HTF_TF, F1HTF_PROJECT, F1HTF_CODE_DIR)."""
-    c = dict(CONFIG)
-    for k, e in (('MODE', 'MODE'), ('TF', 'TF'), ('project_path', 'PROJECT'), ('code_dir', 'CODE_DIR')):
-        c[k] = os.environ.get(_ENV + e, c[k])
-    for k in ('project_path', 'code_dir'):
-        c[k] = c[k] if c[k].endswith('/') else c[k] + '/'
-    return c
-
-
-def paths(c, tf):
-    """Paths of the research file v2.1 for project_path and code_dir; DATA_1H / OUT_DIR — the folders of the TF."""
-    p = c['project_path']
-    code = c['code_dir'] if os.path.isabs(c['code_dir']) else p + c['code_dir']
-    return {'TF_PY': code + 'sumo_class_tf.py', 'TRAIN_PY': code + 'sumo_class_train.py', 'BELL_PY': code + 'sumo_class_bell.py',
-            'LIVE_PY': code + 'sumo_class_live.py', 'CEIL_PY': code + 'sumo_class_ceil.py', 'SITE_PY': code + 'sumo_class_site.py',
+# =====================================================================
+# ПОДМЕНА
+# =====================================================================
+def paths(tf, project=None, code=None):
+    """Пути v2.1 для project_path и папки кода; DATA_1H / OUT_DIR — папки ТФ."""
+    p = project or project_path
+    c = code or (CODE_DIR if project is None else p + 'SMC/')
+    return {'TF_PY': c + 'sumo_class_tf.py', 'TRAIN_PY': c + 'sumo_class_train.py', 'BELL_PY': c + 'sumo_class_bell.py',
+            'LIVE_PY': c + 'sumo_class_live.py', 'CEIL_PY': c + 'sumo_class_ceil.py', 'SITE_PY': c + 'sumo_class_site.py',
             'RUN_DIR': p + 'SMC/runs/', 'DATA_5M': p + 'SMC/data/', 'DATA_TF': p + 'SMC/data_tf/', 'CSV_DIR': p + 'Raw Datasets/',
             'DATA_1H': p + TFS[tf]['data'], 'OUT_DIR': p + TFS[tf]['out']}
 
 
 def load_tf(path):
-    """research/sumo_class_tf.py as the module 'sumo_class_tf' (v2.1: modes 'line_stand' and 'line21', LINE21)."""
+    """sumo_class_tf.py модулем 'sumo_class_tf' (v2.1: режимы 'line_stand' и 'line21', LINE21)."""
     if not os.path.isfile(path):
         raise FileNotFoundError(f"🍆 АЙ, ОШИБКА! нет {path} — положи туда sumo_class_tf.py (SuMo_Class_TF v2.1)")
     spec = importlib.util.spec_from_file_location('sumo_class_tf', path)
@@ -101,7 +104,7 @@ def load_tf(path):
 
 
 def apply(M, tf, P):
-    """The swap of R27 on the module M: TFL['tf'], TFL['csv_ref'], paths. Returns {name: (before, after)}."""
+    """Подмена R27 в модуле M: пути, TFL['tf'], TFL['csv_ref']. Возвращает {имя: (было, стало)}."""
     out = {}
     for k in ('TRAIN_PY', 'BELL_PY', 'LIVE_PY', 'CEIL_PY', 'SITE_PY', 'RUN_DIR', 'DATA_5M', 'DATA_TF', 'CSV_DIR', 'DATA_1H',
               'OUT_DIR'):
@@ -114,8 +117,8 @@ def apply(M, tf, P):
 
 
 def stand_params(M, tf):
-    """Parameters of the stand copy on the TF (R27): minutes, 5M bars per bar, bars of the 3 h gap of BTC, the gap of FIL in П1
-       and its length in minutes, rows of the check 'long windows on the confirmation — stop'."""
+    """Параметры копии стенда на ТФ (R27): минуты, баров 5M в баре, баров дыры BTC 3 ч, дыра FIL в П1 и её длина в минутах,
+       ряды проверки «длинные окна на подтверждении — стоп»."""
     mins = int(M.T_MIN[tf])
     gap = TFS[tf]['fil_gap'] or M.LSTAND['fil_gap']
     if 180 % mins or mins % 5:
@@ -132,46 +135,44 @@ def header(M, tf, swap):
 
 
 def run_stand(M, tf):
-    """The stand copy (mode_line_stand_tf) in the namespace of the research module — as the original runs."""
+    """Копия стенда (mode_line_stand_tf) в пространстве имён модуля research — как исполняется оригинал."""
     f = types.FunctionType(mode_line_stand_tf.__code__, M.__dict__, 'mode_line_stand_tf')
     return f(stand_params(M, tf))
 
 
+# =====================================================================
+# ЗАПУСК
+# =====================================================================
 def main():
-    c = config()
-    mode, tf = c['MODE'], c['TF']
-    if mode not in MODES or tf not in TFS:
-        print(f"🍆 АЙ, ОШИБКА! MODE '{mode}', TF '{tf}' — есть MODE {', '.join(MODES)}, TF {', '.join(TFS)}")
+    if MODE not in MODES or TF not in TFS:
+        print(f"🍆 АЙ, ОШИБКА! MODE '{MODE}', TF '{TF}' — есть MODE {', '.join(MODES)}, TF {', '.join(TFS)}")
         return None
-    if mode == 'line21' and tf == '1H':
+    if MODE == 'line21' and TF == '1H':
         print("🍆 СТОП: 1H проверен 'line21' 2026-10-22 исходным файлом; обёртка на 1H — только стенд (регрессия), папки 1H не "
               "трогаю")
         return None
-    if IN_COLAB:
-        drive.mount('/content/drive')
-    P = paths(c, tf)
+    P = paths(TF)
     M = load_tf(P['TF_PY'])
-    swap = apply(M, tf, P)
+    swap = apply(M, TF, P)
     os.makedirs(M.OUT_DIR + 'logs/', exist_ok=True)
-    log_path = M.OUT_DIR + f"logs/tf_{mode}_{time.strftime('%Y%m%d_%H%M%S')}.log"
-    res = None
+    log_path = M.OUT_DIR + f"logs/tf_{MODE}_{time.strftime('%Y%m%d_%H%M%S')}.log"
     with M._tee(log_path):
         print(f"🗒️ лог: {log_path}")
-        header(M, tf, swap)
-        res = M.mode_line21() if mode == 'line21' else run_stand(M, tf)
+        header(M, TF, swap)
+        res = M.mode_line21() if MODE == 'line21' else run_stand(M, TF)
     if IN_COLAB:
         try:                                       # всё записанное этой консолью — на Drive до закрытия runtime
             drive.flush_and_unmount()
-            print("☁️ Drive: записи выгружены; следующий режим — запусти файл заново (Drive подключится сам)")
+            print("☁️ Drive: записи выгружены; следующий режим — запусти ячейку заново (Drive подключится сам)")
         except Exception as e:
             print(f"⚠️ Drive: flush_and_unmount не прошёл ({type(e).__name__}: {e}) — проверь файлы на Drive")
     return res
 
 
 # =====================================================================
-# The stand copy. Source: research/sumo_class_tf.py, mode_line_stand (SuMo_Class_TF v2.1), copied as is with the edits
-# STAND_EDITS (old -> new, each exactly once): the TF from the parameter tfp (stand_params) instead of 1H literals. It runs
-# with the globals of the research module (run_stand): names below are the names of that file.
+# КОПИЯ СТЕНДА. Источник — sumo_class_tf.py v2.1, mode_line_stand, как есть, с правками STAND_EDITS (было -> стало, у каждой —
+# ровно одно место): ТФ — из параметра tfp (stand_params) вместо литералов 1H. Исполняется с глобальными именами модуля research
+# (run_stand): имена ниже — имена того файла.
 # =====================================================================
 STAND_EDITS = (
     ("def mode_line_stand():", "def mode_line_stand_tf(tfp):"),

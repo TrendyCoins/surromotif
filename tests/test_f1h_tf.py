@@ -2,7 +2,7 @@
 
 - The stand copy mode_line_stand_tf is research/sumo_class_tf.py mode_line_stand with exactly the edits STAND_EDITS.
 - The swap: with TF '1H' and the paths of v2.1 nothing changes; with 15M / 30M — only TFL['tf'], TFL['csv_ref'], DATA_1H and
-  OUT_DIR. Stand parameters per TF.
+  OUT_DIR. Stand parameters per TF. The folders of the pack = those of the wrapper; the Colab notebooks (.ipynb) = the .py.
 - Compact research files (pack): values are slices of the whole files, the training code reads them, window inputs equal
   (needs torch). The pack end to end on a synthetic project: 5M (Site, compact), 15M (wrapper), 30M (a stopped line — not
   packed) -> zip with the manifests (needs torch and artifacts/weights).
@@ -10,6 +10,7 @@ The behaviour of the stand copy (1H bit for bit with the research file; 15M / 30
 docs/checks/f1h_tf/.
 """
 import ast
+import glob
 import importlib.util
 import inspect
 import json
@@ -65,11 +66,10 @@ def test_stand_copy_is_the_original_with_the_edits(W):
 
 
 def test_swap_1h_is_the_research_file(W, M):
-    c = {'MODE': 'line_stand', 'TF': '1H', 'project_path': M.project_path, 'code_dir': 'SMC/'}
     keep = {k: getattr(M, k) for k in ('TRAIN_PY', 'BELL_PY', 'LIVE_PY', 'CEIL_PY', 'SITE_PY', 'RUN_DIR', 'DATA_5M', 'DATA_TF',
                                        'CSV_DIR', 'DATA_1H', 'OUT_DIR')}
     tfl = dict(M.TFL)
-    P = W.paths(c, '1H')
+    P = W.paths('1H', M.project_path)
     assert P['TF_PY'] == M.project_path + 'SMC/sumo_class_tf.py'
     swap = W.apply(M, '1H', P)
     assert all(a == b for a, b in swap.values()), {k: v for k, v in swap.items() if v[0] != v[1]}
@@ -79,9 +79,8 @@ def test_swap_1h_is_the_research_file(W, M):
 @pytest.mark.parametrize('tf,data,out,csv', [('15M', 'SMC/data_15m/', 'SMC/runs/tf15m/', 'BTCUSDT-15M.csv'),
                                              ('30M', 'SMC/data_30m/', 'SMC/runs/tf30m/', 'BTCUSDT-30M.csv')])
 def test_swap_tf_changes_only_the_tf_and_its_folders(W, M, tf, data, out, csv):
-    c = {'MODE': 'line21', 'TF': tf, 'project_path': M.project_path, 'code_dir': 'SMC/'}
     tfl = dict(M.TFL)
-    swap = W.apply(M, tf, W.paths(c, tf))
+    swap = W.apply(M, tf, W.paths(tf, M.project_path))
     changed = {k: v[1] for k, v in swap.items() if v[0] != v[1]}
     assert changed == {"TFL['tf']": tf, "TFL['csv_ref']": csv, 'DATA_1H': M.project_path + data,
                        'OUT_DIR': M.project_path + out}
@@ -99,9 +98,24 @@ def test_stand_params(W, M):
     assert M._span_txt(p15['fil_min']) == '153 сут' and M._span_txt(p30['fil_min']) == '111 сут'
 
 
+def test_pack_folders_are_those_of_the_wrapper(W):
+    pk = _load(os.path.join(ROOT, 'scripts', 'f1h_tf_pack.py'), 'f1h_tf_pack_folders')
+    assert pk.FOLDERS == {tf: {'data': W.TFS[tf]['data'], 'out': W.TFS[tf]['out']} for tf in ('15M', '30M')}
+
+
+def test_notebooks_are_the_scripts():
+    import colab_notebooks as nb
+    for name in nb.NOTEBOOKS:
+        with open(os.path.join(ROOT, 'scripts', name + '.ipynb'), encoding='utf-8') as fh:
+            got = json.load(fh)
+        assert got == nb.notebook(name), f"scripts/{name}.ipynb is not scripts/{name}.py — python scripts/colab_notebooks.py"
+        with open(os.path.join(ROOT, 'scripts', name + '.py'), encoding='utf-8') as fh:
+            assert ''.join(got['cells'][1]['source']) + '\n' == fh.read()
+
+
 def test_main_refuses_line21_on_1h(W, monkeypatch, capsys):
-    monkeypatch.setenv('F1HTF_MODE', 'line21')
-    monkeypatch.setenv('F1HTF_TF', '1H')
+    monkeypatch.setattr(W, 'MODE', 'line21')
+    monkeypatch.setattr(W, 'TF', '1H')
     assert W.main() is None
     assert '1H проверен' in capsys.readouterr().out
 
@@ -190,8 +204,8 @@ def test_pack_end_to_end(tmp_path):
     proj = str(tmp_path / 'proj') + '/'
     code = proj + 'code/'
     os.makedirs(code)
-    for f, src in (('sumo_class_train.py', 'research'), ('sumo_class_ceil.py', 'research'), ('f1h_tf_line21.py', 'scripts')):
-        os.symlink(os.path.join(ROOT, src, f), code + f)
+    for f in ('sumo_class_train.py', 'sumo_class_ceil.py'):            # all the pack needs on Drive besides the runs
+        os.symlink(os.path.join(ROOT, 'research', f), code + f)
     os.makedirs(proj + 'SMC/runs/prod/')
     for ext, src in (('.json', '.json'), ('.npz', '_slim.npz')):
         os.symlink(R.PROD + src, proj + 'SMC/runs/prod/prod_SP_l025_d1_L64_a' + ext)
@@ -233,13 +247,14 @@ def test_pack_end_to_end(tmp_path):
     env.pop('F1HTF_PACK_SITE_STAMP', None)
     p = subprocess.run([sys.executable, os.path.join(ROOT, 'scripts', 'f1h_tf_pack.py')], env=env, capture_output=True,
                        text=True, timeout=1800)
-    assert 'СТОП: 5M: впиши' in p.stdout and not os.path.isdir(proj + 'out/'), p.stdout[-2000:] + p.stderr[-2000:]
+    assert 'СТОП: 5M: впиши' in p.stdout and not glob.glob(proj + 'out/*.zip'), p.stdout[-2000:] + p.stderr[-2000:]
+    assert len(glob.glob(proj + 'out/logs/pack_*.log')) == 1                    # the log of the stopped run
     env['F1HTF_PACK_SITE_STAMP'] = '20261021_120000'
     p = subprocess.run([sys.executable, os.path.join(ROOT, 'scripts', 'f1h_tf_pack.py')], env=env, capture_output=True,
                        text=True, timeout=1800)
-    zs = [f for f in os.listdir(proj + 'out/')] if os.path.isdir(proj + 'out/') else []
+    zs = glob.glob(proj + 'out/*.zip')
     assert len(zs) == 1, p.stdout[-3000:] + p.stderr[-3000:]
-    with zipfile.ZipFile(proj + 'out/' + zs[0]) as z:
+    with zipfile.ZipFile(zs[0]) as z:
         names = set(z.namelist())
         assert 'artifacts/pack/site30m_manifest.json' not in names
         for tf in ('5m', '15m'):
