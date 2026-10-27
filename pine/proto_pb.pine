@@ -74,7 +74,7 @@ var array<float> RZ = array.from(-3.090232306167813, -2.878161739095483, -2.5758
 color colorRealInput   = input.color(#FF7A1A, "More often in real markets", group = "Colors", tooltip = "Windows like the current one occur M times more often in real markets than on a random chart made of the same bars: the market is not random right now, there is something to look for.")
 color colorEqualInput  = input.color(#9D9D9D, "Equally often (M = 1)", group = "Colors", tooltip = "M = 1: windows like the current one occur equally often in real markets and on the random chart, MRI is silent. The line starts from this color and turns orange or grey as M grows.")
 color colorRandomInput = input.color(#665F5A, "More often on the random chart", group = "Colors", tooltip = "Windows like the current one occur M times more often on a random chart made of the same bars: right now the market behaves like a coin toss, so a pattern found in it is likely noise.")
-float markLevelInput   = input.float(3.0, "Marks on the price chart at M >=", minval = 0.0, step = 0.5, group = "Marks", tooltip = "A small mark above the price bar where M reaches this value, in the color of its side. 0 = no marks.")
+float markLevelInput   = input.float(8.0, "Marks on the price chart at M >=", minval = 0.0, step = 0.5, group = "Marks", tooltip = "A small mark above the price bar where M reaches this value, in the color of its side. 0 = no marks.")
 bool  dbg      = input.bool(false, "Debug values (parity check)", group = "Advanced", tooltip = "Plots the internal values of each bar for checking against the Python reference (Export chart data).")
 int   calcBarsInput    = input.int(0, "Compute only the last N bars (0 = all history)", minval = 0, group = "Advanced", tooltip = "The network runs on the last N bars only: TradingView limits the run time of a script on the whole history. The line starts 4096 windows after the first computed window.")
 
@@ -536,13 +536,13 @@ float Mshow  = na(Mraw) ? na : more or less ? math.min(Mraw, CEIL) : 1.0
 color sideColor = more ? colorRealInput : less ? colorRandomInput : colorEqualInput
 color mriColor  = shownM ? color.from_gradient(math.log(Mshow), 0.0, math.log(CEIL), colorEqualInput, sideColor) : na
 plot(Mshow, "M", color = mriColor, linewidth = 2)
-// Horizontal lines: M = 1 (equally often) and a faint grid at 2, 4, 6, 8. They are fixed, so "editable = false" keeps
+// Dashed horizontal lines: M = 1 (equally often) and a faint grid at 2, 4, 6, 8. They are fixed: "editable = false" keeps
 // them out of the Style tab of the settings; their color follows the silver of the Inputs tab.
-hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)
-hline(2.0, "M = 2", color = color.new(colorEqualInput, 70), linestyle = hline.style_solid, editable = false)
-hline(4.0, "M = 4", color = color.new(colorEqualInput, 70), linestyle = hline.style_solid, editable = false)
-hline(6.0, "M = 6", color = color.new(colorEqualInput, 70), linestyle = hline.style_solid, editable = false)
-hline(8.0, "M = 8", color = color.new(colorEqualInput, 70), linestyle = hline.style_solid, editable = false)
+hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_dashed, editable = false)
+hline(2.0, "M = 2", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
+hline(4.0, "M = 4", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
+hline(6.0, "M = 6", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
+hline(8.0, "M = 8", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
 // the start of the line: a constant text at the window SHOW; the shape under the text is fully transparent
 plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.new(colorEqualInput, 100), text = "MRI starts here:\non each bar, the 64-bar window\nis compared with 4032 historical\nwindows of this chart", textcolor = chart.fg_color, size = size.tiny, editable = false, display = display.pane)
 // marks on the price chart where M reaches the level set in the Inputs tab (0 = no marks)
