@@ -173,9 +173,15 @@ def test_wording_colors_literals(proto, which):
     assert len(re.findall(r'^const float FLOOR = 0\.20000000298023224 ', code, flags=re.M)) == 1
     assert len(re.findall(r'^const float CEIL  = 10\.0 ', code, flags=re.M)) == 1
     # the start mark: a plot shape with a constant text (not a label), at the window SHOW only
-    st = re.findall(r'^plotshape\(shownM and nW == SHOW, "Line start", shape\.diamond, location\.bottom, colorEqualInput, '
-                    r'text = "([^"]+)", textcolor = chart\.fg_color, size = size\.tiny\)$', code, flags=re.M)
-    assert st == ['MRI starts here:\\neach window is compared\\nwith 4032 windows of this chart']   # text of 2026-10-27
+    st = re.findall(r'^plotshape\(shownM and nW == SHOW, "Line start", shape\.diamond, location\.bottom, '
+                    r'color\.new\(colorEqualInput, 100\), text = "([^"]+)", textcolor = chart\.fg_color, size = size\.tiny, '
+                    r'editable = false, display = display\.pane\)$', code, flags=re.M)
+    assert st == ['MRI starts here:\\non each bar, the 64-bar window\\nis compared with 4032 historical\\n'
+                  'windows of this chart']                     # text of 2026-10-27; the shape under it is transparent
+    # the faint grid M = 2, 4, 6, 8 next to the line M = 1, no threshold line, no colour of the price bars (2026-10-27)
+    assert re.findall(r'^hline\(([0-9.]+), ', code, flags=re.M) == ['1.0', '2.0', '4.0', '6.0', '8.0']
+    assert 'barcolor(' not in code and 'thresholdInput' not in code
+    assert 'input.float(3.0, "Marks on the price chart at M >=", minval = 0.0' in code
     assert 'label.' not in code and '10+' not in code and 'max_labels_count' not in code   # no "10+" (decision 2026-10-18)
     # the palette of the site (2026-10-25): silver at M = 1 towards orange (real markets) or grey (the random chart),
     # the share of the side colour = ln M / ln CEIL; the old blue is gone
@@ -237,7 +243,7 @@ def test_production_is_the_prototype_without_debug():
     assert len(a) == len(b) and len(proto.splitlines()) - len(b) == 46     # 1 input, 2 state, 5 writes, 38 debug section
     diff = [(x, y) for x, y in zip(a, b) if x != y]
     assert len(diff) == 3
-    assert diff[0][1] == '// Market Randomness Index (MRI): shows when there is something to look for in the market.'
+    assert diff[0][1] == '// Market Randomness Index (MRI): shows when the market does not look like a random walk.'
     assert diff[1][1].startswith('indicator("Market Randomness Index", shorttitle = "MRI",')
     assert diff[2] == (diff[2][1].replace('input.int(10000, ', 'input.int(0, '), diff[2][1]) and 'calcBars' in diff[2][1]
     cut = [ln for ln in proto.splitlines() if re.search(r'\b(DBG|nConf|dbg|display_dbg)\b', ln)]
