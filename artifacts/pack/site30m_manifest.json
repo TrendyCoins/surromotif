@@ -1,0 +1,96 @@
+{
+ "what": "вход бэкенда сайта на 30M: итог 'line21' обёртки scripts/f1h_tf_line21.py (SuMo_Class_TF v2.1) — линия M F1 SP_l025_d1 prod a",
+ "tf": "30M",
+ "line21": "20261027_090105",
+ "prod": "prod_SP_l025_d1_L64_a",
+ "export": {
+  "tf": "30M",
+  "rules": "v2.1",
+  "floor": 0.2,
+  "ceiling": 8,
+  "marks": {
+   "orange": 1.25,
+   "blue": 0.8
+  }
+ },
+ "live": "4032·k0.5",
+ "golden": {
+  "asset": "BTCUSDT",
+  "tf": "30M",
+  "n": 22694,
+  "shown": 18598,
+  "from": "2025-07-06T11:30:00.000000000",
+  "to": "2026-10-22T06:00:00.000000000"
+ },
+ "checks": {
+  "research_files": {
+   "n_tr": 130964,
+   "n_va": 22757,
+   "windows": 22694,
+   "same_t_end": true,
+   "crc": {
+    "tr": 2561799737,
+    "va": 699414250
+   }
+  },
+  "research_eq_golden": {
+   "n": 2048,
+   "max": 1.0758638381958008e-05,
+   "p99": 3.830492496490478e-06,
+   "ok": true
+  }
+ },
+ "research": {
+  "kind": "whole"
+ },
+ "weights": {
+  "manifest": "artifacts/pack/site1h_manifest.json",
+  "prod_json_sha256": "7245459310e0c5fd9a3ae56097f9187a1307fea7443dfc4084bcada165935d9a",
+  "note": "веса prod a — в репо (artifacts/weights/); json prod a на Drive — тот же (sha256)"
+ },
+ "files": [
+  {
+   "path": "artifacts/calib/tfline21_30m_20261027_090105.json",
+   "bytes": 360549,
+   "sha256": "7199d24828e5b42c9fde4e9db29ab8611906c5544041bd239bc68dbd83d9a1df",
+   "from": "SMC/runs/tf30m/tfline21_20261027_090105.json"
+  },
+  {
+   "path": "artifacts/calib/tfline21_30m_golden_20261027_090105.npz",
+   "bytes": 969714,
+   "sha256": "142d1bffe41370c2a98f98ac370c1a86d8307a9b4ad7841103f4cb019e6e3737",
+   "from": "SMC/runs/tf30m/tfline21_golden_20261027_090105.npz"
+  },
+  {
+   "path": "artifacts/logs/tf30m/tf_line21_20261027_090058.log",
+   "bytes": 29239,
+   "sha256": "66024076bea560ce226836ace0b885e805d3a69126130568fb6c4a3f4fdcce15",
+   "from": "SMC/runs/tf30m/logs/tf_line21_20261027_090058.log"
+  },
+  {
+   "path": "artifacts/bars/smc_series_BTCUSDT_30M_N200.npz",
+   "bytes": 2135982,
+   "sha256": "2e296a8364fc73256552ef2ecf27306e83616c6361d846c52b1763ab11ee7f77",
+   "from": "SMC/data_30m/smc_series_BTCUSDT_30M_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_prices_BTCUSDT_30M_N200.npz",
+   "bytes": 2292166,
+   "sha256": "1b890f486127475a25710e750b060bc8eb0e1e312d04938614fe0abca31adcf0",
+   "from": "SMC/data_30m/smc_prices_BTCUSDT_30M_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_range_BTCUSDT_30M_N200.npz",
+   "bytes": 544967,
+   "sha256": "f80af912d014e28439932d782ba48ae5e3620524d383da7f12ab3ac525b20fc1",
+   "from": "SMC/data_30m/smc_range_BTCUSDT_30M_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_bars_BTCUSDT_30M_N200.npz",
+   "bytes": 2068084,
+   "sha256": "3788d7c1c0b1236ef2a8746f2df8a7caa78054446c2b2891df516fc135b644d2",
+   "from": "SMC/data_30m/smc_bars_BTCUSDT_30M_N200.npz"
+  }
+ ],
+ "created": "2026-10-27 10:17:00"
+}

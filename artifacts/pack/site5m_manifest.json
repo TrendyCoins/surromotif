@@ -1,0 +1,128 @@
+{
+ "what": "вход бэкенда сайта на 5M: итог SuMo_Class_Site v1.1 'run' — линия M F1 SP_l025_d1 prod a (экспорт: потолок как проверено; до 8 на сайте режет генератор)",
+ "tf": "5M",
+ "site": "20261021_084916",
+ "prod": "prod_SP_l025_d1_L64_a",
+ "export": {
+  "tf": "5M",
+  "rules": "SuMo_Class_Site v1.1",
+  "floor": 0.2,
+  "ceiling": 10,
+  "marks": {
+   "orange": 1.25,
+   "blue": 0.8
+  },
+  "live": "4032·k0.5"
+ },
+ "live": "4032·k0.5",
+ "golden": {
+  "asset": "BTCUSDT",
+  "tf": "5M",
+  "n": 104599,
+  "shown": 100503,
+  "from": "2025-07-01T21:55:00.000000000",
+  "to": "2026-06-30T02:25:00.000000000"
+ },
+ "checks": {
+  "research_files": {
+   "n_tr": 786733,
+   "n_va": 104662,
+   "windows": 104599,
+   "same_t_end": true,
+   "crc": {
+    "tr": 1811111110,
+    "va": 1814511499
+   }
+  },
+  "research_eq_golden": {
+   "n": 2048,
+   "max": 9.655952453613281e-06,
+   "p99": 3.7586688995361296e-06,
+   "ok": true
+  }
+ },
+ "research": {
+  "kind": "compact",
+  "tail_rows": 8640,
+  "cut_row": 778093,
+  "checks": {
+   "positions": 113302,
+   "time_same": true,
+   "inputs_bit": true,
+   "nt_val_bit": true,
+   "nt_tail_max_ulp": 1.0,
+   "nt_tail_n_diff": 1,
+   "windows": 113176,
+   "windows_same": true,
+   "ok": true,
+   "research_eq_golden": {
+    "n": 2048,
+    "max": 9.655952453613281e-06,
+    "p99": 3.7586688995361296e-06,
+    "ok": true
+   }
+  }
+ },
+ "weights": {
+  "manifest": "artifacts/pack/site1h_manifest.json",
+  "prod_json_sha256": "7245459310e0c5fd9a3ae56097f9187a1307fea7443dfc4084bcada165935d9a",
+  "note": "веса prod a — в репо (artifacts/weights/); json prod a на Drive — тот же (sha256)"
+ },
+ "files": [
+  {
+   "path": "artifacts/calib/site_20261021_084916.json",
+   "bytes": 642168,
+   "sha256": "15d1e694d9e7ebbe99d95e0f9a3446c193170b2393c38261f3e66e4d5a433646",
+   "from": "SMC/runs/site/site_20261021_084916.json"
+  },
+  {
+   "path": "artifacts/calib/site_golden_20261021_084916.npz",
+   "bytes": 5220766,
+   "sha256": "89cc4a8c83abbdb374403773e9a7df9a8f7a9aa66293e9ef742e1fb88c5cc5a4",
+   "from": "SMC/runs/site/site_golden_20261021_084916.npz"
+  },
+  {
+   "path": "artifacts/calib/site_live_20261021_083943.json",
+   "bytes": 130166,
+   "sha256": "2c04128be6736240f36d7b8519e05fd4cb4dcb25cf91bc490b1a93636f281344",
+   "from": "SMC/runs/site/site_live_20261021_083943.json"
+  },
+  {
+   "path": "artifacts/logs/site/site_run_20261021_084706.log",
+   "bytes": 17365,
+   "sha256": "a298393fc69a34a73787418e5077b09b27d85d3f92d8f1f0436416ba31c457a4",
+   "from": "SMC/runs/site/logs/site_run_20261021_084706.log"
+  },
+  {
+   "path": "artifacts/logs/site/site_live_20261021_083440.log",
+   "bytes": 15739,
+   "sha256": "940484dcad1985c1b890c2b472de109a2811fa7ce74698c8b67dfd7f674492a1",
+   "from": "SMC/runs/site/logs/site_live_20261021_083440.log"
+  },
+  {
+   "path": "artifacts/bars/btc5m_compact/smc_series_BTCUSDT_5M_N200.npz",
+   "bytes": 1522290,
+   "sha256": "ee6e842aa7ee9610423948c6b3fc48cb3829e8d2a846b9161b82c2da9f07d75f",
+   "from": "SMC/data/smc_series_BTCUSDT_5M_N200.npz (компактно: VAL целиком + последние 8640 строк TRAINING)"
+  },
+  {
+   "path": "artifacts/bars/btc5m_compact/smc_prices_BTCUSDT_5M_N200.npz",
+   "bytes": 1691224,
+   "sha256": "432e146d6817803b01d8eb5d2fa77fd5c59663f64453596f915c48eb9e6b49a1",
+   "from": "SMC/data/smc_prices_BTCUSDT_5M_N200.npz (компактно: VAL целиком + последние 8640 строк TRAINING)"
+  },
+  {
+   "path": "artifacts/bars/btc5m_compact/smc_range_BTCUSDT_5M_N200.npz",
+   "bytes": 404996,
+   "sha256": "d64a2a3c997775f4ccb0ae0b64965d5c31c70aa40e2649d08de6e68f4c85378e",
+   "from": "SMC/data/smc_range_BTCUSDT_5M_N200.npz (компактно: VAL целиком + последние 8640 строк TRAINING)"
+  },
+  {
+   "path": "artifacts/bars/btc5m_compact/smc_bars_BTCUSDT_5M_N200.npz",
+   "bytes": 1536482,
+   "sha256": "2c0f828d6e46dd88b8e6dd1d865ee35d9ebffd6b96e08d0586761a35c7e6e33e",
+   "from": "SMC/data/smc_bars_BTCUSDT_5M_N200.npz (компактно: VAL целиком + последние 8640 строк TRAINING)"
+  }
+ ],
+ "created": "2026-10-27 10:16:41"
+}

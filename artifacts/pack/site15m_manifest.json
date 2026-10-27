@@ -1,0 +1,102 @@
+{
+ "what": "вход бэкенда сайта на 15M: итог 'line21' обёртки scripts/f1h_tf_line21.py (SuMo_Class_TF v2.1) — линия M F1 SP_l025_d1 prod a",
+ "tf": "15M",
+ "line21": "20261027_084749",
+ "prod": "prod_SP_l025_d1_L64_a",
+ "export": {
+  "tf": "15M",
+  "rules": "v2.1",
+  "floor": 0.2,
+  "ceiling": 10,
+  "marks": {
+   "orange": 1.25,
+   "blue": 0.8
+  }
+ },
+ "live": "4032+288",
+ "golden": {
+  "asset": "BTCUSDT",
+  "tf": "15M",
+  "n": 45650,
+  "shown": 41554,
+  "from": "2025-07-03T17:45:00.000000000",
+  "to": "2026-10-22T06:00:00.000000000"
+ },
+ "checks": {
+  "research_files": {
+   "n_tr": 262116,
+   "n_va": 45713,
+   "windows": 45650,
+   "same_t_end": true,
+   "crc": {
+    "tr": 1057451195,
+    "va": 942617428
+   }
+  },
+  "research_eq_golden": {
+   "n": 2048,
+   "max": 8.702278137207031e-06,
+   "p99": 3.727078437805174e-06,
+   "ok": true
+  }
+ },
+ "research": {
+  "kind": "whole"
+ },
+ "weights": {
+  "manifest": "artifacts/pack/site1h_manifest.json",
+  "prod_json_sha256": "7245459310e0c5fd9a3ae56097f9187a1307fea7443dfc4084bcada165935d9a",
+  "note": "веса prod a — в репо (artifacts/weights/); json prod a на Drive — тот же (sha256)"
+ },
+ "files": [
+  {
+   "path": "artifacts/calib/tfline21_15m_20261027_084749.json",
+   "bytes": 347417,
+   "sha256": "559e9366bdf20e5644b1e325baebda1e46f3d037a963f93eeb34fbf2d75665da",
+   "from": "SMC/runs/tf15m/tfline21_20261027_084749.json"
+  },
+  {
+   "path": "artifacts/calib/tfline21_15m_golden_20261027_084749.npz",
+   "bytes": 1960111,
+   "sha256": "9998bba707126aac5f7d3df9126963ad32e0496b4c9e85ad627135311a6fc7cd",
+   "from": "SMC/runs/tf15m/tfline21_golden_20261027_084749.npz"
+  },
+  {
+   "path": "artifacts/logs/tf15m/tf_line21_20261027_084727.log",
+   "bytes": 29267,
+   "sha256": "891f03efe32d65f7cd4ea80481a2fc14a25c096867973af24afd399afc0f316e",
+   "from": "SMC/runs/tf15m/logs/tf_line21_20261027_084727.log"
+  },
+  {
+   "path": "artifacts/logs/tf15m/tf_line_stand_20261027_082003.log",
+   "bytes": 39008,
+   "sha256": "c97c0a7ef416f082476790032d1d2613fa177acb7605e8c88329d34b3af05e14",
+   "from": "SMC/runs/tf15m/logs/tf_line_stand_20261027_082003.log"
+  },
+  {
+   "path": "artifacts/bars/smc_series_BTCUSDT_15M_N200.npz",
+   "bytes": 4247905,
+   "sha256": "33c9e762761886297a54c6287a3eccb2f0a5457870b25e01a7b153e1f8b0f9c7",
+   "from": "SMC/data_15m/smc_series_BTCUSDT_15M_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_prices_BTCUSDT_15M_N200.npz",
+   "bytes": 4584275,
+   "sha256": "442bfe8a1e22991f38802e55c56fe1d49da3bd08f0af747d4f961d9347f215b4",
+   "from": "SMC/data_15m/smc_prices_BTCUSDT_15M_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_range_BTCUSDT_15M_N200.npz",
+   "bytes": 1089835,
+   "sha256": "5eb2363e9e43026f8ed351e583aa1af29464a57afe0f53932c67effa140387c7",
+   "from": "SMC/data_15m/smc_range_BTCUSDT_15M_N200.npz"
+  },
+  {
+   "path": "artifacts/bars/smc_bars_BTCUSDT_15M_N200.npz",
+   "bytes": 4040112,
+   "sha256": "60546b5f384abdde7ed8c163b9079875f154cafa40f741e61a1769ec6f56ef09",
+   "from": "SMC/data_15m/smc_bars_BTCUSDT_15M_N200.npz"
+  }
+ ],
+ "created": "2026-10-27 10:16:52"
+}
