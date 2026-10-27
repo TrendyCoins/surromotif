@@ -2,7 +2,7 @@
 stream (mri.pb) < 1e-10, with and without 'compute only the last N bars', first line bar 4360 (R18) with one start mark;
 the weights decoded from the script strings are the export weights bit for bit; strings only inside functions; the script
 fits the size measured on TradingView; FLOOR, CEIL, ruler, L, n0, lag and the start of the line = export, no symbol tables,
-no settings of the live part; project rules on wording, colors, literals."""
+no settings of the live part; project rules on wording, colors (the site palette, 2026-10-27), literals."""
 import os
 import re
 import sys
@@ -136,7 +136,10 @@ def test_wording_colors_literals(proto, which):
     else:
         with open(os.path.join(ROOT, PRODUCTION), encoding='utf-8') as fh:
             script = fh.read()
-    assert script.startswith('//@version=6\n// SPDX-License-Identifier: Apache-2.0\n// © TrendyCoins\n')
+    # license comments first, then the version (TradingView's script template and the Pine style guide; 2026-10-27)
+    assert script.startswith('// SPDX-License-Identifier: Apache-2.0\n'
+                             '// This source code is subject to the terms of the Apache License, Version 2.0.\n'
+                             '// © TrendyCoins\n\n//@version=6\n')
     code = re.sub(r'"[一-嗿]+"', '""', script)
     banned = r'\b(buy|sell|long|short|bull\w*|bear\w*|arrow\w*|triangle\w*|label_?up|label_?down)\b'
     assert not re.findall(banned, code, flags=re.I)
@@ -170,10 +173,19 @@ def test_wording_colors_literals(proto, which):
     assert len(re.findall(r'^const float FLOOR = 0\.20000000298023224 ', code, flags=re.M)) == 1
     assert len(re.findall(r'^const float CEIL  = 10\.0 ', code, flags=re.M)) == 1
     # the start mark: a plot shape with a constant text (not a label), at the window SHOW only
-    st = re.findall(r'^plotshape\(shownM and nW == SHOW, "Line start", shape\.diamond, location\.bottom, color\.gray, '
+    st = re.findall(r'^plotshape\(shownM and nW == SHOW, "Line start", shape\.diamond, location\.bottom, colorEqualInput, '
                     r'text = "([^"]+)", textcolor = chart\.fg_color, size = size\.tiny\)$', code, flags=re.M)
-    assert st == ['MRI starts here\\ncalibrated on 4032 windows of this chart']
+    assert st == ['MRI starts here:\\neach window is compared\\nwith 4032 windows of this chart']   # text of 2026-10-27
     assert 'label.' not in code and '10+' not in code and 'max_labels_count' not in code   # no "10+" (decision 2026-10-18)
+    # the palette of the site (2026-10-25): silver at M = 1 towards orange (real markets) or grey (the random chart),
+    # the share of the side colour = ln M / ln CEIL; the old blue is gone
+    assert 'input.color(#FF7A1A, "More often in real markets"' in code
+    assert 'input.color(#9D9D9D, "Equally often (M = 1)"' in code
+    assert 'input.color(#665F5A, "More often on the random chart"' in code
+    assert ('color mriColor  = shownM ? color.from_gradient(math.log(Mshow), 0.0, math.log(CEIL), colorEqualInput, '
+            'sideColor) : na') in code
+    assert 'plot(Mshow, "M", color = mriColor, linewidth = 2)' in code
+    assert 'rgb(47, 128, 237)' not in code and not re.search(r'\bblue\b', code, flags=re.I)
 
 
 @pytest.mark.parametrize('production', [False, True])
