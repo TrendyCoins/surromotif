@@ -1,7 +1,9 @@
 """The golden file: candles and the expected values of every candle (gzip CSV, stdlib + numpy), and the end-to-end check
-of rule R24 (docs/rules.md): the reference on the candles of the file gives the values of the file.
+of rules R24 / R31 (docs/rules.md): the reference on the candles of the file gives the values of the file.
 
-    python -m f1h [--golden tests/golden/btc1h_f1h.csv.gz] [--model export/f1h_model.json]      # exit code 0 = ok
+    python -m f1h [--tf 1H | 5M | 15M | 30M] [--golden PATH] [--model PATH]      # exit code 0 = ok
+    # defaults: the export and the golden of the timeframe in this repository (1H: export/f1h_model.json,
+    # tests/golden/btc1h_f1h.csv.gz; 15M: export/f1h_model_15m.json, tests/golden/btc15m_f1h.csv.gz; ...)
 """
 import argparse
 import csv
@@ -16,12 +18,13 @@ from .model import ROOT, load_model
 from .run import FIELDS, compute
 
 GOLDEN = os.path.join(ROOT, 'tests', 'golden', 'btc1h_f1h.csv.gz')
+GOLDENS = {tf: os.path.join(ROOT, 'tests', 'golden', f'btc{tf.lower()}_f1h.csv.gz') for tf in ('1H', '5M', '15M', '30M')}
 CANDLES = ('time', 'open', 'high', 'low', 'close')
 COLUMNS = CANDLES + FIELDS[1:]
 INTS = ('time', 'n', 'n_live')
 BOOLS = ('window', 'line')
 FLOATS = ('logit', 'z', 'm', 's', 'log_m', 'strength')
-TOL = 1e-9                       # rule R24: other numpy / BLAS versions
+TOL = 1e-9                       # rules R24 / R31: other numpy / BLAS versions
 
 
 def _cell(x, kind):
@@ -93,9 +96,10 @@ def compare(out, ref, tol=TOL):
 
 
 def check_golden(model=None, path=None):
-    """End-to-end check on the golden file (rule R24): candles of the file -> compute -> values of the file."""
+    """End-to-end check on the golden file (rules R24 / R31): candles of the file -> compute -> values of the file. Without
+       a path — the golden of the timeframe of the model in this repository (GOLDENS)."""
     model = load_model() if model is None else model
-    g = read_golden(path)
+    g = read_golden(path or GOLDENS[model.timeframe])
     out = compute(model, g['time'], g['open'], g['high'], g['low'], g['close'])
     res = compare(out, g)
     res['first_line_bar_expected'] = model.first_line_bar
@@ -105,9 +109,12 @@ def check_golden(model=None, path=None):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument('--tf', default=None, help='1H, 5M, 15M or 30M: the export and the golden of this repository')
     ap.add_argument('--golden', default=None)
     ap.add_argument('--model', default=None)
     a = ap.parse_args()
-    res = check_golden(load_model(a.model), a.golden)
+    model = load_model(a.model, tf=a.tf)
+    res = check_golden(model, a.golden)
+    res['timeframe'] = model.timeframe
     print(json.dumps(res, indent=1))
     raise SystemExit(0 if res['ok'] else 1)

@@ -1,10 +1,10 @@
-"""The research side of the F1 1H checks (rules R22, R25): the training code v6.6 (research/sumo_class_train.py) imported
-as a module, the prod a model loaded by its own load_pool_model (build_model + the weights of the slim npz), SeriesData
-'multi_g' over research 1H files, to_shapes / side_feats inside floor_override 0.2 (research/sumo_class_ceil.py). CPU,
-float32. Needs torch; f1h does not.
+"""The research side of the F1 checks (rules R22, R25; by timeframe — R29): the training code v6.6
+(research/sumo_class_train.py) imported as a module, the prod a model loaded by its own load_pool_model (build_model + the
+weights of the slim npz), SeriesData 'multi_g' over research files of a timeframe (1H, 5M, 15M, 30M), to_shapes /
+side_feats inside floor_override 0.2 (research/sumo_class_ceil.py). CPU, float32. Needs torch; f1h does not.
 
 Layout of the temporary project folder (SMC_PROJECT_PATH; nothing is written to the repository):
-    SMC/data/        research 1H files (links to artifacts/bars/ or files written by build_tf_files)
+    SMC/data/        research files (links to artifacts/bars/ or files written by build_tf_files)
     SMC/runs/prod/   prod_SP_l025_d1_L64_a.json and .npz (links to artifacts/weights/: json and slim npz)
 """
 import glob
@@ -89,10 +89,11 @@ def logits(T, CL, model, data, bs=4096):
     return {k: (np.concatenate(v) if isinstance(v, list) else v) for k, v in out.items()}
 
 
-def series_data(T, asset, tune_start='2100-01-01'):
-    """SeriesData of one asset on 1H (three prices + range + history in bars), as SuMo_Class_TF series_data."""
-    return T.SeriesData([asset], '1H', 200, tune_start, 'multi_g')
+def series_data(T, asset, tune_start='2100-01-01', tf='1H'):
+    """SeriesData of one asset on tf (three prices + range + history in bars), as SuMo_Class_TF series_data."""
+    return T.SeriesData([asset], tf, 200, tune_start, 'multi_g')
 
 
-def bars_files(asset='BTCUSDT'):
-    return sorted(glob.glob(os.path.join(ROOT, 'artifacts', 'bars', f'smc_*_{asset}_1H_N200.npz')))
+def bars_files(asset='BTCUSDT', tf='1H', folder=os.path.join(ROOT, 'artifacts', 'bars')):
+    """Research files of an asset on tf in folder (5M: artifacts/bars/btc5m_compact/)."""
+    return sorted(glob.glob(os.path.join(folder, f'smc_*_{asset}_{tf}_N200.npz')))
