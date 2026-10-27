@@ -182,7 +182,11 @@ def test_wording_colors_literals(proto, which):
     assert re.findall(r'^hline\(([0-9.]+), ', code, flags=re.M) == ['1.0', '2.0', '4.0', '6.0', '8.0']
     assert 'barcolor(' not in code and 'thresholdInput' not in code
     assert 'input.float(8.0, "Marks on the price chart at M >=", minval = 0.0' in code   # default 8 (2026-10-27)
-    assert len(re.findall(r'^hline\([^\n]*linestyle = hline\.style_dashed', code, flags=re.M)) == 5
+    # the floor M = 1 — solid, full silver; the grid — dashed, silver at 70% transparency (2026-10-27)
+    assert re.findall(r'^hline\(1\.0, [^\n]*', code, flags=re.M) == [
+        'hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)']
+    assert len(re.findall(r'^hline\([2468]\.0, "M = [2468]", color = color\.new\(colorEqualInput, 70\), '
+                          r'linestyle = hline\.style_dashed, editable = false\)$', code, flags=re.M)) == 4
     assert 'label.' not in code and '10+' not in code and 'max_labels_count' not in code   # no "10+" (decision 2026-10-18)
     # the palette of the site (2026-10-25): silver at M = 1 towards orange (real markets) or grey (the random chart),
     # the share of the side colour = ln M / ln CEIL; the old blue is gone

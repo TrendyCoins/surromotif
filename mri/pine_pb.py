@@ -566,9 +566,10 @@ float Mshow  = na(Mraw) ? na : more or less ? math.min(Mraw, CEIL) : 1.0
 color sideColor = more ? colorRealInput : less ? colorRandomInput : colorEqualInput
 color mriColor  = shownM ? color.from_gradient(math.log(Mshow), 0.0, math.log(CEIL), colorEqualInput, sideColor) : na
 plot(Mshow, "M", color = mriColor, linewidth = 2)
-// Dashed horizontal lines: M = 1 (equally often) and a faint grid at 2, 4, 6, 8. They are fixed: "editable = false" keeps
-// them out of the Style tab of the settings; their color follows the silver of the Inputs tab.
-hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_dashed, editable = false)
+// Horizontal lines: M = 1 (equally often), solid and bright — the floor of the line, and a faint dashed grid at 2, 4, 6, 8.
+// They are fixed: "editable = false" keeps them out of the Style tab of the settings; their color follows the silver
+// of the Inputs tab.
+hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)
 hline(2.0, "M = 2", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
 hline(4.0, "M = 4", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
 hline(6.0, "M = 6", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
