@@ -13,9 +13,10 @@
 | `f1h_parity.py` | F1 on 1H against research and the research golden tfline21 (rules R22, R23; torch) |
 | `f1h_research.py` | F1 on 1H: the research side (training code imported, prod a, floor 0.2) for the parity and tests |
 | `f1h_bench.py` | F1 on 1H: time and memory of the full recompute (rule R26) |
-| `f1h_tf_line21.py` | Colab: line M of F1 on 15M / 30M — modes 'line_stand' and 'line21' of `research/sumo_class_tf.py` v2.1 with the timeframe and folders swapped; the stand copied with the TF as a parameter (rule R27) |
+| `f1h_tf_line21.py` (`.ipynb`) | Colab notebook: line M of F1 on 15M / 30M — modes 'line_stand' and 'line21' of `research/sumo_class_tf.py` v2.1 with the timeframe and folders swapped; the stand copied with the TF as a parameter (rule R27) |
+| `colab_notebooks.py` | builds the Colab notebooks `f1h_tf_line21.ipynb`, `f1h_tf_pack.ipynb` from their .py (a text cell with the run order and one code cell = the .py as is; the .py is the source, a test checks the sync) |
 | `f1h_tf_stand.py` | the stand of `f1h_tf_line21.py` here (CPU): regression with the research file on 1H bit for bit, 15M / 30M (rule R27) |
-| `f1h_tf_pack.py` | Colab: one zip with the inputs of f1h on 5M / 15M / 30M (source json and golden, research files BTC, logs, manifests; rules R28–R31) |
+| `f1h_tf_pack.py` (`.ipynb`) | Colab notebook: one zip with the inputs of f1h on 5M / 15M / 30M (source json and golden, research files BTC, logs, manifests; rules R28–R31) |
 | `futures_klines.py` | run locally, not in Colab: 5M candles of Binance USDT-M perpetual futures, with the taker volume split by side, for `research/sumo_class_flow.py` and `research/sumo_class_eff.py` (CSV → Drive `Raw Datasets/futures/`, not in git) |
 
 Results go to `docs/checks/pb5/` (F1 on 1H — `docs/checks/f1h/`; the wrapper 15M / 30M — `docs/checks/f1h_tf/`). `legacy/` — scripts of the earlier models and of session 4.
