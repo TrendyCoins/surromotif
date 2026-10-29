@@ -29,7 +29,8 @@ comments as in the Pine style guide. Display: the palette of trendycoins.com —
 #FF7A1A (more often in real markets) or grey #665F5A (more often on the random chart), the share of the side colour =
 ln M / ln CEIL (the site mixes in OKLab, Pine's color.from_gradient in RGB: the same ends, a hardly visible difference
 in between); a faint grid at M = 2, 4, 6, 8 (chart.fg_color at 79% transparency: over a dark chart the same as silver at
-70%, over a light one still visible, 2026-10-29); marks on the price chart at M >= the level of one input (0 = no marks); only
+70%, over a light one still visible, 2026-10-29); a fixed scale from 1 to CEIL (two invisible plots, 2026-10-29); marks
+on the price chart at M >= the level of one input (0 = no marks); only
 the line M is listed in the Style tab (the rest has editable = false). Edit this file, not the generated scripts:
 tests/test_pine_pb.py checks that pine/*.pine equal its output.
 """
@@ -578,6 +579,10 @@ hline(2.0, "M = 2", color = gridColor, linestyle = hline.style_dashed, editable 
 hline(4.0, "M = 4", color = gridColor, linestyle = hline.style_dashed, editable = false)
 hline(6.0, "M = 6", color = gridColor, linestyle = hline.style_dashed, editable = false)
 hline(8.0, "M = 8", color = gridColor, linestyle = hline.style_dashed, editable = false)
+// A fixed scale from 1 to CEIL: the pane always fits all values plotted in it, so two invisible plots hold its ends
+// (fully transparent and shown in the pane only: no values in the status line, the Data Window or on the price scale).
+plot(1.0, "Scale bottom", color = color.new(colorEqualInput, 100), editable = false, display = display.pane)
+plot(CEIL, "Scale top", color = color.new(colorEqualInput, 100), editable = false, display = display.pane)
 // the start of the line: a constant text at the window SHOW; the shape under the text is fully transparent
 plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.new(colorEqualInput, 100), text = "{start_text}", textcolor = chart.fg_color, size = size.tiny, editable = false, display = display.pane)
 // marks on the price chart where M reaches the level set in the Inputs tab (0 = no marks)

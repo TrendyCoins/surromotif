@@ -157,7 +157,7 @@ def test_wording_colors_literals(proto, which):
                        'x_end', 'sgn'] + [f'side_{n}' for n in nt3.SIDE_NAMES] + ['confirmed', 'bar_index']   # R10 add. 4
     else:
         assert dbg == [] and not re.search(r'\b(dbg|DBG|nConf|display_dbg)\b', code) and 'Debug' not in code
-    assert len(re.findall(r'^plot\(', code, flags=re.M)) == 1 + len(dbg)
+    assert len(re.findall(r'^plot\(', code, flags=re.M)) == 3 + len(dbg)    # the line M, 2 of the scale (2026-10-29), dbg
     # the live part changes only on a confirmed bar with a valid window; the ring without array.shift
     blk = code[code.index('if barstate.isconfirmed and bar_index >= heavyFrom'):code.index('// ------', code.index(
         'if barstate.isconfirmed and bar_index >= heavyFrom'))]
@@ -189,6 +189,9 @@ def test_wording_colors_literals(proto, which):
         'hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)']
     assert '\ncolor gridColor = color.new(chart.fg_color, 79)\n' in code
     assert 'lightChart' not in code and '== #0F0F0F' not in code
+    # a fixed scale 1 .. CEIL (2026-10-29): two transparent plots in the pane only, kept out of the Style tab
+    assert re.findall(r'^plot\(([^,]+), "Scale (?:bottom|top)", color = color\.new\(colorEqualInput, 100\), '
+                      r'editable = false, display = display\.pane\)$', code, flags=re.M) == ['1.0', 'CEIL']
     assert len(re.findall(r'^hline\([2468]\.0, "M = [2468]", color = gridColor, '
                           r'linestyle = hline\.style_dashed, editable = false\)$', code, flags=re.M)) == 4
     assert 'label.' not in code and '10+' not in code and 'max_labels_count' not in code   # no "10+" (decision 2026-10-18)
