@@ -527,17 +527,18 @@ float Mshow  = na(Mraw) ? na : more or less ? math.min(Mraw, CEIL) : 1.0
 color sideColor = more ? colorRealInput : less ? colorRandomInput : colorEqualInput
 color mriColor  = shownM ? color.from_gradient(math.log(Mshow), 0.0, math.log(CEIL), colorEqualInput, sideColor) : na
 plot(Mshow, "M", color = mriColor, linewidth = 2)
-// Horizontal lines: M = 1 (equally often), solid and bright — the floor of the line, and a faint dashed grid at 2, 4, 6, 8.
-// They are fixed: "editable = false" keeps them out of the Style tab of the settings. The floor is in the silver of the
-// Inputs tab. The grid is in chart.fg_color, the text color TradingView picks for the chart background (#DBDBDB on a
-// dark one, #0F0F0F on a light one), at 79% transparency: on a dark background it matches silver at 70%, on a light one
-// it stays visible. hline() takes only a color that is fixed for the whole run (an "input color"), and this one is.
+// Horizontal lines: the floor M = 1 (equally often), solid and bright, and a faint dashed grid at 2, 4, 6, 8 and 10
+// (the ceiling). They are fixed: "editable = false" keeps them out of the Style tab of the settings. The floor is
+// in the silver of the Inputs tab. The grid is in chart.fg_color, the text color TradingView picks for the chart
+// background (#DBDBDB on a dark one, #0F0F0F on a light one), at 79% transparency: on a dark background it matches
+// silver at 70%, on a light one it stays visible. hline() takes only an "input color": one fixed for the whole run.
 color gridColor = color.new(chart.fg_color, 79)
 hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)
 hline(2.0, "M = 2", color = gridColor, linestyle = hline.style_dashed, editable = false)
 hline(4.0, "M = 4", color = gridColor, linestyle = hline.style_dashed, editable = false)
 hline(6.0, "M = 6", color = gridColor, linestyle = hline.style_dashed, editable = false)
 hline(8.0, "M = 8", color = gridColor, linestyle = hline.style_dashed, editable = false)
+hline(10.0, "M = 10", color = gridColor, linestyle = hline.style_dashed, editable = false)
 // A fixed scale from 1 to CEIL: the pane always fits all values plotted in it, so two invisible plots hold its ends
 // (fully transparent and shown in the pane only: no values in the status line, the Data Window or on the price scale).
 plot(1.0, "Scale bottom", color = color.new(colorEqualInput, 100), editable = false, display = display.pane)

@@ -178,8 +178,9 @@ def test_wording_colors_literals(proto, which):
                     r'editable = false, display = display\.pane\)$', code, flags=re.M)
     assert st == ['MRI starts here:\\non each bar, the 64-bar window\\nis compared with 4032 historical\\n'
                   'windows of this chart']                     # text of 2026-10-27; the shape under it is transparent
-    # the faint grid M = 2, 4, 6, 8 next to the line M = 1, no threshold line, no colour of the price bars (2026-10-27)
-    assert re.findall(r'^hline\(([0-9.]+), ', code, flags=re.M) == ['1.0', '2.0', '4.0', '6.0', '8.0']
+    # the faint grid M = 2, 4, 6, 8 next to the line M = 1, no threshold line, no colour of the price bars (2026-10-27);
+    # the grid line at the ceiling 10 (2026-10-29: shows how far above 8 the line is)
+    assert re.findall(r'^hline\(([0-9.]+), ', code, flags=re.M) == ['1.0', '2.0', '4.0', '6.0', '8.0', '10.0']
     assert 'barcolor(' not in code and 'thresholdInput' not in code
     assert 'input.float(8.0, "Marks on the price chart at M >=", minval = 0.0' in code   # default 8 (2026-10-27)
     # the floor M = 1 — solid, full silver; the grid — dashed, silver at 70% transparency (2026-10-27), since 2026-10-29
@@ -192,8 +193,10 @@ def test_wording_colors_literals(proto, which):
     # a fixed scale 1 .. CEIL (2026-10-29): two transparent plots in the pane only, kept out of the Style tab
     assert re.findall(r'^plot\(([^,]+), "Scale (?:bottom|top)", color = color\.new\(colorEqualInput, 100\), '
                       r'editable = false, display = display\.pane\)$', code, flags=re.M) == ['1.0', 'CEIL']
-    assert len(re.findall(r'^hline\([2468]\.0, "M = [2468]", color = gridColor, '
-                          r'linestyle = hline\.style_dashed, editable = false\)$', code, flags=re.M)) == 4
+    assert re.findall(r'^hline\(([0-9.]+), "M = \d+", color = gridColor, '
+                      r'linestyle = hline\.style_dashed, editable = false\)$', code, flags=re.M) == [
+        '2.0', '4.0', '6.0', '8.0', '10.0']
+    assert 'hline(10.0, "M = 10", color = gridColor' in code
     assert 'label.' not in code and '10+' not in code and 'max_labels_count' not in code   # no "10+" (decision 2026-10-18)
     # the palette of the site (2026-10-25): silver at M = 1 towards orange (real markets) or grey (the random chart),
     # the share of the side colour = ln M / ln CEIL; the old blue is gone
