@@ -157,7 +157,7 @@ def test_wording_colors_literals(proto, which):
                        'x_end', 'sgn'] + [f'side_{n}' for n in nt3.SIDE_NAMES] + ['confirmed', 'bar_index']   # R10 add. 4
     else:
         assert dbg == [] and not re.search(r'\b(dbg|DBG|nConf|display_dbg)\b', code) and 'Debug' not in code
-    assert len(re.findall(r'^plot\(', code, flags=re.M)) == 1 + len(dbg)
+    assert len(re.findall(r'^plot\(', code, flags=re.M)) == 3 + len(dbg)    # the line M, 2 of the scale (2026-10-29), dbg
     # the live part changes only on a confirmed bar with a valid window; the ring without array.shift
     blk = code[code.index('if barstate.isconfirmed and bar_index >= heavyFrom'):code.index('// ------', code.index(
         'if barstate.isconfirmed and bar_index >= heavyFrom'))]
@@ -178,15 +178,25 @@ def test_wording_colors_literals(proto, which):
                     r'editable = false, display = display\.pane\)$', code, flags=re.M)
     assert st == ['MRI starts here:\\non each bar, the 64-bar window\\nis compared with 4032 historical\\n'
                   'windows of this chart']                     # text of 2026-10-27; the shape under it is transparent
-    # the faint grid M = 2, 4, 6, 8 next to the line M = 1, no threshold line, no colour of the price bars (2026-10-27)
-    assert re.findall(r'^hline\(([0-9.]+), ', code, flags=re.M) == ['1.0', '2.0', '4.0', '6.0', '8.0']
+    # the faint grid M = 2, 4, 6, 8 next to the line M = 1, no threshold line, no colour of the price bars (2026-10-27);
+    # the grid line at the ceiling 10 (2026-10-29: shows how far above 8 the line is)
+    assert re.findall(r'^hline\(([0-9.]+), ', code, flags=re.M) == ['1.0', '2.0', '4.0', '6.0', '8.0', '10.0']
     assert 'barcolor(' not in code and 'thresholdInput' not in code
     assert 'input.float(8.0, "Marks on the price chart at M >=", minval = 0.0' in code   # default 8 (2026-10-27)
-    # the floor M = 1 — solid, full silver; the grid — dashed, silver at 70% transparency (2026-10-27)
+    # the floor M = 1 — solid, full silver; the grid — dashed, silver at 70% transparency (2026-10-27), since 2026-10-29
+    # chart.fg_color at 79%: over a dark chart the same colour, over white contrast 1.6:1 instead of 1.3:1. hline() takes
+    # only an "input color": the check chart.fg_color == #0F0F0F gave a "series color" (TradingView error 2026-10-29)
     assert re.findall(r'^hline\(1\.0, [^\n]*', code, flags=re.M) == [
         'hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)']
-    assert len(re.findall(r'^hline\([2468]\.0, "M = [2468]", color = color\.new\(colorEqualInput, 70\), '
-                          r'linestyle = hline\.style_dashed, editable = false\)$', code, flags=re.M)) == 4
+    assert '\ncolor gridColor = color.new(chart.fg_color, 79)\n' in code
+    assert 'lightChart' not in code and '== #0F0F0F' not in code
+    # a fixed scale 1 .. CEIL (2026-10-29): two transparent plots in the pane only, kept out of the Style tab
+    assert re.findall(r'^plot\(([^,]+), "Scale (?:bottom|top)", color = color\.new\(colorEqualInput, 100\), '
+                      r'editable = false, display = display\.pane\)$', code, flags=re.M) == ['1.0', 'CEIL']
+    assert re.findall(r'^hline\(([0-9.]+), "M = \d+", color = gridColor, '
+                      r'linestyle = hline\.style_dashed, editable = false\)$', code, flags=re.M) == [
+        '2.0', '4.0', '6.0', '8.0', '10.0']
+    assert 'hline(10.0, "M = 10", color = gridColor' in code
     assert 'label.' not in code and '10+' not in code and 'max_labels_count' not in code   # no "10+" (decision 2026-10-18)
     # the palette of the site (2026-10-25): silver at M = 1 towards orange (real markets) or grey (the random chart),
     # the share of the side colour = ln M / ln CEIL; the old blue is gone
