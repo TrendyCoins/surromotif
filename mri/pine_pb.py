@@ -28,7 +28,8 @@ functions, calculations, display and messages, with `// @function` / `// @param`
 comments as in the Pine style guide. Display: the palette of trendycoins.com — silver #9D9D9D at M = 1 towards orange
 #FF7A1A (more often in real markets) or grey #665F5A (more often on the random chart), the share of the side colour =
 ln M / ln CEIL (the site mixes in OKLab, Pine's color.from_gradient in RGB: the same ends, a hardly visible difference
-in between); a faint grid at M = 2, 4, 6, 8; marks on the price chart at M >= the level of one input (0 = no marks); only
+in between); a faint grid at M = 2, 4, 6, 8 (silver at 70% transparency on a dark chart and 40% on a light one: the same
+contrast with the background, 2026-10-29); marks on the price chart at M >= the level of one input (0 = no marks); only
 the line M is listed in the Style tab (the rest has editable = false). Edit this file, not the generated scripts:
 tests/test_pine_pb.py checks that pine/*.pine equal its output.
 """
@@ -568,12 +569,16 @@ color mriColor  = shownM ? color.from_gradient(math.log(Mshow), 0.0, math.log(CE
 plot(Mshow, "M", color = mriColor, linewidth = 2)
 // Horizontal lines: M = 1 (equally often), solid and bright — the floor of the line, and a faint dashed grid at 2, 4, 6, 8.
 // They are fixed: "editable = false" keeps them out of the Style tab of the settings; their color follows the silver
-// of the Inputs tab.
+// of the Inputs tab. Silver is pale on a light background, so there the grid is less transparent (40% instead of 70%)
+// and stands out from the background as much as on a dark one. chart.fg_color is the text color TradingView picks
+// for the chart background: #0F0F0F on a light background, #DBDBDB on a dark one.
+bool  lightChart = chart.fg_color == #0F0F0F
+color gridColor  = color.new(colorEqualInput, lightChart ? 40 : 70)
 hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)
-hline(2.0, "M = 2", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
-hline(4.0, "M = 4", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
-hline(6.0, "M = 6", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
-hline(8.0, "M = 8", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
+hline(2.0, "M = 2", color = gridColor, linestyle = hline.style_dashed, editable = false)
+hline(4.0, "M = 4", color = gridColor, linestyle = hline.style_dashed, editable = false)
+hline(6.0, "M = 6", color = gridColor, linestyle = hline.style_dashed, editable = false)
+hline(8.0, "M = 8", color = gridColor, linestyle = hline.style_dashed, editable = false)
 // the start of the line: a constant text at the window SHOW; the shape under the text is fully transparent
 plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.new(colorEqualInput, 100), text = "{start_text}", textcolor = chart.fg_color, size = size.tiny, editable = false, display = display.pane)
 // marks on the price chart where M reaches the level set in the Inputs tab (0 = no marks)

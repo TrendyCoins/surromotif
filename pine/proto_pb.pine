@@ -538,12 +538,16 @@ color mriColor  = shownM ? color.from_gradient(math.log(Mshow), 0.0, math.log(CE
 plot(Mshow, "M", color = mriColor, linewidth = 2)
 // Horizontal lines: M = 1 (equally often), solid and bright — the floor of the line, and a faint dashed grid at 2, 4, 6, 8.
 // They are fixed: "editable = false" keeps them out of the Style tab of the settings; their color follows the silver
-// of the Inputs tab.
+// of the Inputs tab. Silver is pale on a light background, so there the grid is less transparent (40% instead of 70%)
+// and stands out from the background as much as on a dark one. chart.fg_color is the text color TradingView picks
+// for the chart background: #0F0F0F on a light background, #DBDBDB on a dark one.
+bool  lightChart = chart.fg_color == #0F0F0F
+color gridColor  = color.new(colorEqualInput, lightChart ? 40 : 70)
 hline(1.0, "Equally often (M = 1)", color = colorEqualInput, linestyle = hline.style_solid, editable = false)
-hline(2.0, "M = 2", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
-hline(4.0, "M = 4", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
-hline(6.0, "M = 6", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
-hline(8.0, "M = 8", color = color.new(colorEqualInput, 70), linestyle = hline.style_dashed, editable = false)
+hline(2.0, "M = 2", color = gridColor, linestyle = hline.style_dashed, editable = false)
+hline(4.0, "M = 4", color = gridColor, linestyle = hline.style_dashed, editable = false)
+hline(6.0, "M = 6", color = gridColor, linestyle = hline.style_dashed, editable = false)
+hline(8.0, "M = 8", color = gridColor, linestyle = hline.style_dashed, editable = false)
 // the start of the line: a constant text at the window SHOW; the shape under the text is fully transparent
 plotshape(shownM and nW == SHOW, "Line start", shape.diamond, location.bottom, color.new(colorEqualInput, 100), text = "MRI starts here:\non each bar, the 64-bar window\nis compared with 4032 historical\nwindows of this chart", textcolor = chart.fg_color, size = size.tiny, editable = false, display = display.pane)
 // marks on the price chart where M reaches the level set in the Inputs tab (0 = no marks)
