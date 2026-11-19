@@ -47,9 +47,9 @@ MRI comes as a TradingView indicator for 5-minute charts and as the colors of th
 |---|---|
 | `pine/` | the indicator `mri.pine` and its test prototype |
 | `mri/` | Python reference of the indicator: model, line M, export, Pine generator |
-| `f1h/` | the website model (F1) on 1H candles: numpy reference of the logit and the line M (CPU, numpy only) |
+| `f1h/` | the website model (F1) on 5M, 15M, 30M and 1H candles: numpy reference of the logit and the line M (CPU, numpy only) |
 | `export/` | the models as JSON: weights, rules, constants |
-| `tests/` | pytest and the golden files (bar-by-bar values on BTCUSDT 5M and 1H) |
+| `tests/` | pytest and the golden files (bar-by-bar values on BTCUSDT 5M, 15M, 30M and 1H) |
 | `scripts/` | checks against research code, parity with TradingView, Colab exports |
 | `docs/` | progress, rules of the checks, Pine limits, check results (in Russian) |
 | `research/` | research scripts as they ran in Colab (their Drive paths and Colab links are private): data, training, surrogate tests; SMC there is the SuMo classifier, not Smart Money Concepts |
