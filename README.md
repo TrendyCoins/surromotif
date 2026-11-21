@@ -17,8 +17,9 @@ find is noise.
 **What it is not.** A forecast. MRI is blind to direction by design — to the model, a window and its upside-down copy
 are the same thing — so it never says where the price will go. Not financial advice.
 
-MRI comes as a TradingView indicator for 5-minute charts and as the colors of the price bars on
-[trendycoins.com](https://trendycoins.com).
+MRI comes as a TradingView indicator for 5-minute charts —
+[Market Randomness Index (MRI)](https://www.tradingview.com/script/9OmI0GZv-Market-Randomness-Index-MRI/), open source —
+and as the colors of the price bars on [trendycoins.com](https://trendycoins.com).
 
 ## How it is built
 
