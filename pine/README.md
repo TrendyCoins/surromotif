@@ -1,5 +1,8 @@
 # pine — the TradingView indicator (Pine Script v6)
 
+On TradingView (open source, published 2026-11-21):
+[Market Randomness Index (MRI)](https://www.tradingview.com/script/9OmI0GZv-Market-Randomness-Index-MRI/).
+
 - `mri.pine` — the indicator: one script, weights inside, "Compute only the last N bars" = 10000 by default.
 - `proto_pb.pine` — its test prototype: the same computation, N = 0 and a debug mode (values for the parity check with the
   Python reference, `scripts/parity.py`).
